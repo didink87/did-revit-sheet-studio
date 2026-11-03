@@ -1,5 +1,4 @@
 using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
 using SheetStudio.Core.Create;
 using SheetStudio.Core.Model;
 using SheetStudio.Core.Preferences;
@@ -8,7 +7,8 @@ using SheetStudio.Core.ViewModels;
 namespace SheetStudio.Revit.Revit;
 
 /// <summary>IStudioGateway over the active document; every call runs through the ExternalEvent queue.</summary>
-public sealed partial class RevitStudioGateway(ExternalEventQueue queue) : IStudioGateway
+/// <param name="openSheet">Opens a sheet in the Revit UI; null in tests.</param>
+public sealed partial class RevitStudioGateway(IDocumentRunner runner, Func<string, Task>? openSheet = null) : IStudioGateway
 {
     public static string UserPrefsPath { get; set; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SheetStudio", "preferensi.json");
@@ -17,7 +17,7 @@ public sealed partial class RevitStudioGateway(ExternalEventQueue queue) : IStud
 
     internal void RaiseModelChanged() => ModelChanged?.Invoke();
 
-    public Task<StudioSnapshot> LoadAsync() => queue.Run(ui => Load(ActiveDoc(ui)));
+    public Task<StudioSnapshot> LoadAsync() => runner.Run(Load);
 
     public static StudioSnapshot Load(Document doc)
     {
@@ -27,9 +27,9 @@ public sealed partial class RevitStudioGateway(ExternalEventQueue queue) : IStud
         return SnapshotReader.Read(doc, prefs, ProjectStateJson.Deserialize(stateJson));
     }
 
-    public Task<ApplyReport> ApplyAsync(ApplyPlan plan) => queue.Run(ui => ApplyExecutor.Apply(ActiveDoc(ui), plan));
+    public Task<ApplyReport> ApplyAsync(ApplyPlan plan) => runner.Run(doc => ApplyExecutor.Apply(doc, plan));
 
-    public Task SaveAsync(Prefs? prefs, ProjectState? state, bool userLevel) => queue.Run(ui => Save(ActiveDoc(ui), prefs, state, userLevel));
+    public Task SaveAsync(Prefs? prefs, ProjectState? state, bool userLevel) => runner.Run(doc => { Save(doc, prefs, state, userLevel); return true; });
 
     /// <summary>User level writes %AppData% (preferences only); project level writes Extensible Storage.</summary>
     public static void Save(Document doc, Prefs? prefs, ProjectState? state, bool userLevel)
@@ -47,12 +47,5 @@ public sealed partial class RevitStudioGateway(ExternalEventQueue queue) : IStud
         t.Commit();
     }
 
-    public Task OpenSheetAsync(string uniqueId) => queue.Run(ui =>
-    {
-        var doc = ActiveDoc(ui);
-        if (doc.GetElement(uniqueId) is ViewSheet s) ui.ActiveUIDocument.RequestViewChange(s);
-    });
-
-    internal static Document ActiveDoc(UIApplication ui) =>
-        ui.ActiveUIDocument?.Document ?? throw new InvalidOperationException("Tidak ada dokumen Revit yang aktif");
+    public Task OpenSheetAsync(string uniqueId) => openSheet?.Invoke(uniqueId) ?? Task.CompletedTask;
 }

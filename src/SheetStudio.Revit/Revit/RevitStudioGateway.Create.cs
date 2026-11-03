@@ -12,42 +12,38 @@ public sealed partial class RevitStudioGateway
 
     public async Task<CreateReport> CreateAsync(IReadOnlyList<CreateRequest> reqs, IProgress<(int Done, int Total, string Title)> progress, CancellationToken ct)
     {
-        var prefs = await queue.Run(ui => Load(ActiveDoc(ui)).Prefs);
+        var prefs = await runner.Run(doc => Load(doc).Prefs);
         var rows = new List<(string Title, bool Ok, string? Pesan, string? UniqueId)>();
         var created = new List<string>();
         for (var start = 0; start < reqs.Count; start += ChunkSize)
         {
             if (ct.IsCancellationRequested)
             {
-                await queue.Run(ui => CreateExecutor.DeleteCreated(ActiveDoc(ui), created));
+                await runner.Run(doc => { CreateExecutor.DeleteCreated(doc, created); return true; });
                 return new CreateReport(rows.Select(r => (r.Title, false, (string?)"Dibatalkan", (string?)null)).ToList(), true);
             }
             var chunk = reqs.Skip(start).Take(ChunkSize).ToList();
             var offset = start;
             var inner = new Progress<(int, int, string)>(x => progress.Report((offset + x.Item1, reqs.Count, x.Item3)));
-            var report = await queue.Run(ui => CreateExecutor.Create(ActiveDoc(ui), chunk, prefs, prefs.BatchLewatiGagal, inner, CancellationToken.None));
+            var report = await runner.Run(doc => CreateExecutor.Create(doc, chunk, prefs, prefs.BatchLewatiGagal, inner, CancellationToken.None));
             rows.AddRange(report.Rows);
             created.AddRange(report.Rows.Where(r => r.UniqueId is not null).Select(r => r.UniqueId!));
             if (!prefs.BatchLewatiGagal && report.Rows.Any(r => !r.Ok))
             {
-                await queue.Run(ui => CreateExecutor.DeleteCreated(ActiveDoc(ui), created));
+                await runner.Run(doc => { CreateExecutor.DeleteCreated(doc, created); return true; });
                 return new CreateReport(rows.Select(r => (r.Title, false, r.Ok ? "Dibatalkan karena baris lain gagal" : r.Pesan, (string?)null)).ToList(), false);
             }
         }
         return new CreateReport(rows, false);
     }
 
-    public Task<CreateReport> DuplicateAsync(IReadOnlyList<string> ids, DuplicateMode mode) => queue.Run(ui =>
+    public Task<CreateReport> DuplicateAsync(IReadOnlyList<string> ids, DuplicateMode mode) => runner.Run(doc =>
     {
-        var doc = ActiveDoc(ui);
         var prefs = Load(doc).Prefs;
         var profile = ProfileLoader.LoadBuiltIn(ProfileLoader.BuiltInIds.Contains(prefs.ProfileId) ? prefs.ProfileId : "pupr");
         return CreateExecutor.Duplicate(doc, ids, mode, profile, prefs.Numbering);
     });
 
-    public Task<byte[]?> ThumbnailAsync(string uniqueId) => queue.Run(ui =>
-    {
-        var doc = ActiveDoc(ui);
-        return ThumbnailService.Render(doc, uniqueId, ThumbnailService.CacheDir(doc));
-    });
+    public Task<byte[]?> ThumbnailAsync(string uniqueId) =>
+        runner.Run(doc => ThumbnailService.Render(doc, uniqueId, ThumbnailService.CacheDir(doc)));
 }

@@ -25,7 +25,11 @@ public sealed class App : IExternalApplication
         });
 
         Queue = new ExternalEventQueue();
-        Gateway = new RevitStudioGateway(Queue);
+        var runner = new ActiveDocumentRunner(Queue);
+        Gateway = new RevitStudioGateway(runner, uid => runner.RunUi(ui =>
+        {
+            if (ui.ActiveUIDocument?.Document.GetElement(uid) is Autodesk.Revit.DB.ViewSheet s) ui.ActiveUIDocument.RequestViewChange(s);
+        }));
         ViewModel = new StudioViewModel(Gateway);
         var pane = new StudioPane(ViewModel);
         application.RegisterDockablePane(PaneIds.Studio, "Sheet Studio", pane);
