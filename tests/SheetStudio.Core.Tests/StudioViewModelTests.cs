@@ -69,7 +69,7 @@ public class StudioViewModelTests
         Assert.True(await vm.ApplyAsync());
         var plan = Assert.Single(gw.Applied);
         Assert.Equal(2, plan.Renumber.Count);
-        Assert.All(plan.Renumber, s => Assert.StartsWith("~TMP-", s.Temp));
+        Assert.All(plan.Renumber, s => Assert.StartsWith("SSTMP-", s.Temp));
         Assert.Equal("TAMPAK DEPAN BARU", plan.Edits.Single(e => e.UniqueId == "T1").NewTitle);
         Assert.Equal("A-111|DENAH LANTAI 2", plan.ExpectedVersi["L2"]);
         Assert.Equal("A-201|TAMPAK DEPAN", plan.ExpectedVersi["T1"]);

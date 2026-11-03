@@ -13,6 +13,9 @@ public static class TitleRules
 {
     private const string Vowels = "AEIOU";
 
+    /// <summary>Characters Revit rejects in sheet numbers/names.</summary>
+    public const string Prohibited = @"\:{}[]|;<>?`~";
+
     public static string Normalize(string? raw) =>
         string.Join(' ', (raw ?? "").ToUpperInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
@@ -20,6 +23,9 @@ public static class TitleRules
     {
         var norm = Normalize(raw);
         if (norm.Length == 0) return new TitleCheck("", Severity.Galat, [], "Judul kosong");
+        var bad = norm.Where(c => Prohibited.Contains(c)).Distinct().ToList();
+        if (bad.Count > 0)
+            return new TitleCheck(norm, Severity.Galat, [], $"Judul memuat karakter terlarang Revit: {string.Join(" ", bad)}");
         var hints = new List<AbbrevHint>();
         foreach (var tok in norm.Split(' '))
         {

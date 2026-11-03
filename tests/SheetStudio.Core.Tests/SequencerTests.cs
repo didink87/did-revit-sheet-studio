@@ -173,7 +173,8 @@ public class SequencerTests
         var steps = TwoPhasePlan.Build([new("a", "A-110", "A-111", "", true), new("b", "A-111", "A-110", "", true), new("c", "A-112", "A-112", "", false)]);
         Assert.Equal(2, steps.Count);
         Assert.Equal(2, steps.Select(s => s.Temp).Distinct().Count());
-        Assert.All(steps, s => Assert.StartsWith("~TMP-", s.Temp));
+        Assert.All(steps, s => Assert.Matches(@"^SSTMP-[0-9A-F]{6}-\d{3}$", s.Temp));
+        Assert.All(steps, s => Assert.DoesNotContain(s.Temp, c => "{}[]|;<>?`~".Contains(c))); // Revit-prohibited
         Assert.All(steps, s => Assert.False(SheetId.Parse(s.Temp, Profiles.Pupr).Ok));
     }
 

@@ -60,4 +60,15 @@ public class TitleRulesTests
         Assert.Equal(Severity.Galat, c.Severity);
         Assert.Equal("Judul kosong", c.Pesan);
     }
+
+    [Theory]
+    [InlineData("DENAH [LANTAI 1]")]
+    [InlineData("DENAH; TAMPAK")]
+    [InlineData("DETAIL A|B")]
+    public void RevitProhibitedChars_IsGalat(string title)
+    {
+        var c = TitleRules.Check(title, Profiles.Pupr);
+        Assert.Equal(Severity.Galat, c.Severity);
+        Assert.Contains("karakter", c.Pesan);
+    }
 }
