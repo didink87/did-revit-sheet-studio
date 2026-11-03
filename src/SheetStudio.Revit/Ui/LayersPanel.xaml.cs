@@ -5,6 +5,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using SheetStudio.Core.Diagnostics;
 using SheetStudio.Core.Layers;
 using SheetStudio.Core.ViewModels;
 
@@ -216,7 +217,12 @@ public partial class LayersPanel : UserControl
         if (_thumbTimer is null)
         {
             _thumbTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-            _thumbTimer.Tick += (_, _) => { _thumbTimer.Stop(); RequestVisibleThumbnails(); };
+            _thumbTimer.Tick += (_, _) =>
+            {
+                _thumbTimer.Stop();
+                try { RequestVisibleThumbnails(); }
+                catch (Exception ex) { StudioLog.Write("thumb-ui-gagal", ex.Message); }
+            };
         }
         _thumbTimer.Stop();
         _thumbTimer.Start();

@@ -197,7 +197,8 @@ public class StudioViewModelTests
         var run = batch.RunAsync();
         gw.LoadError = "putus"; // the post-create reload will fail
         gw.CreateGate.SetResult();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => run);
+        await run; // reload failure is reported via Status, not thrown
+        Assert.StartsWith("Galat", vm.Status);
         Assert.NotNull(batch.Report);
         Assert.False(batch.Report!.Dibatalkan);
     }

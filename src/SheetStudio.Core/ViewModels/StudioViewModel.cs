@@ -317,6 +317,7 @@ public sealed class StudioViewModel : ObservableObject
         _undo.Reset(Current);
         Recompute();
         Status = dropped.Count > 0 ? $"{dropped.Count} perubahan dibuang karena lembarnya terhapus di model" : statusIfOk ?? Status;
+        Raise(nameof(Snapshot));
     }
 
     /// <summary>Runs a create/duplicate operation and always reloads afterwards, so sheets made before a failure still show.</summary>
@@ -330,7 +331,13 @@ public sealed class StudioViewModel : ObservableObject
             catch (Exception ex) { StudioLog.Write("reload", "gagal setelah buat gagal: " + ex.Message); }
             throw;
         }
-        await AfterCreateAsync(report);
+        try { await AfterCreateAsync(report); }
+        catch (Exception ex)
+        {
+            // The sheets exist; losing the report would leave the dialog open and invite a duplicate create.
+            ReportError(ex);
+            StudioLog.Write("reload-gagal", ex.Message);
+        }
         return report;
     }
 

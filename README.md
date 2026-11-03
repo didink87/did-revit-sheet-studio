@@ -26,7 +26,7 @@ Log ditulis ke `%LocalAppData%\SheetStudio\log\sheetstudio-yyyyMMdd.log` (satu f
 | `apply` | TERAPKAN ke model |
 | `thumb` / `thumb-gagal` | Thumbnail berhasil dibuat / gagal |
 | `watcher` | Pemantau perubahan model |
-| `event` | Kejadian dokumen Revit (mis. Save As, lembar ditambah di luar panel) |
+| `event` | ExternalEvent ditolak/tidak diterima Revit (Denied/TimedOut) |
 | `reload` | Baca ulang panel |
 
 Lampirkan file log hari itu saat melaporkan masalah.

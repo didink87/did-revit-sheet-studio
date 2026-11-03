@@ -34,6 +34,6 @@ public sealed class ExternalEventQueue : IExternalEventHandler
     private void Raise()
     {
         var result = _event.Raise();
-        if (result != ExternalEventRequest.Accepted) StudioLog.Write("event", result.ToString());
+        if (result != ExternalEventRequest.Accepted && result != ExternalEventRequest.Pending) StudioLog.Write("event", result.ToString());
     }
 }

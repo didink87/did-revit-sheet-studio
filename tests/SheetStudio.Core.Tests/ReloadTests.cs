@@ -173,4 +173,24 @@ public class ReloadTests
             vm.CreateThenReloadAsync(() => gw.CreateAsync([], new Progress<(int, int, string)>(), default)));
         Assert.Contains(vm.Layers.Rows, r => r.Key == "L3");
     }
+
+    [Fact]
+    public async Task Reload_InPlace_RaisesSnapshotChanged()
+    {
+        var (vm, _) = await Loaded();
+        var raised = new List<string?>();
+        vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+        await vm.ReloadAsync(ReloadReason.ModelBerubah);
+        Assert.Contains("Snapshot", raised);
+    }
+
+    [Fact]
+    public async Task CreateThenReload_SuccessButReloadFails_ReturnsReport()
+    {
+        var (vm, gw) = await Loaded();
+        gw.LoadError = "putus";
+        var report = await vm.CreateThenReloadAsync(() => gw.CreateAsync([], new Progress<(int, int, string)>(), default));
+        Assert.NotNull(report);
+        Assert.StartsWith("Galat", vm.Status);
+    }
 }
