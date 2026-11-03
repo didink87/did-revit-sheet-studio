@@ -136,8 +136,12 @@ public sealed class BatchViewModel : ObservableObject
                 ProgressText = $"{x.Done}/{x.Total} · {x.Title}";
             });
             var token = _cts.Token;
-            Report = await _studio.CreateThenReloadAsync(() => _studio.Gateway.CreateAsync(reqs, progress, token));
-            Raise(nameof(Report));
+            await _studio.CreateThenReloadAsync(async () =>
+            {
+                Report = await _studio.Gateway.CreateAsync(reqs, progress, token);
+                Raise(nameof(Report));
+                return Report;
+            });
         }
         finally
         {

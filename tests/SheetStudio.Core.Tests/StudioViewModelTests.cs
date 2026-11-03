@@ -187,6 +187,22 @@ public class StudioViewModelTests
     }
 
     [Fact]
+    public async Task Batch_ReportSetBeforeReload()
+    {
+        var (vm, gw) = await Loaded();
+        gw.CreateGate = new TaskCompletionSource();
+        var batch = vm.NewBatch();
+        batch.LoadPreset("DENAH SEMUA LANTAI");
+        batch.Preview();
+        var run = batch.RunAsync();
+        gw.LoadError = "putus"; // the post-create reload will fail
+        gw.CreateGate.SetResult();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => run);
+        Assert.NotNull(batch.Report);
+        Assert.False(batch.Report!.Dibatalkan);
+    }
+
+    [Fact]
     public async Task Create_InvalidName_CommandDisabled()
     {
         var (vm, gw) = await Loaded();

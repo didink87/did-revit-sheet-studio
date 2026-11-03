@@ -24,6 +24,7 @@ public partial class StudioPane : UserControl, IDockablePaneProvider
         InspectorHost.Content = new InspectorPanel { DataContext = vm.Inspector };
         vm.PreferencesRequested += prefs => new PreferencesWindow(prefs) { Owner = Window.GetWindow(this) }.ShowDialog();
         vm.Inspector.EditNumberRequested += picker => new EditNumberWindow(picker, vm.Inspector) { Owner = Window.GetWindow(this) }.ShowDialog();
+        vm.IsPaneVisible = IsVisible; // the pane starts hidden; IsVisibleChanged does not fire for that initial state
         IsVisibleChanged += async (_, e) =>
         {
             var visible = e.NewValue is true;

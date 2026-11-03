@@ -98,12 +98,16 @@ public sealed class StudioViewModel : ObservableObject
 
     public IStudioGateway Gateway => _gateway;
 
-    public async Task LoadAsync() => ApplyFresh(await _gateway.LoadAsync());
+    public async Task LoadAsync()
+    {
+        IsStale = false; // before the await: a change arriving during the load must stay stale
+        try { ApplyFresh(await _gateway.LoadAsync()); }
+        catch { IsStale = true; throw; }
+    }
 
     private void ApplyFresh(StudioSnapshot fresh)
     {
         Snapshot = fresh;
-        IsStale = false;
         Profile = ProfileLoader.BuiltInIds.Contains(Snapshot.Prefs.ProfileId)
             ? ProfileLoader.LoadBuiltIn(Snapshot.Prefs.ProfileId)
             : ProfileLoader.LoadBuiltIn("pupr");
@@ -278,7 +282,10 @@ public sealed class StudioViewModel : ObservableObject
     /// (edits made while the load was in flight are kept). A different active document resets everything.</summary>
     private async Task ReloadRoundAsync(string? statusIfOk)
     {
-        var fresh = await _gateway.LoadAsync();
+        IsStale = false; // before the await: a change arriving during the load must stay stale
+        StudioSnapshot fresh;
+        try { fresh = await _gateway.LoadAsync(); }
+        catch { IsStale = true; throw; }
         var pending = Current;
         if (Snapshot.DocumentKey.Length == 0)
         {
@@ -298,7 +305,6 @@ public sealed class StudioViewModel : ObservableObject
             return;
         }
         Snapshot = fresh;
-        IsStale = false;
         var (next, dropped) = Rebase.Onto(pending, Snapshot.Sheets, Profile);
         Current = next;
         foreach (var id in dropped) _baseVersi.Remove(id);

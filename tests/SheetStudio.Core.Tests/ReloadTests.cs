@@ -70,6 +70,19 @@ public class ReloadTests
     }
 
     [Fact]
+    public async Task ModelChanged_HiddenDuringLoad_StaysStale()
+    {
+        var (vm, gw) = await Loaded();
+        gw.LoadGate = new();
+        var t = vm.ReloadAsync(ReloadReason.ModelBerubah);
+        vm.IsPaneVisible = false;
+        gw.RaiseModelChanged();
+        gw.LoadGate.SetResult();
+        await t;
+        Assert.True(vm.IsStale);
+    }
+
+    [Fact]
     public async Task Show_NotStale_DoesNotLoad()
     {
         var (vm, gw) = await Loaded();
