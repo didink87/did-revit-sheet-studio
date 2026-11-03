@@ -22,6 +22,7 @@ internal sealed class FakeGateway : IStudioGateway
 
     public string? LoadError { get; set; }
     public string DocumentKey { get; set; } = "doc1";
+    public string DocumentId { get; set; } = "";
     public string? ApplyError { get; set; }
 
     public async Task<StudioSnapshot> LoadAsync()
@@ -30,7 +31,8 @@ internal sealed class FakeGateway : IStudioGateway
         if (LoadError is not null) throw new InvalidOperationException(LoadError);
         if (LoadGate is not null) await LoadGate.Task;
         return new StudioSnapshot(DocumentKey, Sheets.ToList(), State, Prefs, [("Lantai 1", 0), ("Lantai 2", 4), ("Lantai 3", 8)],
-            ["PUPR_KOP_A3", "PUPR_KOP_A2"], [new ViewInfo("v1", "DENAH LANTAI 1", "Denah", false), new ViewInfo("v2", "TAMPAK", "Tampak", true)]);
+            ["PUPR_KOP_A3", "PUPR_KOP_A2"], [new ViewInfo("v1", "DENAH LANTAI 1", "Denah", false), new ViewInfo("v2", "TAMPAK", "Tampak", true)])
+            { DocumentId = DocumentId };
     }
 
     public Task<ApplyReport> ApplyAsync(ApplyPlan plan)

@@ -16,7 +16,11 @@ public sealed record StudioSnapshot(
     Prefs Prefs,
     IReadOnlyList<(string Name, double Elevation)> Levels,
     IReadOnlyList<string> TitleBlockTypes,
-    IReadOnlyList<ViewInfo> Views);
+    IReadOnlyList<ViewInfo> Views)
+{
+    /// <summary>Stable identity of the document (survives Save As, unlike <see cref="DocumentKey"/>); empty when unknown.</summary>
+    public string DocumentId { get; init; } = "";
+}
 
 public sealed record ApplyPlan(
     string DocumentKey,

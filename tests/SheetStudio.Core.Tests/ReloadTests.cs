@@ -102,6 +102,39 @@ public class ReloadTests
     }
 
     [Fact]
+    public async Task Reload_SameDocumentNewPath_AdoptsKey()
+    {
+        var (vm, gw) = await Loaded();
+        gw.DocumentId = "P1";
+        await vm.ReloadAsync(ReloadReason.ModelBerubah);
+        vm.Layers.Click("L1");
+        vm.Layers.MarkDelete();
+        gw.DocumentKey = "C:\\baru.rvt";
+        gw.Sheets.Add(S("L3", "A-112", "DENAH LANTAI 3", kind: "denah", subjek: "LANTAI 3"));
+        await vm.ReloadAsync(ReloadReason.ModelBerubah);
+        Assert.Equal("C:\\baru.rvt", vm.Snapshot.DocumentKey);
+        Assert.Equal(1, vm.PendingCount);
+        Assert.Contains(vm.Layers.Rows, r => r.Key == "L3");
+        Assert.Equal("C:\\baru.rvt", vm.BuildPlan().DocumentKey);
+    }
+
+    [Fact]
+    public async Task Reload_DifferentDocument_StillKeepsPendingAndWarns()
+    {
+        var (vm, gw) = await Loaded();
+        gw.DocumentId = "P1";
+        await vm.ReloadAsync(ReloadReason.ModelBerubah);
+        vm.Layers.Click("L1");
+        vm.Layers.MarkDelete();
+        gw.DocumentKey = "C:\\lain.rvt";
+        gw.DocumentId = "P2";
+        await vm.ReloadAsync(ReloadReason.ModelBerubah);
+        Assert.Equal("doc1", vm.Snapshot.DocumentKey);
+        Assert.Equal(1, vm.PendingCount);
+        Assert.Contains("milik dokumen lain", vm.Status);
+    }
+
+    [Fact]
     public async Task Create_GatewayThrows_StillReloads()
     {
         var (vm, gw) = await Loaded();

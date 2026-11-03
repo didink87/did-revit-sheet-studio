@@ -38,7 +38,10 @@ public static class SnapshotReader
             .OrderBy(v => v.Name)
             .ToList();
 
-        return new StudioSnapshot(DocumentKey(doc), sheets, state, prefs, levels, TitleBlocks.All(doc).Select(TitleBlocks.Display).ToList(), views);
+        return new StudioSnapshot(DocumentKey(doc), sheets, state, prefs, levels, TitleBlocks.All(doc).Select(TitleBlocks.Display).ToList(), views)
+        {
+            DocumentId = doc.ProjectInformation?.UniqueId ?? "",
+        };
     }
 
     private static SheetSnapshot Sheet(Document doc, ViewSheet s)

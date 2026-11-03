@@ -12,6 +12,20 @@ namespace SheetStudio.Revit.Tests;
 public class SnapshotTests
 {
     [Test]
+    public void Snapshot_DocumentId_IsProjectInfoUniqueId(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var snap = SnapshotReader.Read(doc, Prefs.Default, ProjectState.Empty);
+
+            Assert.That(snap.DocumentId, Is.Not.Empty);
+            Assert.That(snap.DocumentId, Is.EqualTo(doc.ProjectInformation.UniqueId));
+        }
+        finally { doc.Close(false); }
+    }
+
+    [Test]
     public void Snapshot_ReadsSheetsAndParams(Application app)
     {
         var doc = NewDoc(app);

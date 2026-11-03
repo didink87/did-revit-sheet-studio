@@ -292,7 +292,9 @@ public sealed class StudioViewModel : ObservableObject
             ApplyFresh(fresh);
             return;
         }
-        if (fresh.DocumentKey != Snapshot.DocumentKey)
+        // Same project identity under a new path = Save As of the same document: treat as an ordinary reload.
+        var sameDocument = fresh.DocumentId.Length > 0 && fresh.DocumentId == Snapshot.DocumentId;
+        if (fresh.DocumentKey != Snapshot.DocumentKey && !sameDocument)
         {
             if (pending.PendingCount > 0)
             {
