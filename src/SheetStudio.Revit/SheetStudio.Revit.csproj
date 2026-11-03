@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Configurations>Debug;Release</Configurations>
+    <RevitVersion>2026</RevitVersion>
+    <RootNamespace>SheetStudio.Revit</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*" ExcludeAssets="runtime" />
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.IO" />
+    <ProjectReference Include="..\SheetStudio.Core\SheetStudio.Core.csproj" />
+    <InternalsVisibleTo Include="SheetStudio.Revit.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\*.png" />
+  </ItemGroup>
+
+  <!-- Opt-in: dotnet build -p:InstallAddin=true copies the manifest into the user's Revit 2026 Addins folder.
+       Off by default so test runs and the user's own Revit never load an unfinished add-in by accident. -->
+  <Target Name="InstallAddin" AfterTargets="Build" Condition="'$(InstallAddin)' == 'true'">
+    <PropertyGroup>
+      <AddinDir>$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)\</AddinDir>
+      <AddinText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\SheetStudio.addin').Replace('__ASSEMBLY__', '$(TargetPath)'))</AddinText>
+    </PropertyGroup>
+    <MakeDir Directories="$(AddinDir)" />
+    <WriteLinesToFile File="$(AddinDir)SheetStudio.addin" Lines="$(AddinText)" Overwrite="true" />
+  </Target>
+
+</Project>

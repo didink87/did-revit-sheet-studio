@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Sheet Studio</Name>
+    <Assembly>__ASSEMBLY__</Assembly>
+    <AddInId>E4A9D2B7-6C31-4F85-9B0E-2D7C5A8F1E63</AddInId>
+    <FullClassName>SheetStudio.Revit.App</FullClassName>
+    <VendorId>DIDF</VendorId>
+    <VendorDescription>Sheet Studio</VendorDescription>
+  </AddIn>
+</RevitAddIns>

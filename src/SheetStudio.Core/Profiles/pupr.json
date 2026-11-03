@@ -1,0 +1,765 @@
+{
+ "Id": "pupr",
+ "Nama": "PUPR (Modul Kelengkapan Gambar AR 2021 + UDS)",
+ "Disiplin": [
+  {
+   "Code": "G",
+   "NamaId": "Umum",
+   "NamaEn": "General",
+   "Keterangan": "Sampul, daftar lembar, legenda simbol, singkatan, catatan umum, ringkasan peraturan.",
+   "Order": 1,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "H",
+   "NamaId": "Bahan Berbahaya",
+   "NamaEn": "Hazardous Materials",
+   "Keterangan": "Penanganan dan pembersihan bahan berbahaya.",
+   "Order": 2,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "V",
+   "NamaId": "Survei / Pemetaan",
+   "NamaEn": "Survey / Mapping",
+   "Keterangan": "Data survei dan pemetaan lokasi.",
+   "Order": 3,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "B",
+   "NamaId": "Geoteknik",
+   "NamaEn": "Geotechnical",
+   "Keterangan": "Data penyelidikan tanah dan boring.",
+   "Order": 4,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "C",
+   "NamaId": "Sipil",
+   "NamaEn": "Civil",
+   "Keterangan": "Pekerjaan sipil tapak: jalan, drainase, utilitas luar.",
+   "Order": 5,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "L",
+   "NamaId": "Lansekap",
+   "NamaEn": "Landscape",
+   "Keterangan": "Rencana lansekap, penanaman, hardscape.",
+   "Order": 6,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "S",
+   "NamaId": "Struktur",
+   "NamaEn": "Structural",
+   "Keterangan": "Pondasi, kolom, balok, pelat, rangka atap.",
+   "Order": 7,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "A",
+   "NamaId": "Arsitektur",
+   "NamaEn": "Architectural",
+   "Keterangan": "Tapak, denah, tampak, potongan, rencana, detail, perspektif arsitektur.",
+   "Order": 8,
+   "Umum": true,
+   "HurufKedua": [
+    {
+     "Huruf": "S",
+     "Nama": "Tapak arsitektur",
+     "Keterangan": "Gambar tapak arsitektur (cek NCS)"
+    },
+    {
+     "Huruf": "D",
+     "Nama": "Demolisi",
+     "Keterangan": "Gambar pembongkaran (contoh AD107 di PDF AIA)"
+    },
+    {
+     "Huruf": "E",
+     "Nama": "Elemen",
+     "Keterangan": "Elemen arsitektur (cek NCS)"
+    },
+    {
+     "Huruf": "I",
+     "Nama": "Interior",
+     "Keterangan": "Interior pada set arsitektur (cek NCS)"
+    },
+    {
+     "Huruf": "F",
+     "Nama": "Finishing",
+     "Keterangan": "Rencana finishing (cek NCS)"
+    },
+    {
+     "Huruf": "G",
+     "Nama": "Grafis",
+     "Keterangan": "Signage dan grafis (cek NCS)"
+    }
+   ]
+  },
+  {
+   "Code": "I",
+   "NamaId": "Interior",
+   "NamaEn": "Interiors",
+   "Keterangan": "Desain interior, furnitur, finishing interior.",
+   "Order": 9,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "Q",
+   "NamaId": "Peralatan",
+   "NamaEn": "Equipment",
+   "Keterangan": "Peralatan khusus (dapur, laboratorium, rumah sakit).",
+   "Order": 10,
+   "Umum": false,
+   "HurufKedua": [
+    {
+     "Huruf": "H",
+     "Nama": "Peralatan rumah sakit",
+     "Keterangan": "Contoh QH601 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "F",
+   "NamaId": "Proteksi Kebakaran",
+   "NamaEn": "Fire Protection",
+   "Keterangan": "Sprinkler, hidran, APAR, alarm kebakaran.",
+   "Order": 11,
+   "Umum": true,
+   "HurufKedua": [
+    {
+     "Huruf": "A",
+     "Nama": "Alarm kebakaran",
+     "Keterangan": "Contoh FA601 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "P",
+   "NamaId": "Plambing",
+   "NamaEn": "Plumbing",
+   "Keterangan": "Air bersih, air kotor, air hujan, sanitair.",
+   "Order": 12,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "D",
+   "NamaId": "Proses",
+   "NamaEn": "Process",
+   "Keterangan": "Sistem proses industri.",
+   "Order": 13,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "M",
+   "NamaId": "Mekanikal",
+   "NamaEn": "Mechanical",
+   "Keterangan": "Tata udara, ventilasi, pipa mekanikal.",
+   "Order": 14,
+   "Umum": true,
+   "HurufKedua": [
+    {
+     "Huruf": "H",
+     "Nama": "HVAC",
+     "Keterangan": "Contoh MH402 di PDF AIA"
+    },
+    {
+     "Huruf": "P",
+     "Nama": "Pipa mekanikal",
+     "Keterangan": "Contoh MP501 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "E",
+   "NamaId": "Elektrikal",
+   "NamaEn": "Electrical",
+   "Keterangan": "Penerangan, daya, panel, pembumian.",
+   "Order": 15,
+   "Umum": true,
+   "HurufKedua": [
+    {
+     "Huruf": "L",
+     "Nama": "Penerangan",
+     "Keterangan": "Contoh EL103 di PDF AIA"
+    },
+    {
+     "Huruf": "P",
+     "Nama": "Daya",
+     "Keterangan": "Contoh EP110 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "W",
+   "NamaId": "Energi Terdistribusi",
+   "NamaEn": "Distributed Energy",
+   "Keterangan": "Pembangkit energi setempat (surya, dll).",
+   "Order": 16,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "T",
+   "NamaId": "Telekomunikasi",
+   "NamaEn": "Telecommunications",
+   "Keterangan": "Data, telepon, CCTV, tata suara.",
+   "Order": 17,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "R",
+   "NamaId": "Kondisi Eksisting",
+   "NamaEn": "Resource",
+   "Keterangan": "Kondisi atau bangunan eksisting.",
+   "Order": 18,
+   "Umum": false,
+   "HurufKedua": [
+    {
+     "Huruf": "A",
+     "Nama": "Arsitektur eksisting",
+     "Keterangan": "Contoh RA102 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "X",
+   "NamaId": "Disiplin Lain",
+   "NamaEn": "Other Disciplines",
+   "Keterangan": "Disiplin lain di luar daftar.",
+   "Order": 19,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "Z",
+   "NamaId": "Kontraktor / Shop Drawing",
+   "NamaEn": "Contractor / Shop Drawings",
+   "Keterangan": "Gambar kerja dari kontraktor.",
+   "Order": 20,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "O",
+   "NamaId": "Operasional",
+   "NamaEn": "Operations",
+   "Keterangan": "Gambar operasional dan pemeliharaan.",
+   "Order": 21,
+   "Umum": false,
+   "HurufKedua": []
+  }
+ ],
+ "Tipe": [
+  {
+   "Digit": 0,
+   "Nama": "General",
+   "Keterangan": "Umum: legenda simbol, singkatan, catatan umum."
+  },
+  {
+   "Digit": 1,
+   "Nama": "Plans",
+   "Keterangan": "Denah: pandangan horizontal — denah, rencana tapak, plafon, atap, pola lantai."
+  },
+  {
+   "Digit": 2,
+   "Nama": "Elevations",
+   "Keterangan": "Tampak: pandangan vertikal."
+  },
+  {
+   "Digit": 3,
+   "Nama": "Sections",
+   "Keterangan": "Potongan: potongan bangunan, potongan tapak, wall section."
+  },
+  {
+   "Digit": 4,
+   "Nama": "Large-Scale Views",
+   "Keterangan": "Skala besar: denah/tampak/potongan diperbesar (toilet, tangga, core) — bukan detail."
+  },
+  {
+   "Digit": 5,
+   "Nama": "Details",
+   "Keterangan": "Detail."
+  },
+  {
+   "Digit": 6,
+   "Nama": "Schedules and Diagrams",
+   "Keterangan": "Schedule dan diagram."
+  },
+  {
+   "Digit": 7,
+   "Nama": "User Defined",
+   "Keterangan": "Bebas: tipe lain, termasuk lembar detail tipikal."
+  },
+  {
+   "Digit": 8,
+   "Nama": "User Defined",
+   "Keterangan": "Bebas: tipe lain di luar kategori."
+  },
+  {
+   "Digit": 9,
+   "Nama": "3D Representations",
+   "Keterangan": "3D: isometri, perspektif, foto."
+  }
+ ],
+ "Jenis": [
+  {
+   "Id": "sampul",
+   "Nama": "SAMPUL",
+   "Disiplin": "G",
+   "Tipe": 0,
+   "SeqFrom": 0,
+   "SeqTo": 0,
+   "TemplatJudul": "SAMPUL",
+   "PerLevel": false,
+   "JenisView": "Tanpa",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "daftar-gambar",
+   "Nama": "DAFTAR GAMBAR",
+   "Disiplin": "G",
+   "Tipe": 0,
+   "SeqFrom": 1,
+   "SeqTo": 1,
+   "TemplatJudul": "DAFTAR GAMBAR",
+   "PerLevel": false,
+   "JenisView": "Schedule",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "legenda-simbol",
+   "Nama": "LEGENDA SIMBOL DAN SINGKATAN",
+   "Disiplin": "G",
+   "Tipe": 0,
+   "SeqFrom": 2,
+   "SeqTo": 3,
+   "TemplatJudul": "LEGENDA SIMBOL DAN SINGKATAN",
+   "PerLevel": false,
+   "JenisView": "Legend",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "catatan-umum",
+   "Nama": "CATATAN UMUM",
+   "Disiplin": "G",
+   "Tipe": 0,
+   "SeqFrom": 4,
+   "SeqTo": 4,
+   "TemplatJudul": "CATATAN UMUM",
+   "PerLevel": false,
+   "JenisView": "Drafting",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "data-proyek",
+   "Nama": "DATA PROYEK DAN INTENSITAS BANGUNAN",
+   "Disiplin": "G",
+   "Tipe": 0,
+   "SeqFrom": 5,
+   "SeqTo": 5,
+   "TemplatJudul": "DATA PROYEK DAN INTENSITAS BANGUNAN",
+   "PerLevel": false,
+   "JenisView": "Schedule",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "legenda-arsitektur",
+   "Nama": "LEGENDA DAN CATATAN UMUM ARSITEKTUR",
+   "Disiplin": "A",
+   "Tipe": 0,
+   "SeqFrom": 1,
+   "SeqTo": 9,
+   "TemplatJudul": "LEGENDA DAN CATATAN UMUM ARSITEKTUR",
+   "PerLevel": false,
+   "JenisView": "Legend",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "blockplan",
+   "Nama": "RENCANA MASSA BANGUNAN",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 1,
+   "SeqTo": 2,
+   "TemplatJudul": "RENCANA MASSA BANGUNAN",
+   "PerLevel": false,
+   "JenisView": "Denah",
+   "SkalaDefault": 500,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "siteplan",
+   "Nama": "RENCANA TAPAK",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 3,
+   "SeqTo": 5,
+   "TemplatJudul": "RENCANA TAPAK",
+   "PerLevel": false,
+   "JenisView": "Denah",
+   "SkalaDefault": 200,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "sanitasi-tapak",
+   "Nama": "RENCANA SANITASI TAPAK",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 6,
+   "SeqTo": 9,
+   "TemplatJudul": "RENCANA SANITASI TAPAK",
+   "PerLevel": false,
+   "JenisView": "Denah",
+   "SkalaDefault": 200,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "denah",
+   "Nama": "DENAH",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 10,
+   "SeqTo": 39,
+   "TemplatJudul": "DENAH {subjek}",
+   "PerLevel": true,
+   "JenisView": "Denah",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "rencana-atap",
+   "Nama": "RENCANA ATAP",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 40,
+   "SeqTo": 44,
+   "TemplatJudul": "RENCANA ATAP",
+   "PerLevel": false,
+   "JenisView": "Denah",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "rencana-plafon",
+   "Nama": "RENCANA PLAFON",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 45,
+   "SeqTo": 54,
+   "TemplatJudul": "RENCANA PLAFON {subjek}",
+   "PerLevel": true,
+   "JenisView": "Plafon",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "rencana-pola-lantai",
+   "Nama": "RENCANA POLA LANTAI",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 55,
+   "SeqTo": 64,
+   "TemplatJudul": "RENCANA POLA LANTAI {subjek}",
+   "PerLevel": true,
+   "JenisView": "Denah",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "rencana-finishing-dinding",
+   "Nama": "RENCANA FINISHING DINDING",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 65,
+   "SeqTo": 69,
+   "TemplatJudul": "RENCANA FINISHING DINDING {subjek}",
+   "PerLevel": true,
+   "JenisView": "Denah",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "rencana-pintu-jendela",
+   "Nama": "RENCANA PINTU DAN JENDELA",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 70,
+   "SeqTo": 79,
+   "TemplatJudul": "RENCANA PINTU DAN JENDELA {subjek}",
+   "PerLevel": true,
+   "JenisView": "Denah",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "rencana-titik-lampu",
+   "Nama": "RENCANA TITIK LAMPU",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 80,
+   "SeqTo": 89,
+   "TemplatJudul": "RENCANA TITIK LAMPU {subjek}",
+   "PerLevel": true,
+   "JenisView": "Plafon",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "rencana-sanitasi",
+   "Nama": "RENCANA SANITASI",
+   "Disiplin": "A",
+   "Tipe": 1,
+   "SeqFrom": 90,
+   "SeqTo": 99,
+   "TemplatJudul": "RENCANA SANITASI {subjek}",
+   "PerLevel": true,
+   "JenisView": "Denah",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "tampak-tapak",
+   "Nama": "TAMPAK TAPAK",
+   "Disiplin": "A",
+   "Tipe": 2,
+   "SeqFrom": 1,
+   "SeqTo": 9,
+   "TemplatJudul": "TAMPAK TAPAK",
+   "PerLevel": false,
+   "JenisView": "Tampak",
+   "SkalaDefault": 200,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "tampak-bangunan",
+   "Nama": "TAMPAK",
+   "Disiplin": "A",
+   "Tipe": 2,
+   "SeqFrom": 10,
+   "SeqTo": 49,
+   "TemplatJudul": "TAMPAK {subjek}",
+   "PerLevel": false,
+   "JenisView": "Tampak",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "potongan-tapak",
+   "Nama": "POTONGAN TAPAK",
+   "Disiplin": "A",
+   "Tipe": 3,
+   "SeqFrom": 1,
+   "SeqTo": 9,
+   "TemplatJudul": "POTONGAN TAPAK {subjek}",
+   "PerLevel": false,
+   "JenisView": "Potongan",
+   "SkalaDefault": 200,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "potongan-bangunan",
+   "Nama": "POTONGAN",
+   "Disiplin": "A",
+   "Tipe": 3,
+   "SeqFrom": 10,
+   "SeqTo": 49,
+   "TemplatJudul": "POTONGAN {subjek}",
+   "PerLevel": false,
+   "JenisView": "Potongan",
+   "SkalaDefault": 100,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "potongan-prinsip",
+   "Nama": "POTONGAN PRINSIP",
+   "Disiplin": "A",
+   "Tipe": 3,
+   "SeqFrom": 50,
+   "SeqTo": 79,
+   "TemplatJudul": "POTONGAN PRINSIP {subjek}",
+   "PerLevel": false,
+   "JenisView": "Potongan",
+   "SkalaDefault": 20,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "detail-toilet",
+   "Nama": "DENAH DAN POTONGAN TOILET",
+   "Disiplin": "A",
+   "Tipe": 4,
+   "SeqFrom": 1,
+   "SeqTo": 19,
+   "TemplatJudul": "DENAH DAN POTONGAN TOILET {subjek}",
+   "PerLevel": false,
+   "JenisView": "Denah",
+   "SkalaDefault": 20,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "ruang-khusus",
+   "Nama": "DETAIL RUANG",
+   "Disiplin": "A",
+   "Tipe": 4,
+   "SeqFrom": 20,
+   "SeqTo": 39,
+   "TemplatJudul": "DETAIL RUANG {subjek}",
+   "PerLevel": false,
+   "JenisView": "Denah",
+   "SkalaDefault": 50,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "tangga-ramp-skala-besar",
+   "Nama": "DENAH DAN POTONGAN",
+   "Disiplin": "A",
+   "Tipe": 4,
+   "SeqFrom": 40,
+   "SeqTo": 59,
+   "TemplatJudul": "DENAH DAN POTONGAN {subjek}",
+   "PerLevel": false,
+   "JenisView": "Denah",
+   "SkalaDefault": 20,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "core-lift",
+   "Nama": "DENAH DAN POTONGAN CORE LIFT",
+   "Disiplin": "A",
+   "Tipe": 4,
+   "SeqFrom": 60,
+   "SeqTo": 79,
+   "TemplatJudul": "DENAH DAN POTONGAN CORE LIFT",
+   "PerLevel": false,
+   "JenisView": "Denah",
+   "SkalaDefault": 50,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "detail-pintu-jendela",
+   "Nama": "DETAIL PINTU DAN JENDELA",
+   "Disiplin": "A",
+   "Tipe": 5,
+   "SeqFrom": 1,
+   "SeqTo": 29,
+   "TemplatJudul": "DETAIL PINTU DAN JENDELA {subjek}",
+   "PerLevel": false,
+   "JenisView": "Drafting",
+   "SkalaDefault": 20,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "detail-tangga-ramp",
+   "Nama": "DETAIL",
+   "Disiplin": "A",
+   "Tipe": 5,
+   "SeqFrom": 30,
+   "SeqTo": 49,
+   "TemplatJudul": "DETAIL {subjek}",
+   "PerLevel": false,
+   "JenisView": "Drafting",
+   "SkalaDefault": 10,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "detail-lainnya",
+   "Nama": "DETAIL",
+   "Disiplin": "A",
+   "Tipe": 5,
+   "SeqFrom": 50,
+   "SeqTo": 99,
+   "TemplatJudul": "DETAIL {subjek}",
+   "PerLevel": false,
+   "JenisView": "Drafting",
+   "SkalaDefault": 10,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "schedule-pintu-jendela",
+   "Nama": "SCHEDULE PINTU DAN JENDELA",
+   "Disiplin": "A",
+   "Tipe": 6,
+   "SeqFrom": 1,
+   "SeqTo": 9,
+   "TemplatJudul": "SCHEDULE PINTU DAN JENDELA",
+   "PerLevel": false,
+   "JenisView": "Schedule",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "schedule-finishing",
+   "Nama": "SCHEDULE FINISHING RUANG",
+   "Disiplin": "A",
+   "Tipe": 6,
+   "SeqFrom": 10,
+   "SeqTo": 19,
+   "TemplatJudul": "SCHEDULE FINISHING RUANG",
+   "PerLevel": false,
+   "JenisView": "Schedule",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "diagram-pengkabelan",
+   "Nama": "DIAGRAM PENGKABELAN PENERANGAN",
+   "Disiplin": "A",
+   "Tipe": 6,
+   "SeqFrom": 20,
+   "SeqTo": 29,
+   "TemplatJudul": "DIAGRAM PENGKABELAN PENERANGAN",
+   "PerLevel": false,
+   "JenisView": "Drafting",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  },
+  {
+   "Id": "perspektif",
+   "Nama": "PERSPEKTIF",
+   "Disiplin": "A",
+   "Tipe": 9,
+   "SeqFrom": 1,
+   "SeqTo": 99,
+   "TemplatJudul": "PERSPEKTIF {subjek}",
+   "PerLevel": false,
+   "JenisView": "TigaD",
+   "SkalaDefault": 0,
+   "ViewTemplate": null
+  }
+ ],
+ "Singkatan": {
+  "LT": "LANTAI",
+  "LANT": "LANTAI",
+  "POT": "POTONGAN",
+  "TPK": "TAMPAK",
+  "TMPK": "TAMPAK",
+  "DTL": "DETAIL",
+  "DET": "DETAIL",
+  "REN": "RENCANA",
+  "RENC": "RENCANA",
+  "KM": "KAMAR MANDI",
+  "JDL": "JENDELA",
+  "BSMT": "BASEMENT",
+  "PLF": "PLAFON",
+  "SCH": "SCHEDULE"
+ }
+}

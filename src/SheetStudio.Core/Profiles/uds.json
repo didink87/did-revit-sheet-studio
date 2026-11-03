@@ -1,0 +1,335 @@
+{
+ "Id": "uds",
+ "Nama": "UDS umum (US NCS)",
+ "Disiplin": [
+  {
+   "Code": "G",
+   "NamaId": "Umum",
+   "NamaEn": "General",
+   "Keterangan": "Sampul, daftar lembar, legenda simbol, singkatan, catatan umum, ringkasan peraturan.",
+   "Order": 1,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "H",
+   "NamaId": "Bahan Berbahaya",
+   "NamaEn": "Hazardous Materials",
+   "Keterangan": "Penanganan dan pembersihan bahan berbahaya.",
+   "Order": 2,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "V",
+   "NamaId": "Survei / Pemetaan",
+   "NamaEn": "Survey / Mapping",
+   "Keterangan": "Data survei dan pemetaan lokasi.",
+   "Order": 3,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "B",
+   "NamaId": "Geoteknik",
+   "NamaEn": "Geotechnical",
+   "Keterangan": "Data penyelidikan tanah dan boring.",
+   "Order": 4,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "C",
+   "NamaId": "Sipil",
+   "NamaEn": "Civil",
+   "Keterangan": "Pekerjaan sipil tapak: jalan, drainase, utilitas luar.",
+   "Order": 5,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "L",
+   "NamaId": "Lansekap",
+   "NamaEn": "Landscape",
+   "Keterangan": "Rencana lansekap, penanaman, hardscape.",
+   "Order": 6,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "S",
+   "NamaId": "Struktur",
+   "NamaEn": "Structural",
+   "Keterangan": "Pondasi, kolom, balok, pelat, rangka atap.",
+   "Order": 7,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "A",
+   "NamaId": "Arsitektur",
+   "NamaEn": "Architectural",
+   "Keterangan": "Tapak, denah, tampak, potongan, rencana, detail, perspektif arsitektur.",
+   "Order": 8,
+   "Umum": true,
+   "HurufKedua": [
+    {
+     "Huruf": "S",
+     "Nama": "Tapak arsitektur",
+     "Keterangan": "Gambar tapak arsitektur (cek NCS)"
+    },
+    {
+     "Huruf": "D",
+     "Nama": "Demolisi",
+     "Keterangan": "Gambar pembongkaran (contoh AD107 di PDF AIA)"
+    },
+    {
+     "Huruf": "E",
+     "Nama": "Elemen",
+     "Keterangan": "Elemen arsitektur (cek NCS)"
+    },
+    {
+     "Huruf": "I",
+     "Nama": "Interior",
+     "Keterangan": "Interior pada set arsitektur (cek NCS)"
+    },
+    {
+     "Huruf": "F",
+     "Nama": "Finishing",
+     "Keterangan": "Rencana finishing (cek NCS)"
+    },
+    {
+     "Huruf": "G",
+     "Nama": "Grafis",
+     "Keterangan": "Signage dan grafis (cek NCS)"
+    }
+   ]
+  },
+  {
+   "Code": "I",
+   "NamaId": "Interior",
+   "NamaEn": "Interiors",
+   "Keterangan": "Desain interior, furnitur, finishing interior.",
+   "Order": 9,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "Q",
+   "NamaId": "Peralatan",
+   "NamaEn": "Equipment",
+   "Keterangan": "Peralatan khusus (dapur, laboratorium, rumah sakit).",
+   "Order": 10,
+   "Umum": false,
+   "HurufKedua": [
+    {
+     "Huruf": "H",
+     "Nama": "Peralatan rumah sakit",
+     "Keterangan": "Contoh QH601 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "F",
+   "NamaId": "Proteksi Kebakaran",
+   "NamaEn": "Fire Protection",
+   "Keterangan": "Sprinkler, hidran, APAR, alarm kebakaran.",
+   "Order": 11,
+   "Umum": true,
+   "HurufKedua": [
+    {
+     "Huruf": "A",
+     "Nama": "Alarm kebakaran",
+     "Keterangan": "Contoh FA601 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "P",
+   "NamaId": "Plambing",
+   "NamaEn": "Plumbing",
+   "Keterangan": "Air bersih, air kotor, air hujan, sanitair.",
+   "Order": 12,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "D",
+   "NamaId": "Proses",
+   "NamaEn": "Process",
+   "Keterangan": "Sistem proses industri.",
+   "Order": 13,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "M",
+   "NamaId": "Mekanikal",
+   "NamaEn": "Mechanical",
+   "Keterangan": "Tata udara, ventilasi, pipa mekanikal.",
+   "Order": 14,
+   "Umum": true,
+   "HurufKedua": [
+    {
+     "Huruf": "H",
+     "Nama": "HVAC",
+     "Keterangan": "Contoh MH402 di PDF AIA"
+    },
+    {
+     "Huruf": "P",
+     "Nama": "Pipa mekanikal",
+     "Keterangan": "Contoh MP501 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "E",
+   "NamaId": "Elektrikal",
+   "NamaEn": "Electrical",
+   "Keterangan": "Penerangan, daya, panel, pembumian.",
+   "Order": 15,
+   "Umum": true,
+   "HurufKedua": [
+    {
+     "Huruf": "L",
+     "Nama": "Penerangan",
+     "Keterangan": "Contoh EL103 di PDF AIA"
+    },
+    {
+     "Huruf": "P",
+     "Nama": "Daya",
+     "Keterangan": "Contoh EP110 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "W",
+   "NamaId": "Energi Terdistribusi",
+   "NamaEn": "Distributed Energy",
+   "Keterangan": "Pembangkit energi setempat (surya, dll).",
+   "Order": 16,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "T",
+   "NamaId": "Telekomunikasi",
+   "NamaEn": "Telecommunications",
+   "Keterangan": "Data, telepon, CCTV, tata suara.",
+   "Order": 17,
+   "Umum": true,
+   "HurufKedua": []
+  },
+  {
+   "Code": "R",
+   "NamaId": "Kondisi Eksisting",
+   "NamaEn": "Resource",
+   "Keterangan": "Kondisi atau bangunan eksisting.",
+   "Order": 18,
+   "Umum": false,
+   "HurufKedua": [
+    {
+     "Huruf": "A",
+     "Nama": "Arsitektur eksisting",
+     "Keterangan": "Contoh RA102 di PDF AIA"
+    }
+   ]
+  },
+  {
+   "Code": "X",
+   "NamaId": "Disiplin Lain",
+   "NamaEn": "Other Disciplines",
+   "Keterangan": "Disiplin lain di luar daftar.",
+   "Order": 19,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "Z",
+   "NamaId": "Kontraktor / Shop Drawing",
+   "NamaEn": "Contractor / Shop Drawings",
+   "Keterangan": "Gambar kerja dari kontraktor.",
+   "Order": 20,
+   "Umum": false,
+   "HurufKedua": []
+  },
+  {
+   "Code": "O",
+   "NamaId": "Operasional",
+   "NamaEn": "Operations",
+   "Keterangan": "Gambar operasional dan pemeliharaan.",
+   "Order": 21,
+   "Umum": false,
+   "HurufKedua": []
+  }
+ ],
+ "Tipe": [
+  {
+   "Digit": 0,
+   "Nama": "General",
+   "Keterangan": "Umum: legenda simbol, singkatan, catatan umum."
+  },
+  {
+   "Digit": 1,
+   "Nama": "Plans",
+   "Keterangan": "Denah: pandangan horizontal — denah, rencana tapak, plafon, atap, pola lantai."
+  },
+  {
+   "Digit": 2,
+   "Nama": "Elevations",
+   "Keterangan": "Tampak: pandangan vertikal."
+  },
+  {
+   "Digit": 3,
+   "Nama": "Sections",
+   "Keterangan": "Potongan: potongan bangunan, potongan tapak, wall section."
+  },
+  {
+   "Digit": 4,
+   "Nama": "Large-Scale Views",
+   "Keterangan": "Skala besar: denah/tampak/potongan diperbesar (toilet, tangga, core) — bukan detail."
+  },
+  {
+   "Digit": 5,
+   "Nama": "Details",
+   "Keterangan": "Detail."
+  },
+  {
+   "Digit": 6,
+   "Nama": "Schedules and Diagrams",
+   "Keterangan": "Schedule dan diagram."
+  },
+  {
+   "Digit": 7,
+   "Nama": "User Defined",
+   "Keterangan": "Bebas: tipe lain, termasuk lembar detail tipikal."
+  },
+  {
+   "Digit": 8,
+   "Nama": "User Defined",
+   "Keterangan": "Bebas: tipe lain di luar kategori."
+  },
+  {
+   "Digit": 9,
+   "Nama": "3D Representations",
+   "Keterangan": "3D: isometri, perspektif, foto."
+  }
+ ],
+ "Jenis": [],
+ "Singkatan": {
+  "LT": "LANTAI",
+  "LANT": "LANTAI",
+  "POT": "POTONGAN",
+  "TPK": "TAMPAK",
+  "TMPK": "TAMPAK",
+  "DTL": "DETAIL",
+  "DET": "DETAIL",
+  "REN": "RENCANA",
+  "RENC": "RENCANA",
+  "KM": "KAMAR MANDI",
+  "JDL": "JENDELA",
+  "BSMT": "BASEMENT",
+  "PLF": "PLAFON",
+  "SCH": "SCHEDULE"
+ }
+}
