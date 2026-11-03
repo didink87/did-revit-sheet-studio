@@ -31,6 +31,7 @@
       <AddinDir>$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)\</AddinDir>
       <AddinText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\SheetStudio.addin').Replace('__ASSEMBLY__', '$(TargetPath)'))</AddinText>
     </PropertyGroup>
+    <Warning Text="InstallAddin dari konfigurasi Debug: add-in lebih lambat. Pakai -c Release." Condition="'$(Configuration)' == 'Debug'" />
     <MakeDir Directories="$(AddinDir)" />
     <WriteLinesToFile File="$(AddinDir)SheetStudio.addin" Lines="$(AddinText)" Overwrite="true" />
   </Target>

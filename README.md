@@ -9,10 +9,27 @@ Plugin Revit untuk **membuat, mengurutkan, dan mengedit lembar (sheet)** dengan 
 ## Instal (opt-in)
 
 ```
-dotnet build src/SheetStudio.Revit -p:InstallAddin=true
+dotnet build src/SheetStudio.Revit -c Release -p:InstallAddin=true
 ```
 
-Menyalin `SheetStudio.addin` ke `%AppData%\Autodesk\Revit\Addins\2026\`. Revit yang sudah terbuka perlu ditutup–buka lagi. Hapus file `.addin` itu untuk mencopot.
+Menyalin `SheetStudio.addin` ke `%AppData%\Autodesk\Revit\Addins\2026\` dan menunjuk ke `bin\Release\SheetStudio.Revit.dll`. Pakai **Release**: build Debug lebih lambat (target memberi peringatan bila dipasang dari Debug). Revit yang sudah terbuka perlu ditutup–buka lagi. Hapus file `.addin` itu untuk mencopot.
+
+## Diagnosa
+
+Log ditulis ke `%LocalAppData%\SheetStudio\log\sheetstudio-yyyyMMdd.log` (satu file per hari). Peristiwa yang dicatat:
+
+| Peristiwa | Isi |
+|---|---|
+| `startup` | Add-in dimuat |
+| `load` | Pembacaan model (dengan durasi) |
+| `create` | Pembuatan lembar (＋ Baru / Batch) |
+| `apply` | TERAPKAN ke model |
+| `thumb` / `thumb-gagal` | Thumbnail berhasil dibuat / gagal |
+| `watcher` | Pemantau perubahan model |
+| `event` | Kejadian dokumen Revit (mis. Save As, lembar ditambah di luar panel) |
+| `reload` | Baca ulang panel |
+
+Lampirkan file log hari itu saat melaporkan masalah.
 
 ## Tiga sistem dalam satu panel
 
@@ -84,6 +101,7 @@ denah;LANTAI 1;Lantai 1;;;100;A3;YA
 - **Batch** berjalan per 5 lembar per langkah agar progres & tombol Batal hidup; satu batch = beberapa langkah Undo. Batal/galat (mode "batalkan semua") menghapus lembar yang sudah dibuat.
 - Revit bisa "mencuri" Ctrl+Z bila fokus keyboard tidak di dalam panel — klik daftar lembar dulu.
 - Parameter `SS_JenisGambar` dan `SS_Subjek` (Identity Data) ditambahkan ke kategori Sheets saat pembuatan pertama.
+- **Thumbnail mati secara bawaan** (mahal di proyek besar) — aktifkan di ⚙ Preferensi.
 - Rasa interaksi (drag, tema gelap, 1000 lembar) dan "satu Undo" diuji manual, bukan otomatis.
 
 ## Pengembangan
@@ -94,3 +112,5 @@ dotnet test tests/SheetStudio.Revit.Tests     # ricaun: membuka & menutup Revit 
 ```
 
 Tes Revit tidak pernah menyentuh Revit yang sedang Anda pakai.
+
+**Catatan:** `dotnet test tests/SheetStudio.Revit.Tests` akan menggantung (timeout ricaun) selama `%AppData%\Autodesk\Revit\Addins\2026\SheetStudio.addin` terpasang, karena Revit tes menampilkan dialog keamanan add-in tak bertanda tangan. Ganti nama sementara menjadi `SheetStudio.addin.disabled` selama tes berjalan, lalu kembalikan.
