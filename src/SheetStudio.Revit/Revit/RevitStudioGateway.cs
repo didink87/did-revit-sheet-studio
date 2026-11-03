@@ -1,4 +1,5 @@
 using Autodesk.Revit.DB;
+using SheetStudio.Core.Diagnostics;
 using SheetStudio.Core.Create;
 using SheetStudio.Core.Model;
 using SheetStudio.Core.Preferences;
@@ -21,13 +22,20 @@ public sealed partial class RevitStudioGateway(IDocumentRunner runner, Func<stri
 
     public static StudioSnapshot Load(Document doc)
     {
+        using var _ = StudioLog.Time("load");
         var (prefsJson, stateJson) = StorageAdapter.Read(doc);
         var userJson = File.Exists(UserPrefsPath) ? File.ReadAllText(UserPrefsPath) : null;
         var prefs = PreferencesStore.Merge(Prefs.Default, userJson, prefsJson);
-        return SnapshotReader.Read(doc, prefs, ProjectStateJson.Deserialize(stateJson));
+        var snapshot = SnapshotReader.Read(doc, prefs, ProjectStateJson.Deserialize(stateJson));
+        StudioLog.Write("load", $"{snapshot.Sheets.Count} lembar");
+        return snapshot;
     }
 
-    public Task<ApplyReport> ApplyAsync(ApplyPlan plan) => runner.Run(doc => ApplyExecutor.Apply(doc, plan));
+    public async Task<ApplyReport> ApplyAsync(ApplyPlan plan)
+    {
+        using var _ = StudioLog.Time("apply");
+        return await runner.Run(doc => ApplyExecutor.Apply(doc, plan));
+    }
 
     public Task SaveAsync(Prefs? prefs, ProjectState? state, bool userLevel) => runner.Run(doc => { Save(doc, prefs, state, userLevel); return true; });
 

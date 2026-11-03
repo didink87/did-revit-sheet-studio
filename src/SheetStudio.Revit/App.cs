@@ -1,4 +1,6 @@
 using Autodesk.Revit.UI;
+using SheetStudio.Core.Diagnostics;
+using SheetStudio.Revit.Diagnostics;
 using SheetStudio.Core.ViewModels;
 using SheetStudio.Revit.Revit;
 using SheetStudio.Revit.Ui;
@@ -16,6 +18,8 @@ public sealed class App : IExternalApplication
 
     public Result OnStartup(UIControlledApplication application)
     {
+        StudioLog.Sink = new FileLogSink(FileLogSink.DefaultDir).Write;
+        using var _ = StudioLog.Time("startup");
         application.CreateRibbonTab(TabName);
         var panel = application.CreateRibbonPanel(TabName, "Lembar");
         var asm = typeof(App).Assembly;

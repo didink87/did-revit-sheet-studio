@@ -1,6 +1,7 @@
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Events;
+using SheetStudio.Core.Diagnostics;
 
 namespace SheetStudio.Revit.Revit;
 
@@ -54,7 +55,11 @@ public sealed class ModelWatcher : IDisposable
         _timer = new Timer(_ => _dispatch(Raise), null, _debounceMs, Timeout.Infinite);
     }
 
-    private void Raise() => Changed?.Invoke();
+    private void Raise()
+    {
+        StudioLog.Write("watcher", "berubah");
+        Changed?.Invoke();
+    }
 
     /// <summary>Our own commits are already reflected by the panel; Revit Undo/Redo of them is not.</summary>
     public static bool ShouldIgnore(IEnumerable<string> transactionNames, UndoOperation operation) =>

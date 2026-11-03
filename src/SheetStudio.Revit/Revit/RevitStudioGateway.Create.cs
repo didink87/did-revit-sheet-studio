@@ -1,4 +1,5 @@
 using SheetStudio.Core.Create;
+using SheetStudio.Core.Diagnostics;
 using SheetStudio.Core.Profiles;
 using SheetStudio.Core.ViewModels;
 
@@ -12,6 +13,7 @@ public sealed partial class RevitStudioGateway
 
     public async Task<CreateReport> CreateAsync(IReadOnlyList<CreateRequest> reqs, IProgress<(int Done, int Total, string Title)> progress, CancellationToken ct)
     {
+        using var _ = StudioLog.Time("create", $"{reqs.Count} permintaan");
         var prefs = await runner.Run(doc => Load(doc).Prefs);
         var rows = new List<(string Title, bool Ok, string? Pesan, string? UniqueId)>();
         var created = new List<string>();
@@ -46,6 +48,9 @@ public sealed partial class RevitStudioGateway
         return CreateExecutor.Duplicate(doc, ids, mode, profile, prefs.Numbering);
     });
 
-    public Task<byte[]?> ThumbnailAsync(string uniqueId) =>
-        runner.Run(doc => ThumbnailService.Render(doc, uniqueId, ThumbnailService.CacheDir(doc)));
+    public async Task<byte[]?> ThumbnailAsync(string uniqueId)
+    {
+        using var _ = StudioLog.Time("thumb", uniqueId);
+        return await runner.Run(doc => ThumbnailService.Render(doc, uniqueId, ThumbnailService.CacheDir(doc)));
+    }
 }
