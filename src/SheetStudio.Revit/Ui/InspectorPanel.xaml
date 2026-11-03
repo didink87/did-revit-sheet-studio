@@ -1,0 +1,159 @@
+<UserControl x:Class="SheetStudio.Revit.Ui.InspectorPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:SheetStudio.Revit.Ui"
+             xmlns:vm="clr-namespace:SheetStudio.Core.ViewModels;assembly=SheetStudio.Core"
+             FontFamily="Segoe UI" FontSize="12" Foreground="{DynamicResource SS.Fg}">
+    <UserControl.Resources>
+        <ui:BoolToVisibility x:Key="Vis"/>
+        <Style x:Key="Section" TargetType="Expander">
+            <Setter Property="IsExpanded" Value="True"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="Foreground" Value="{DynamicResource SS.Fg}"/>
+        </Style>
+        <Style x:Key="Lbl" TargetType="TextBlock">
+            <Setter Property="Width" Value="76"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource SS.FgMuted}"/>
+        </Style>
+        <Style x:Key="Mixed" TargetType="TextBlock">
+            <Setter Property="Text" Value="{x:Static vm:InspectorViewModel.MixedText}"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="Foreground" Value="{DynamicResource SS.FgMuted}"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="Margin" Value="6,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="8,0,8,8">
+            <TextBlock Margin="0,0,0,8" FontWeight="SemiBold">
+                <Run Text="{Binding SelectedCount, Mode=OneWay}"/><Run Text=" lembar dipilih"/>
+            </TextBlock>
+            <TextBlock Text="Pilih lembar di panel Lapisan (Ctrl/Shift untuk banyak)." TextWrapping="Wrap" Foreground="{DynamicResource SS.FgMuted}"
+                       Visibility="{Binding HasSelectionValue, Converter={x:Static ui:InspectorPanel.NotVis}}"/>
+
+            <StackPanel IsEnabled="{Binding HasSelectionValue}">
+                <!-- NOMOR -->
+                <Expander Header="NOMOR" Style="{StaticResource Section}">
+                    <StackPanel Margin="4">
+                        <DockPanel Margin="0,2">
+                            <TextBlock Style="{StaticResource Lbl}" Text="Disiplin"/>
+                            <Grid>
+                                <ComboBox x:Name="DisciplineBox" ItemsSource="{Binding DisciplineDefs}" SelectedValuePath="Code"
+                                          SelectedValue="{Binding Discipline}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" ToolTip="{Binding Keterangan}">
+                                                <TextBlock Text="{Binding Code}" FontWeight="Bold" Width="22" FontFamily="Consolas"/>
+                                                <TextBlock Text="{Binding NamaId}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Style="{StaticResource Mixed}" Visibility="{Binding Discipline, Converter={x:Static ui:InspectorPanel.NullVis}}"/>
+                            </Grid>
+                        </DockPanel>
+                        <DockPanel Margin="0,4,0,0">
+                            <TextBlock Style="{StaticResource Lbl}" Text="Tipe"/>
+                            <TextBlock DockPanel.Dock="Right" x:Name="TypeLabel" Width="24" TextAlignment="Right" FontWeight="Bold"
+                                       Text="{Binding SheetType, TargetNullValue='—'}"/>
+                            <Slider x:Name="TypeSlider" Minimum="0" Maximum="9" TickFrequency="1" IsSnapToTickEnabled="True" TickPlacement="BottomRight"
+                                    Value="{Binding SheetType, Mode=OneWay}" ValueChanged="OnTypeSlider"/>
+                        </DockPanel>
+                        <TextBlock x:Name="TypeName" Margin="76,0,0,0" FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource SS.FgMuted}" Text="{Binding TypeDescription}"/>
+                        <DockPanel Margin="0,4,0,0">
+                            <TextBlock Style="{StaticResource Lbl}" Text="Urut"/>
+                            <Button DockPanel.Dock="Right" Content="Pilih di peta…" Padding="6,1" Margin="4,0,0,0" Command="{Binding EditNumber}"/>
+                            <TextBox x:Name="SeqBox" Text="{Binding ManualSeq, UpdateSourceTrigger=LostFocus, TargetNullValue=''}" IsEnabled="{Binding IsSeqEnabled}"
+                                     ToolTip="Nomor urut manual (hanya untuk satu lembar)"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!-- JUDUL -->
+                <Expander Header="JUDUL" Style="{StaticResource Section}">
+                    <StackPanel Margin="4">
+                        <Grid>
+                            <TextBox x:Name="TitleBox" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" CharacterCasing="Upper" KeyDown="OnTitleKey"/>
+                            <TextBlock x:Name="MixedTitleHint" Style="{StaticResource Mixed}"
+                                       Visibility="{Binding TitleIsMixed, Converter={StaticResource Vis}}"/>
+                        </Grid>
+                        <Button Content="Terapkan judul" HorizontalAlignment="Right" Margin="0,4,0,6" Padding="8,1" Command="{Binding ApplyTitle}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="46"/><ColumnDefinition/><ColumnDefinition Width="46"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Cari" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1" Text="{Binding Find, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Column="2" Text=" Ganti" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="3" Text="{Binding Replace, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                        <DockPanel Margin="0,4,0,0">
+                            <Button DockPanel.Dock="Right" Content="Ganti" Padding="8,1" Command="{Binding ApplyFindReplace}"/>
+                            <CheckBox Content="kata utuh" IsChecked="{Binding WholeWord}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="46"/><ColumnDefinition/><ColumnDefinition Width="50"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Awalan" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1" Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Column="2" Text=" Akhiran" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="3" Text="{Binding Suffix, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                        <WrapPanel Margin="0,4,0,0" HorizontalAlignment="Right">
+                            <Button Content="Tambah awalan/akhiran" Padding="8,1" Margin="0,0,4,0" Command="{Binding ApplyPrefixSuffix}"/>
+                            <Button Content="KAPITALKAN" Padding="8,1" Margin="0,0,4,0" Command="{Binding Uppercase}"/>
+                            <Button Content="Pakai saran singkatan" Padding="8,1" Command="{Binding AcceptSuggestions}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!-- KOP -->
+                <Expander Header="KOP" Style="{StaticResource Section}">
+                    <StackPanel Margin="4">
+                        <DockPanel Margin="0,2">
+                            <TextBlock Style="{StaticResource Lbl}" Text="Title block"/>
+                            <Grid>
+                                <ComboBox ItemsSource="{Binding TitleBlockTypes}" SelectedItem="{Binding TitleBlockType}"/>
+                                <TextBlock Style="{StaticResource Mixed}" Visibility="{Binding TitleBlockType, Converter={x:Static ui:InspectorPanel.NullVis}}"/>
+                            </Grid>
+                        </DockPanel>
+                        <ItemsControl ItemsSource="{Binding Params}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ParamField}">
+                                    <DockPanel Margin="0,2">
+                                        <TextBlock Style="{StaticResource Lbl}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+                                        <Grid>
+                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" KeyDown="OnParamKey" LostKeyboardFocus="OnParamLostFocus"/>
+                                            <TextBlock Style="{StaticResource Mixed}" Visibility="{Binding IsMixed, Converter={StaticResource Vis}}"/>
+                                        </Grid>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Expander>
+
+                <!-- TAMPILAN -->
+                <Expander Header="TAMPILAN" Style="{StaticResource Section}">
+                    <CheckBox Margin="4" Content="Muncul di daftar gambar" IsThreeState="False" IsChecked="{Binding InSheetList}"/>
+                </Expander>
+
+                <!-- AKSI -->
+                <Expander Header="AKSI" Style="{StaticResource Section}">
+                    <WrapPanel Margin="4">
+                        <Button x:Name="DuplicateButton" Content="Duplikat ▾" Padding="10,2" Margin="0,0,6,0" Click="OnDuplicateMenu">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Lembar saja" Command="{Binding Duplicate}" CommandParameter="{x:Static vm:DuplicateMode.LembarSaja}"/>
+                                    <MenuItem Header="Dengan view" Command="{Binding Duplicate}" CommandParameter="{x:Static vm:DuplicateMode.DenganView}"/>
+                                    <MenuItem Header="Dengan view + detailing" Command="{Binding Duplicate}" CommandParameter="{x:Static vm:DuplicateMode.DenganViewDetailing}"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                        <Button Content="Tandai hapus" Padding="10,2" Foreground="White" Background="{DynamicResource SS.Danger}" Command="{Binding Delete}"/>
+                    </WrapPanel>
+                </Expander>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

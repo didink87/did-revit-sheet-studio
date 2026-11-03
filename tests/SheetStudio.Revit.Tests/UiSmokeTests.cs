@@ -112,4 +112,32 @@ public class UiSmokeTests
         Assert.That(window.RowsGrid.Items.Count, Is.EqualTo(1));
         window.Close();
     }
+
+    [Test]
+    public async Task Inspector_ShowsBerbedaForMixed()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var panel = new InspectorPanel { DataContext = vm.Inspector };
+        vm.Layers.Click("L1");
+        vm.Layers.CtrlClick("T1");
+        Pump(panel);
+        Assert.That(panel.MixedTitleHint.Visibility, Is.EqualTo(System.Windows.Visibility.Visible));
+        Assert.That(panel.SeqBox.IsEnabled, Is.False);
+        vm.Layers.Click("L1");
+        Pump(panel);
+        Assert.That(panel.MixedTitleHint.Visibility, Is.EqualTo(System.Windows.Visibility.Collapsed));
+        Assert.That(panel.SeqBox.IsEnabled, Is.True);
+    }
+
+    [Test]
+    public async Task PreferencesWindow_Instantiates()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var window = new PreferencesWindow(vm.NewPreferences());
+        Pump(window);
+        Assert.That(window.TitleBlockA3.Text, Is.EqualTo("PUPR_KOP_A3"));
+        window.Close();
+    }
 }

@@ -33,7 +33,7 @@ public sealed class StudioViewModel : ObservableObject
         NewSheet = new RelayCommand(() => CreateRequested?.Invoke(NewCreateSheet()));
         Batch = new RelayCommand(() => BatchRequested?.Invoke(NewBatch()));
         NormalizeNumbers = new RelayCommand(() => Push(Current with { NormalizeAll = true }, "Semua nomor dirapikan sesuai urutan (belum diterapkan)"));
-        OpenPreferences = new RelayCommand(() => PreferencesRequested?.Invoke(new PreferencesViewModel(this, Snapshot.Prefs)));
+        OpenPreferences = new RelayCommand(() => PreferencesRequested?.Invoke(NewPreferences()));
         _gateway.ModelChanged += async () =>
         {
             try { await OnModelChangedAsync(); }
@@ -182,6 +182,7 @@ public sealed class StudioViewModel : ObservableObject
 
     public CreateSheetViewModel NewCreateSheet() => new(this);
     public BatchViewModel NewBatch() => new(this);
+    public PreferencesViewModel NewPreferences() => new(this, Snapshot.Prefs);
 
     public async Task AfterCreateAsync(CreateReport report)
     {

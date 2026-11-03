@@ -52,6 +52,13 @@ public sealed class InspectorViewModel : ObservableObject
         ApplyParam = new RelayCommand(o => { if (o is ParamField f) Push(BulkEdit.SetParam(_studio.Current, _sel, f.Name, f.Value)); });
         Duplicate = new RelayCommand(async o => await DuplicateAsync(o is DuplicateMode m ? m : DuplicateMode.LembarSaja), _ => HasSelection());
         Delete = new RelayCommand(() => _studio.Layers.MarkDeleteKeys(_sel.Select(s => s.UniqueId).ToList()), HasSelection);
+        EditNumber = new RelayCommand(() =>
+        {
+            if (_sel.Count != 1) return;
+            var picker = new NamePickerViewModel(_studio.Profile, _studio.Sheets, _studio.Current, _studio.Numbering,
+                _studio.Snapshot.Levels.OrderBy(l => l.Elevation).Select(l => l.Name).ToList(), _sel[0].UniqueId);
+            EditNumberRequested?.Invoke(picker);
+        }, () => _sel.Count == 1);
     }
 
     public int SelectedCount => _sel.Count;
@@ -87,6 +94,10 @@ public sealed class InspectorViewModel : ObservableObject
             _studio.Push(_studio.Current.Upsert(new SheetChange(_sel[0].UniqueId, ManualSeq: value)));
         }
     }
+
+    /// <summary>Description of the common sheet type, or the mixed marker.</summary>
+    public string TypeDescription => SheetType is int t && _studio.Profile.Tipe.FirstOrDefault(x => x.Digit == t) is { } d
+        ? $"{d.Nama} — {d.Keterangan}" : _sel.Count > 1 ? MixedText : "";
 
     public bool TitleIsMixed => _display.Select(s => s.Title).Distinct().Count() > 1;
     public string TitleDisplay => TitleIsMixed ? MixedText : _title ?? "";
@@ -138,10 +149,23 @@ public sealed class InspectorViewModel : ObservableObject
     public ICommand Duplicate { get; }
     public ICommand Delete { get; }
 
-    /// <summary>Raised when the user asks to edit the number (context menu); the view focuses the number fields.</summary>
-    public event Action? FocusNumber;
+    /// <summary>Raised by <see cref="EditNumber"/>: the view shows a NamePicker in edit mode and calls <see cref="ApplyName"/> on OK.</summary>
+    public event Action<NamePickerViewModel>? EditNumberRequested;
 
-    public void FocusNumberRequested() => FocusNumber?.Invoke();
+    public ICommand EditNumber { get; }
+
+    public IReadOnlyList<Profiles.DisciplineDef> DisciplineDefs => _studio.Profile.Disiplin.OrderBy(d => d.Order).ToList();
+
+    /// <summary>Stages discipline, type, sequence and title of the single selected sheet from the picker result.</summary>
+    public void ApplyName(CreateName name)
+    {
+        if (_sel.Count != 1) return;
+        var s = _sel[0];
+        var cs = BulkEdit.SetDisciplineType(_studio.Current, [s], name.Id.Discipline, name.Id.Type, _studio.Profile);
+        cs = cs.Upsert(new SheetChange(s.UniqueId, ManualSeq: name.Id.Seq)).Next;
+        cs = BulkEdit.SetTitle(cs, [s], name.Title);
+        Push(cs);
+    }
 
     internal void Refresh()
     {
@@ -160,9 +184,9 @@ public sealed class InspectorViewModel : ObservableObject
                 Params.Add(new ParamField(name, values.Count == 1 ? values[0] : "", values.Count > 1));
             }
             Raise(nameof(SelectedCount), nameof(HasSelectionValue), nameof(IsSeqEnabled), nameof(Discipline), nameof(SheetType),
-                nameof(ManualSeq), nameof(TitleIsMixed), nameof(TitleDisplay), nameof(Title), nameof(TitleBlockType),
+                nameof(ManualSeq), nameof(TypeDescription), nameof(TitleIsMixed), nameof(TitleDisplay), nameof(Title), nameof(TitleBlockType),
                 nameof(TitleBlockTypes), nameof(InSheetList), nameof(DisciplineCodes));
-            foreach (var c in new[] { ApplyTitle, ApplyFindReplace, ApplyPrefixSuffix, Uppercase, AcceptSuggestions, Duplicate, Delete }.OfType<RelayCommand>())
+            foreach (var c in new[] { ApplyTitle, ApplyFindReplace, ApplyPrefixSuffix, Uppercase, AcceptSuggestions, Duplicate, Delete, EditNumber }.OfType<RelayCommand>())
                 c.RaiseCanExecuteChanged();
         }
         finally { _refreshing = false; }

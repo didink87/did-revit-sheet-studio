@@ -212,4 +212,32 @@ public class StudioViewModelTests
         await vm.SafeLoadAsync();
         Assert.Equal("Tidak ada dokumen Revit yang aktif", vm.Status);
     }
+
+    [Fact]
+    public async Task Inspector_EditNumber_OpensPickerInEditMode_AndApplyNameStages()
+    {
+        var (vm, _) = await Loaded();
+        vm.Layers.Click("L1");
+        NamePickerViewModel? opened = null;
+        vm.Inspector.EditNumberRequested += p => opened = p;
+        vm.Inspector.EditNumber.Execute(null);
+        Assert.NotNull(opened);
+        Assert.Equal("A-110", opened!.NumberPreview);
+        vm.Inspector.ApplyName(new CreateName(new Naming.SheetId("A", 3, 5), "potongan x", null, ""));
+        Assert.Equal(("A-305", "POTONGAN X"), (Row(vm, "L1").NewNumber, Row(vm, "L1").Label));
+        vm.Layers.Click("A"); // whole discipline = several sheets
+        Assert.False(vm.Inspector.EditNumber.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task Preferences_SaveProject_CallsGatewayAndUpdatesNumbering()
+    {
+        var (vm, gw) = await Loaded();
+        var prefs = new PreferencesViewModel(vm, vm.Snapshot.Prefs) { StrategyUrut = true, Langkah = 10 };
+        prefs.SaveProject.Execute(null);
+        await Task.Yield();
+        Assert.Equal(10, gw.SavedPrefs!.Langkah);
+        Assert.True(vm.IsStrategyUrut);
+        Assert.Contains("PUPR_KOP_A3", prefs.TitleBlockTypes);
+    }
 }

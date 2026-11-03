@@ -21,6 +21,9 @@ public partial class StudioPane : UserControl, IDockablePaneProvider
         vm.ConfirmApply = plan => Task.FromResult(new PreviewWindow(vm, plan, confirm: true) { Owner = Window.GetWindow(this) }.ShowDialog() == true);
         vm.CreateRequested += create => new CreateSheetWindow(create) { Owner = Window.GetWindow(this) }.ShowDialog();
         vm.BatchRequested += batch => new BatchWindow(batch) { Owner = Window.GetWindow(this) }.ShowDialog();
+        InspectorHost.Content = new InspectorPanel { DataContext = vm.Inspector };
+        vm.PreferencesRequested += prefs => new PreferencesWindow(prefs) { Owner = Window.GetWindow(this) }.ShowDialog();
+        vm.Inspector.EditNumberRequested += picker => new EditNumberWindow(picker, vm.Inspector) { Owner = Window.GetWindow(this) }.ShowDialog();
         IsVisibleChanged += async (_, e) => { if (e.NewValue is true && vm.Sheets.Count == 0) await vm.SafeLoadAsync(); };
     }
 

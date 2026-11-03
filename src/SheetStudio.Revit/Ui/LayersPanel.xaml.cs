@@ -197,7 +197,7 @@ public partial class LayersPanel : UserControl
         }
     }
 
-    private void OnEditNumber(object sender, RoutedEventArgs e) => Vm?.Inspector.FocusNumberRequested();
+    private void OnEditNumber(object sender, RoutedEventArgs e) => Vm?.Inspector.EditNumber.Execute(null);
 
     // ── helpers ─────────────────────────────────────────────────
     private LayerRowViewModel? RowAt(object source) =>

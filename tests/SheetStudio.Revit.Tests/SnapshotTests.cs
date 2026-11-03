@@ -52,4 +52,17 @@ public class SnapshotTests
         }
         finally { doc.Close(false); }
     }
+
+    [Test]
+    public void Preferences_SaveProjectWritesStorage(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            RevitStudioGateway.Save(doc, Prefs.Default with { Langkah = 10 }, null, userLevel: false);
+            Assert.That(StorageAdapter.Read(doc).Preferensi, Does.Contain("\"Langkah\": 10"));
+            Assert.That(RevitStudioGateway.Load(doc).Prefs.Langkah, Is.EqualTo(10));
+        }
+        finally { doc.Close(false); }
+    }
 }

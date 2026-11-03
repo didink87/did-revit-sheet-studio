@@ -29,7 +29,10 @@ public sealed partial class RevitStudioGateway(ExternalEventQueue queue) : IStud
 
     public Task<ApplyReport> ApplyAsync(ApplyPlan plan) => queue.Run(ui => ApplyExecutor.Apply(ActiveDoc(ui), plan));
 
-    public Task SaveAsync(Prefs? prefs, ProjectState? state, bool userLevel) => queue.Run(ui =>
+    public Task SaveAsync(Prefs? prefs, ProjectState? state, bool userLevel) => queue.Run(ui => Save(ActiveDoc(ui), prefs, state, userLevel));
+
+    /// <summary>User level writes %AppData% (preferences only); project level writes Extensible Storage.</summary>
+    public static void Save(Document doc, Prefs? prefs, ProjectState? state, bool userLevel)
     {
         if (prefs is not null && userLevel)
         {
@@ -37,13 +40,12 @@ public sealed partial class RevitStudioGateway(ExternalEventQueue queue) : IStud
             File.WriteAllText(UserPrefsPath, PreferencesStore.Serialize(prefs));
             if (state is null) return;
         }
-        var doc = ActiveDoc(ui);
         using var t = new Transaction(doc, "Sheet Studio: Simpan preferensi");
         t.Start();
         StorageAdapter.Write(doc, prefs is not null && !userLevel ? PreferencesStore.Serialize(prefs) : null,
             state is null ? null : ProjectStateJson.Serialize(state));
         t.Commit();
-    });
+    }
 
     public Task OpenSheetAsync(string uniqueId) => queue.Run(ui =>
     {

@@ -23,6 +23,8 @@ public sealed class PreferencesViewModel : ObservableObject
     public Prefs Value => _p;
     public IReadOnlyList<string> ProfileIds => ProfileLoader.BuiltInIds;
     public IReadOnlyList<int> LangkahOptions { get; } = [1, 5, 10];
+    public IReadOnlyList<string> TitleBlockTypes => _studio.Snapshot.TitleBlockTypes;
+    public IReadOnlyList<Kertas> KertasOptions { get; } = [Kertas.A3, Kertas.A2, Kertas.A1];
 
     public string ProfileId { get => _p.ProfileId; set => Update(_p with { ProfileId = value }); }
     public bool StrategyUrut { get => _p.Strategy == Strategy.Urut; set => Update(_p with { Strategy = value ? Strategy.Urut : Strategy.Rentang }); }
