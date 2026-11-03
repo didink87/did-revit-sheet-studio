@@ -9,7 +9,7 @@ public static class Rebase
     public static (ChangeSet Next, IReadOnlyList<string> Dropped) Onto(ChangeSet pending, IReadOnlyList<SheetSnapshot> fresh, NamingProfile p)
     {
         var alive = fresh.Select(s => s.UniqueId).ToHashSet();
-        var dropped = pending.Changes.Keys.Union(pending.Touched).Where(id => !alive.Contains(id)).Distinct().ToList();
+        var dropped = pending.Changes.Keys.Union(pending.Touched).Union(pending.Relocked).Where(id => !alive.Contains(id)).Distinct().ToList();
 
         var changes = pending.Changes.Where(kv => alive.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
         var order = pending.State.OrderPerGroup.ToDictionary(
@@ -19,6 +19,7 @@ public static class Rebase
         {
             Changes = changes,
             Touched = pending.Touched.Where(alive.Contains).ToHashSet(),
+            Relocked = pending.Relocked.Where(alive.Contains).ToHashSet(),
             State = pending.State with { OrderPerGroup = order, Locked = pending.State.Locked.Where(alive.Contains).ToHashSet() },
         };
 

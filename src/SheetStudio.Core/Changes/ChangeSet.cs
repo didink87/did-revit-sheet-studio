@@ -8,14 +8,39 @@ namespace SheetStudio.Core.Changes;
 /// <summary>
 /// Immutable staged edits: per-sheet changes plus the panel state (order, locks, discipline order).
 /// Ordering ops need the snapshot list and profile to know each sheet's effective group.
-/// <see cref="Touched"/> holds sheets whose position/lock changed, so they count as pending.
+/// <see cref="Touched"/> holds sheets whose position changed, <see cref="Relocked"/> those whose lock was toggled;
+/// both count as pending. Only groups touched by the user are renumbered unless <see cref="NormalizeAll"/> is set.
 /// </summary>
 public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, SheetChange> Changes, IReadOnlySet<string> Touched)
 {
     public static ChangeSet Start(ProjectState state) =>
         new(state, new Dictionary<string, SheetChange>(), new HashSet<string>());
 
-    public int PendingCount => Changes.Keys.Union(Touched).Count();
+    public IReadOnlySet<string> Relocked { get; init; } = new HashSet<string>();
+
+    /// <summary>"Rapikan semua nomor": renumber every group, not only the ones the user touched.</summary>
+    public bool NormalizeAll { get; init; }
+
+    public int PendingCount => Changes.Keys.Union(Touched).Union(Relocked).Count() + (NormalizeAll ? 1 : 0);
+
+    /// <summary>Groups whose numbers must be recomputed: source and target groups of moved, regrouped,
+    /// manually numbered or deleted sheets. Null = all groups.</summary>
+    public IReadOnlySet<string>? DirtyGroups(IReadOnlyList<SheetSnapshot> sheets, NamingProfile p)
+    {
+        if (NormalizeAll) return null;
+        var byId = sheets.ToDictionary(s => s.UniqueId);
+        var ids = Touched.Concat(Changes.Values
+            .Where(c => c.NewDiscipline is not null || c.NewType is not null || c.ManualSeq is not null || c.Delete)
+            .Select(c => c.UniqueId));
+        var dirty = new HashSet<string>();
+        foreach (var id in ids)
+        {
+            if (!byId.TryGetValue(id, out var s)) continue;
+            dirty.Add(EffectiveGroup(s, p));
+            dirty.Add(LayerListBuilder.GroupOf(s.Number, p).Type);
+        }
+        return dirty;
+    }
     public bool IsEmpty => PendingCount == 0;
 
     /// <summary>Type group key after staged discipline/type changes, e.g. "A|1".</summary>
@@ -157,7 +182,9 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
         var locked = State.Locked.ToHashSet();
         var allLocked = ids.All(locked.Contains);
         foreach (var id in ids) { if (allLocked) locked.Remove(id); else locked.Add(id); }
-        return new OpResult(this with { State = State with { Locked = locked }, Touched = Touched.Union(ids).ToHashSet() }, null);
+        var relocked = Relocked.ToHashSet();
+        foreach (var id in ids) if (!relocked.Remove(id)) relocked.Add(id); // toggling twice is no change
+        return new OpResult(this with { State = State with { Locked = locked }, Relocked = relocked }, null);
     }
 
     public OpResult SetInSheetList(IReadOnlyList<string> ids, bool value) =>

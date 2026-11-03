@@ -1,0 +1,215 @@
+using System.Windows.Input;
+using SheetStudio.Core.Layers;
+using SheetStudio.Core.Numbering;
+
+namespace SheetStudio.Core.ViewModels;
+
+public enum DropPosition { Sebelum, Sesudah, Ke }
+
+/// <summary>Photoshop-style layers panel: selection, drag-drop, keyboard moves, lock/eye, collapse, filter.</summary>
+public sealed class LayersViewModel : ObservableObject
+{
+    private readonly StudioViewModel _studio;
+    private readonly HashSet<string> _collapsed = [];
+    private IReadOnlyList<LayerRowViewModel> _rows = [];
+    private IReadOnlyList<LayerRow> _allRows = [];
+    private string _filter = "";
+
+    internal LayersViewModel(StudioViewModel studio)
+    {
+        _studio = studio;
+        Selection.Changed += OnSelectionChanged;
+        MoveUp = new RelayCommand(() => Move(-1));
+        MoveDown = new RelayCommand(() => Move(+1));
+        MoveTop = new RelayCommand(() => Edge(true));
+        MoveBottom = new RelayCommand(() => Edge(false));
+        DeleteSelected = new RelayCommand(MarkDelete);
+        SelectAllCommand = new RelayCommand(SelectAll);
+        ClearSelection = new RelayCommand(() => Selection.Clear());
+    }
+
+    public SelectionModel Selection { get; } = new();
+
+    public IReadOnlyList<LayerRowViewModel> Rows
+    {
+        get => _rows;
+        private set => Set(ref _rows, value);
+    }
+
+    public string Filter
+    {
+        get => _filter;
+        set { if (Set(ref _filter, value ?? "")) Rebuild(); }
+    }
+
+    public ICommand MoveUp { get; }
+    public ICommand MoveDown { get; }
+    public ICommand MoveTop { get; }
+    public ICommand MoveBottom { get; }
+    public ICommand DeleteSelected { get; }
+    public ICommand SelectAllCommand { get; }
+    public ICommand ClearSelection { get; }
+
+    public void Click(string key) => Selection.Click(key);
+    public void CtrlClick(string key) => Selection.CtrlClick(key);
+    public void ShiftClick(string key) => Selection.ShiftClick(key, VisibleRows());
+    public void CtrlShiftClick(string key) => Selection.CtrlShiftClick(key, VisibleRows());
+    public void SelectAll() => Selection.SelectAll(VisibleRows());
+
+    public IReadOnlyList<string> SelectedSheetIds() => Selection.SelectedSheetIds(_allRows);
+
+    /// <summary>Can the dragged keys land at target/pos? Reason explains a refusal (shown as tooltip).</summary>
+    public bool CanDrop(IReadOnlyList<string> keys, string targetKey, DropPosition pos, out string? reason)
+    {
+        if (TryDisciplineDrop(keys, targetKey, out var discIndex))
+        {
+            reason = discIndex < 0 ? "Grup disiplin hanya bisa dilepas di grup disiplin lain" : null;
+            return discIndex >= 0;
+        }
+        var (group, index) = Target(targetKey, pos);
+        if (group is null) { reason = "Tidak bisa dilepas di sini"; return false; }
+        var ids = Expand(keys);
+        var r = _studio.Current.MoveSelection(ids, group, index, _studio.Sheets, _studio.Profile);
+        if (ReferenceEquals(r.Next, _studio.Current) && r.Pesan is not null) { reason = r.Pesan; return false; }
+        if (!Sequencer.CanAccept(ids, group, _studio.Sheets, _studio.Current, _studio.Profile, _studio.Numbering, out var why))
+        {
+            reason = why;
+            return false;
+        }
+        reason = r.Pesan;
+        return true;
+    }
+
+    public void Drop(IReadOnlyList<string> keys, string targetKey, DropPosition pos)
+    {
+        if (TryDisciplineDrop(keys, targetKey, out var discIndex))
+        {
+            if (discIndex >= 0) _studio.Push(_studio.Current.MoveDisciplineGroup(keys[0], discIndex, _studio.Sheets, _studio.Profile));
+            return;
+        }
+        var (group, index) = Target(targetKey, pos);
+        if (group is null) return;
+        _studio.Push(_studio.Current.MoveSelection(Expand(keys), group, index, _studio.Sheets, _studio.Profile));
+    }
+
+    public void ToggleLock(string key) => _studio.Push(_studio.Current.ToggleLock(Expand([key])));
+
+    public void ToggleEye(string key)
+    {
+        var ids = Expand([key]);
+        var display = _studio.DisplaySheets().Where(s => ids.Contains(s.UniqueId)).ToList();
+        _studio.Push(_studio.Current.SetInSheetList(ids, !display.All(s => s.InSheetList)));
+    }
+
+    public void ToggleCollapse(string key, bool all)
+    {
+        var collapse = !_collapsed.Contains(key);
+        if (all)
+        {
+            foreach (var r in _allRows.Where(r => r.Kind != RowKind.Lembar))
+                if (collapse) _collapsed.Add(r.Key); else _collapsed.Remove(r.Key);
+        }
+        else if (collapse) _collapsed.Add(key);
+        else _collapsed.Remove(key);
+        Rebuild();
+    }
+
+    public void RenameInline(string uniqueId, string title)
+    {
+        var sheet = _studio.Sheets.FirstOrDefault(s => s.UniqueId == uniqueId);
+        if (sheet is null) return;
+        _studio.Push(Edit.BulkEdit.SetTitle(_studio.Current, [sheet], title));
+    }
+
+    public void MarkDelete() => MarkDeleteKeys(SelectedSheetIds());
+
+    public void MarkDeleteKeys(IReadOnlyList<string> keys)
+    {
+        var ids = Expand(keys);
+        var allMarked = ids.All(id => _studio.Current.Changes.TryGetValue(id, out var c) && c.Delete);
+        _studio.Push(_studio.Current.MarkDelete(ids, !allMarked));
+    }
+
+    public Task OpenAsync(string uniqueId) => _studio.Gateway.OpenSheetAsync(uniqueId);
+
+    internal void Rebuild()
+    {
+        var display = _studio.DisplaySheets();
+        var state = _studio.Current.State;
+        _allRows = LayerListBuilder.Build(display, state, _studio.Profile, new HashSet<string>(), _filter);
+        var visible = LayerListBuilder.Build(display, state, _studio.Profile, _collapsed, _filter);
+        var byId = _studio.Sheets.ToDictionary(s => s.UniqueId);
+        var shown = display.ToDictionary(s => s.UniqueId);
+        var old = _rows.Where(r => r.Thumbnail is not null).ToDictionary(r => r.Key, r => r.Thumbnail);
+
+        Rows = visible.Select(r =>
+        {
+            if (r.Kind != RowKind.Lembar) return new LayerRowViewModel(r) { IsSelected = Selection.IsSelected(r) };
+            var orig = byId[r.Key];
+            _studio.Current.Changes.TryGetValue(r.Key, out var c);
+            return new LayerRowViewModel(r)
+            {
+                Number = orig.Number,
+                NewNumber = shown[r.Key].Number,
+                WarningText = _studio.WarningFor(shown[r.Key]),
+                Edited = c is not null && (c.NewTitle is not null || c.NewParams is { Count: > 0 } || c.NewTitleBlockType is not null || c.InSheetList is not null),
+                Deleted = c?.Delete == true,
+                Borrowed = orig.BorrowedBy is not null,
+                BorrowedBy = orig.BorrowedBy,
+                InSheetList = shown[r.Key].InSheetList,
+                IsNew = _studio.NewSheetIds.Contains(r.Key),
+                IsSelected = Selection.IsSelected(r),
+                Thumbnail = old.GetValueOrDefault(r.Key),
+            };
+        }).ToList();
+    }
+
+    private IReadOnlyList<LayerRow> VisibleRows() => Rows.Select(r => r.Row).ToList();
+
+    private void OnSelectionChanged()
+    {
+        foreach (var r in _rows) r.IsSelected = Selection.IsSelected(r.Row);
+        _studio.Inspector.Refresh();
+    }
+
+    private IReadOnlyList<string> Expand(IReadOnlyList<string> keys)
+    {
+        var set = keys.ToHashSet();
+        return _allRows.Where(r => r.Kind == RowKind.Lembar &&
+                (set.Contains(r.Key) || (r.GroupKey is { } g && (set.Contains(g) || set.Contains(g.Split('|')[0])))))
+            .Select(r => r.Key).ToList();
+    }
+
+    /// <summary>Target type group and insertion index for a drop on a row.</summary>
+    private (string? Group, int Index) Target(string targetKey, DropPosition pos)
+    {
+        var row = _allRows.FirstOrDefault(r => r.Key == targetKey);
+        if (row is null) return (null, 0);
+        switch (row.Kind)
+        {
+            case RowKind.Disiplin:
+                return (row.Key, int.MaxValue / 2);
+            case RowKind.Tipe:
+                return (row.Key, pos == DropPosition.Sebelum ? 0 : int.MaxValue / 2);
+            default:
+                var group = row.GroupKey!;
+                var order = _studio.Current.GroupOrder(group, _studio.Sheets, _studio.Profile).ToList();
+                var i = order.IndexOf(row.Key);
+                return (group, pos == DropPosition.Sesudah ? i + 1 : i);
+        }
+    }
+
+    /// <summary>Dragging a single discipline header onto another reorders the set. -1 = not allowed.</summary>
+    private bool TryDisciplineDrop(IReadOnlyList<string> keys, string targetKey, out int index)
+    {
+        index = -1;
+        if (keys.Count != 1 || _allRows.FirstOrDefault(r => r.Key == keys[0])?.Kind != RowKind.Disiplin) return false;
+        var discs = _allRows.Where(r => r.Kind == RowKind.Disiplin && r.Key != LayerListBuilder.UnknownDiscipline).Select(r => r.Key).ToList();
+        var target = _allRows.FirstOrDefault(r => r.Key == targetKey);
+        if (target?.Kind == RowKind.Disiplin && target.Key != LayerListBuilder.UnknownDiscipline) index = discs.IndexOf(target.Key);
+        return true;
+    }
+
+    private void Move(int delta) => _studio.Push(_studio.Current.MoveBy(SelectedSheetIds(), delta, _studio.Sheets, _studio.Profile));
+    private void Edge(bool top) => _studio.Push(_studio.Current.MoveToEdge(SelectedSheetIds(), top, _studio.Sheets, _studio.Profile));
+}

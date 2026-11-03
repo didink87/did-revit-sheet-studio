@@ -25,6 +25,7 @@ public static class Sequencer
         var errors = new List<string>();
         var results = new List<NumberResult>();
         var original = sheets.ToDictionary(s => s.UniqueId, s => s.Number);
+        var dirty = cs.DirtyGroups(sheets, p);
         var ordered = LayerListBuilder.OrderedSheets(cs.EffectiveSheets(sheets, p), cs.State, p)
             .Where(s => !(cs.Changes.TryGetValue(s.UniqueId, out var c) && c.Delete))
             .ToList();
@@ -42,7 +43,7 @@ public static class Sequencer
             var parts = group.Key.Split('|');
             var disc = parts[0];
             var type = int.Parse(parts[1]);
-            var assigned = AssignGroup(disc, type, members, cs, p, o, errors);
+            var assigned = dirty is null || dirty.Contains(group.Key) ? AssignGroup(disc, type, members, cs, p, o, errors) : null;
             for (var i = 0; i < members.Count; i++)
             {
                 var s = members[i];
@@ -61,7 +62,7 @@ public static class Sequencer
         NamingProfile p, NumberingOptions o, out string? reason)
     {
         var moved = cs.MoveSelection(ids, targetGroup, int.MaxValue / 2, sheets, p);
-        if (ReferenceEquals(moved.Next, cs)) { reason = moved.Pesan ?? "Tidak ada lembar yang bisa dipindah"; return false; }
+        if (ReferenceEquals(moved.Next, cs)) { reason = moved.Pesan; return moved.Pesan is null; } // no-op drop is fine
         var outcome = Compute(sheets, moved.Next, p, o);
         var label = targetGroup.Contains('|') ? GroupLabel(targetGroup) : targetGroup;
         reason = outcome.Errors.FirstOrDefault(e => e.Contains(label));

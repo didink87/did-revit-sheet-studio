@@ -11,13 +11,42 @@ public class SequencerTests
 {
     private static readonly NumberingOptions Rentang = new(Strategy.Rentang, 1, 1);
 
+    private static ChangeSet Norm(Model.ProjectState st) => ChangeSet.Start(st) with { NormalizeAll = true };
+
+    [Fact]
+    public void Compute_UntouchedGroupsKeepNumbers()
+    {
+        var sheets = new[] { S("t", "A-201", kind: "tampak-bangunan"), S("a", "A-110", kind: "denah"), S("b", "A-111", kind: "denah") };
+        var cs = ChangeSet.Start(State()).MoveSelection(["b"], "A|1", 0, sheets, Profiles.Pupr).Next;
+        var n = Numbers(Sequencer.Compute(sheets, cs, Profiles.Pupr, Rentang));
+        Assert.Equal(("A-201", "A-110", "A-111"), (n["t"], n["b"], n["a"]));
+        Assert.All(Sequencer.Compute(sheets, ChangeSet.Start(State()), Profiles.Pupr, Rentang).Results, r => Assert.False(r.Changed));
+    }
+
+    [Fact]
+    public void Compute_NormalizeAll_RenumbersEverything()
+    {
+        var sheets = new[] { S("t", "A-201", kind: "tampak-bangunan") };
+        Assert.Equal("A-210", Numbers(Sequencer.Compute(sheets, Norm(State()), Profiles.Pupr, Rentang))["t"]);
+    }
+
+    [Fact]
+    public void LockToggle_DoesNotRenumberGroup()
+    {
+        var sheets = new[] { S("t", "A-201", kind: "tampak-bangunan"), S("u", "A-205", kind: "tampak-bangunan") };
+        var cs = ChangeSet.Start(State()).ToggleLock(["t"]).Next;
+        Assert.Equal(1, cs.PendingCount);
+        Assert.All(Sequencer.Compute(sheets, cs, Profiles.Pupr, Rentang).Results, r => Assert.False(r.Changed));
+        Assert.Equal(0, cs.ToggleLock(["t"]).Next.PendingCount);
+    }
+
     private static Dictionary<string, string> Numbers(SequenceOutcome o) => o.Results.ToDictionary(r => r.UniqueId, r => r.NewNumber);
 
     [Fact]
     public void Rentang_FollowsPanelOrder()
     {
         var sheets = new[] { S("L1", "A-110", kind: "denah"), S("L2", "A-111", kind: "denah") };
-        var cs = ChangeSet.Start(State(new() { ["A|1"] = ["L2", "L1"] }));
+        var cs = Norm(State(new() { ["A|1"] = ["L2", "L1"] }));
         var o = Sequencer.Compute(sheets, cs, Profiles.Pupr, Rentang);
         Assert.Empty(o.Errors);
         Assert.Equal("A-110", Numbers(o)["L2"]);
@@ -29,7 +58,7 @@ public class SequencerTests
     public void Rentang_KindsUseOwnRanges_NoKindUsesWholeType()
     {
         var sheets = new[] { S("D", "A-150", kind: "denah"), S("P", "A-112", kind: "rencana-plafon"), S("X", "A-160") };
-        var n = Numbers(Sequencer.Compute(sheets, ChangeSet.Start(State()), Profiles.Pupr, Rentang));
+        var n = Numbers(Sequencer.Compute(sheets, Norm(State()), Profiles.Pupr, Rentang));
         Assert.Equal(("A-110", "A-145"), (n["D"], n["P"]));
         Assert.Equal("A-101", n["X"]);
     }
@@ -38,14 +67,14 @@ public class SequencerTests
     public void Urut_Step10()
     {
         var sheets = Enumerable.Range(0, 5).Select(i => S($"s{i}", $"A-1{10 + i}")).ToArray();
-        var o = Sequencer.Compute(sheets, ChangeSet.Start(State()), Profiles.Pupr, new NumberingOptions(Strategy.Urut, 1, 10));
+        var o = Sequencer.Compute(sheets, Norm(State()), Profiles.Pupr, new NumberingOptions(Strategy.Urut, 1, 10));
         Assert.Equal(new[] { "A-101", "A-111", "A-121", "A-131", "A-141" }, o.Results.Select(r => r.NewNumber));
     }
 
     [Fact]
     public void Urut_GStartsAtZero()
     {
-        var o = Sequencer.Compute([S("a", "G-003"), S("b", "G-007")], ChangeSet.Start(State()), Profiles.Pupr, new NumberingOptions(Strategy.Urut, 1, 1));
+        var o = Sequencer.Compute([S("a", "G-003"), S("b", "G-007")], Norm(State()), Profiles.Pupr, new NumberingOptions(Strategy.Urut, 1, 1));
         Assert.Equal(new[] { "G-000", "G-001" }, o.Results.Select(r => r.NewNumber));
     }
 
@@ -53,9 +82,9 @@ public class SequencerTests
     public void LockedKeepsNumberOthersFlowAround()
     {
         var sheets = new[] { S("a", "A-110", kind: "denah"), S("b", "A-111", kind: "denah"), S("c", "A-115", kind: "denah"), S("d", "A-120", kind: "denah") };
-        var n = Numbers(Sequencer.Compute(sheets, ChangeSet.Start(State(locked: ["b"])), Profiles.Pupr, Rentang));
+        var n = Numbers(Sequencer.Compute(sheets, Norm(State(locked: ["b"])), Profiles.Pupr, Rentang));
         Assert.Equal(new[] { "A-110", "A-111", "A-112", "A-113" }, new[] { n["a"], n["b"], n["c"], n["d"] });
-        var moved = ChangeSet.Start(State(new() { ["A|1"] = ["c", "d", "a", "b"] }, locked: ["b"]));
+        var moved = Norm(State(new() { ["A|1"] = ["c", "d", "a", "b"] }, locked: ["b"]));
         var m = Numbers(Sequencer.Compute(sheets, moved, Profiles.Pupr, Rentang));
         Assert.Equal(("A-110", "A-112", "A-113", "A-111"), (m["c"], m["d"], m["a"], m["b"]));
     }
@@ -72,7 +101,7 @@ public class SequencerTests
     public void NotEditableSheetIsOccupied()
     {
         var n = Numbers(Sequencer.Compute([S("a", "A-115", kind: "denah"), S("b", "A-110", kind: "denah", editable: false)],
-            ChangeSet.Start(State()), Profiles.Pupr, Rentang));
+            Norm(State()), Profiles.Pupr, Rentang));
         Assert.Equal(("A-111", "A-110"), (n["a"], n["b"]));
     }
 
@@ -113,7 +142,7 @@ public class SequencerTests
     public void FullGroup_ReportsErrorAndKeepsNumbers()
     {
         var sheets = Enumerable.Range(10, 31).Select(i => S($"d{i}", i <= 39 ? $"A-1{i}" : "A-150", kind: "denah")).ToList(); // 31 denah, range 10–39 holds 30
-        var o = Sequencer.Compute(sheets, ChangeSet.Start(State()), Profiles.Pupr, Rentang);
+        var o = Sequencer.Compute(sheets, Norm(State()), Profiles.Pupr, Rentang);
         Assert.Contains(o.Errors, e => e.Contains("penuh") && e.Contains("A-1"));
         Assert.All(o.Results, r => Assert.False(r.Changed));
     }
@@ -132,7 +161,7 @@ public class SequencerTests
     public void SortKey_FollowsPanelPosition()
     {
         var sheets = new[] { S("L1", "A-110", kind: "denah"), S("L2", "A-111", kind: "denah") };
-        var cs = ChangeSet.Start(State(new() { ["A|1"] = ["L2", "L1"] }));
+        var cs = Norm(State(new() { ["A|1"] = ["L2", "L1"] }));
         var r = Sequencer.Compute(sheets, cs, Profiles.Pupr, Rentang).Results.ToDictionary(x => x.UniqueId);
         Assert.Equal("08.A.1.0000", r["L2"].SortKey);
         Assert.Equal("08.A.1.0001", r["L1"].SortKey);
