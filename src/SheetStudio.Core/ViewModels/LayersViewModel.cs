@@ -6,6 +6,8 @@ namespace SheetStudio.Core.ViewModels;
 
 public enum DropPosition { Sebelum, Sesudah, Ke }
 
+public sealed record DropEvaluation(DropPosition Pos, bool Allowed, string? Reason);
+
 /// <summary>Photoshop-style layers panel: selection, drag-drop, keyboard moves, lock/eye, collapse, filter.</summary>
 public sealed class LayersViewModel : ObservableObject
 {
@@ -14,6 +16,8 @@ public sealed class LayersViewModel : ObservableObject
     private IReadOnlyList<LayerRowViewModel> _rows = [];
     private IReadOnlyList<LayerRow> _allRows = [];
     private string _filter = "";
+    private readonly Dictionary<string, byte[]> _thumbs = [];
+    private readonly HashSet<string> _thumbRequested = [];
 
     internal LayersViewModel(StudioViewModel studio)
     {
@@ -26,6 +30,73 @@ public sealed class LayersViewModel : ObservableObject
         DeleteSelected = new RelayCommand(MarkDelete);
         SelectAllCommand = new RelayCommand(SelectAll);
         ClearSelection = new RelayCommand(() => Selection.Clear());
+        BeginRename = new RelayCommand(StartRename, () => SingleSelectedSheet() is not null);
+        ToggleLockSelected = new RelayCommand(() => _studio.Push(_studio.Current.ToggleLock(SelectedSheetIds())), () => SelectedSheetIds().Count > 0);
+        ToggleEyeSelected = new RelayCommand(() => ToggleEyeIds(SelectedSheetIds()), () => SelectedSheetIds().Count > 0);
+        OpenSelected = new RelayCommand(async () => { if (SingleSelectedSheet() is { } id) await OpenAsync(id); }, () => SingleSelectedSheet() is not null);
+    }
+
+    public ICommand BeginRename { get; }
+    public ICommand ToggleLockSelected { get; }
+    public ICommand ToggleEyeSelected { get; }
+    public ICommand OpenSelected { get; }
+
+    /// <summary>Where would a drop at this point of the target row land, and is it allowed?
+    /// Sheet rows: upper half = before, lower half = after. Group rows: into the group.</summary>
+    public DropEvaluation Evaluate(IReadOnlyList<string> keys, string targetKey, double yFraction)
+    {
+        var target = _allRows.FirstOrDefault(r => r.Key == targetKey);
+        if (target is null) return new DropEvaluation(DropPosition.Ke, false, null);
+        var pos = target.Kind == RowKind.Lembar ? (yFraction < 0.5 ? DropPosition.Sebelum : DropPosition.Sesudah) : DropPosition.Ke;
+        if (keys.Contains(targetKey)) return new DropEvaluation(pos, false, null);
+        var ok = CanDrop(keys, targetKey, pos, out var reason);
+        return new DropEvaluation(pos, ok, reason);
+    }
+
+    public DropEvaluation ShowDropHint(IReadOnlyList<string> keys, string targetKey, double yFraction)
+    {
+        var e = Evaluate(keys, targetKey, yFraction);
+        foreach (var r in _rows)
+        {
+            if (r.Key != targetKey) { r.DropHint = DropHint.None; r.DropReason = null; continue; }
+            r.DropHint = !e.Allowed ? DropHint.Ditolak : e.Pos switch
+            {
+                DropPosition.Sebelum => DropHint.Atas,
+                DropPosition.Sesudah => DropHint.Bawah,
+                _ => DropHint.Ke,
+            };
+            r.DropReason = e.Reason;
+        }
+        return e;
+    }
+
+    public void ClearDropHint()
+    {
+        foreach (var r in _rows) { r.DropHint = DropHint.None; r.DropReason = null; }
+    }
+
+    public void CommitRename(LayerRowViewModel row)
+    {
+        if (!row.IsEditing) return;
+        row.IsEditing = false;
+        RenameInline(row.Key, row.EditText);
+    }
+
+    public void CancelRename(LayerRowViewModel row) => row.IsEditing = false;
+
+    /// <summary>Loads missing previews for the given (visible) keys; cached per sheet version.</summary>
+    public async Task LoadThumbnailsAsync(IEnumerable<string> keys)
+    {
+        var byId = _studio.Sheets.ToDictionary(s => s.UniqueId);
+        foreach (var key in keys.Where(byId.ContainsKey).ToList())
+        {
+            var cacheKey = key + "|" + byId[key].Versi;
+            if (!_thumbRequested.Add(cacheKey)) continue;
+            var bytes = await _studio.Gateway.ThumbnailAsync(key);
+            if (bytes is null) continue;
+            _thumbs[cacheKey] = bytes;
+            foreach (var r in _rows.Where(r => r.Key == key)) r.Thumbnail = bytes;
+        }
     }
 
     public SelectionModel Selection { get; } = new();
@@ -94,9 +165,10 @@ public sealed class LayersViewModel : ObservableObject
 
     public void ToggleLock(string key) => _studio.Push(_studio.Current.ToggleLock(Expand([key])));
 
-    public void ToggleEye(string key)
+    public void ToggleEye(string key) => ToggleEyeIds(Expand([key]));
+
+    private void ToggleEyeIds(IReadOnlyList<string> ids)
     {
-        var ids = Expand([key]);
         var display = _studio.DisplaySheets().Where(s => ids.Contains(s.UniqueId)).ToList();
         _studio.Push(_studio.Current.SetInSheetList(ids, !display.All(s => s.InSheetList)));
     }
@@ -140,7 +212,6 @@ public sealed class LayersViewModel : ObservableObject
         var visible = LayerListBuilder.Build(display, state, _studio.Profile, _collapsed, _filter);
         var byId = _studio.Sheets.ToDictionary(s => s.UniqueId);
         var shown = display.ToDictionary(s => s.UniqueId);
-        var old = _rows.Where(r => r.Thumbnail is not null).ToDictionary(r => r.Key, r => r.Thumbnail);
 
         Rows = visible.Select(r =>
         {
@@ -159,9 +230,25 @@ public sealed class LayersViewModel : ObservableObject
                 InSheetList = shown[r.Key].InSheetList,
                 IsNew = _studio.NewSheetIds.Contains(r.Key),
                 IsSelected = Selection.IsSelected(r),
-                Thumbnail = old.GetValueOrDefault(r.Key),
+                Thumbnail = _thumbs.GetValueOrDefault(r.Key + "|" + orig.Versi),
             };
         }).ToList();
+    }
+
+    private string? SingleSelectedSheet()
+    {
+        var ids = SelectedSheetIds();
+        return ids.Count == 1 && Selection.Selected.Count == 1 && Selection.Selected[0] == ids[0] ? ids[0] : null;
+    }
+
+    private void StartRename()
+    {
+        if (SingleSelectedSheet() is not { } id) return;
+        foreach (var r in _rows) r.IsEditing = false;
+        var row = _rows.FirstOrDefault(r => r.Key == id);
+        if (row is null) return;
+        row.EditText = row.Label;
+        row.IsEditing = true;
     }
 
     private IReadOnlyList<LayerRow> VisibleRows() => Rows.Select(r => r.Row).ToList();
@@ -170,6 +257,7 @@ public sealed class LayersViewModel : ObservableObject
     {
         foreach (var r in _rows) r.IsSelected = Selection.IsSelected(r.Row);
         _studio.Inspector.Refresh();
+        foreach (var c in new[] { BeginRename, ToggleLockSelected, ToggleEyeSelected, OpenSelected }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
     }
 
     private IReadOnlyList<string> Expand(IReadOnlyList<string> keys)

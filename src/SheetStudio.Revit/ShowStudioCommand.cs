@@ -1,6 +1,7 @@
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using SheetStudio.Revit.Ui;
 
 namespace SheetStudio.Revit;
 
@@ -9,7 +10,13 @@ public sealed class ShowStudioCommand : IExternalCommand
 {
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
     {
-        TaskDialog.Show("Sheet Studio", "Panel Sheet Studio belum tersedia.");
+        var pane = commandData.Application.GetDockablePane(PaneIds.Studio);
+        if (pane.IsShown()) pane.Hide();
+        else
+        {
+            pane.Show();
+            _ = App.ViewModel?.SafeLoadAsync();
+        }
         return Result.Succeeded;
     }
 }

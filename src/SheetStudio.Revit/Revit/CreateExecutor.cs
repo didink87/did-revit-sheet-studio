@@ -35,7 +35,7 @@ public static class CreateExecutor
                 return new CreateReport(rows.Select(r => (r.Title, false, (string?)"Dibatalkan", (string?)null)).ToList(), true);
             }
             var req = reqs[i];
-            using (var t = new Transaction(doc, $"Buat lembar {req.Name.Id.Format()}"))
+            using (var t = new Transaction(doc, $"Sheet Studio: Buat lembar {req.Name.Id.Format()}"))
             {
                 t.Start();
                 try
@@ -118,7 +118,7 @@ public static class CreateExecutor
         foreach (var uid in ids)
         {
             if (doc.GetElement(uid) is not ViewSheet sheet) { rows.Add((uid, false, "Lembar tidak ada lagi", null)); continue; }
-            using var t = new Transaction(doc, $"Duplikat {sheet.SheetNumber}");
+            using var t = new Transaction(doc, $"Sheet Studio: Duplikat {sheet.SheetNumber}");
             t.Start();
             try
             {

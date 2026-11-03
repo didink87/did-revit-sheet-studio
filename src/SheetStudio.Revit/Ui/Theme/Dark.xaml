@@ -1,0 +1,17 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="SS.Bg" Color="#2B2D31"/>
+    <SolidColorBrush x:Key="SS.Panel" Color="#232428"/>
+    <SolidColorBrush x:Key="SS.GroupBg" Color="#3A3C42"/>
+    <SolidColorBrush x:Key="SS.TypeBg" Color="#313338"/>
+    <SolidColorBrush x:Key="SS.Fg" Color="#E5E7EB"/>
+    <SolidColorBrush x:Key="SS.FgMuted" Color="#9CA3AF"/>
+    <SolidColorBrush x:Key="SS.Border" Color="#4B5563"/>
+    <SolidColorBrush x:Key="SS.Accent" Color="#3B82F6"/>
+    <SolidColorBrush x:Key="SS.AccentFg" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SS.Selected" Color="#1E3A8A"/>
+    <SolidColorBrush x:Key="SS.Hover" Color="#374151"/>
+    <SolidColorBrush x:Key="SS.Danger" Color="#F87171"/>
+    <SolidColorBrush x:Key="SS.Warn" Color="#FBBF24"/>
+    <SolidColorBrush x:Key="SS.Ok" Color="#34D399"/>
+</ResourceDictionary>

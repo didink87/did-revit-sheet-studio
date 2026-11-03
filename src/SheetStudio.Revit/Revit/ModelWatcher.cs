@@ -10,7 +10,7 @@ namespace SheetStudio.Revit.Revit;
 /// </summary>
 public sealed class ModelWatcher : IDisposable
 {
-    private readonly Application _app;
+    private readonly Action<EventHandler<DocumentChangedEventArgs>> _unsubscribe;
     private readonly int _debounceMs;
     private readonly Action<Action> _dispatch;
     private readonly Dictionary<string, HashSet<ElementId>> _knownSheets = [];
@@ -19,11 +19,18 @@ public sealed class ModelWatcher : IDisposable
     private Timer? _timer;
 
     public ModelWatcher(Application app, int debounceMs = 500, Action<Action>? dispatch = null)
+        : this(h => app.DocumentChanged += h, h => app.DocumentChanged -= h, debounceMs, dispatch) { }
+
+    public ModelWatcher(ControlledApplication app, int debounceMs = 500, Action<Action>? dispatch = null)
+        : this(h => app.DocumentChanged += h, h => app.DocumentChanged -= h, debounceMs, dispatch) { }
+
+    private ModelWatcher(Action<EventHandler<DocumentChangedEventArgs>> subscribe, Action<EventHandler<DocumentChangedEventArgs>> unsubscribe,
+        int debounceMs, Action<Action>? dispatch)
     {
-        _app = app;
+        _unsubscribe = unsubscribe;
         _debounceMs = debounceMs;
         _dispatch = dispatch ?? (a => a());
-        _app.DocumentChanged += OnChanged;
+        subscribe(OnChanged);
     }
 
     public event Action? Changed;
@@ -51,7 +58,7 @@ public sealed class ModelWatcher : IDisposable
 
     public void Dispose()
     {
-        _app.DocumentChanged -= OnChanged;
+        _unsubscribe(OnChanged);
         _timer?.Dispose();
     }
 }

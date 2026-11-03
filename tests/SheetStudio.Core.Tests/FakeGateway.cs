@@ -18,9 +18,12 @@ internal sealed class FakeGateway : IStudioGateway
     public event Action? ModelChanged;
     public void RaiseModelChanged() => ModelChanged?.Invoke();
 
+    public string? LoadError { get; set; }
+
     public Task<StudioSnapshot> LoadAsync()
     {
         Loads++;
+        if (LoadError is not null) return Task.FromException<StudioSnapshot>(new InvalidOperationException(LoadError));
         return Task.FromResult(new StudioSnapshot(Sheets.ToList(), State, Prefs, [("Lantai 1", 0), ("Lantai 2", 4), ("Lantai 3", 8)],
             ["PUPR_KOP_A3", "PUPR_KOP_A2"], [new ViewInfo("v1", "DENAH LANTAI 1", "Denah", false), new ViewInfo("v2", "TAMPAK", "Tampak", true)]));
     }
@@ -48,7 +51,9 @@ internal sealed class FakeGateway : IStudioGateway
         Task.FromResult(new CreateReport([], false));
 
     public Task OpenSheetAsync(string uniqueId) => Task.CompletedTask;
-    public Task<byte[]?> ThumbnailAsync(string uniqueId) => Task.FromResult<byte[]?>(null);
+    public byte[]? Thumb { get; set; }
+    public int ThumbCalls { get; private set; }
+    public Task<byte[]?> ThumbnailAsync(string uniqueId) { ThumbCalls++; return Task.FromResult(Thumb); }
 
     public Prefs? SavedPrefs { get; private set; }
     public Task SaveAsync(Prefs? prefs, ProjectState? state, bool userLevel)

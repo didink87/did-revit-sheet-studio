@@ -1,0 +1,64 @@
+using System.Windows.Controls;
+using NUnit.Framework;
+using SheetStudio.Core.Create;
+using SheetStudio.Core.Model;
+using SheetStudio.Core.Preferences;
+using SheetStudio.Core.ViewModels;
+using SheetStudio.Revit.Ui;
+
+namespace SheetStudio.Revit.Tests;
+
+[TestFixture]
+public class UiSmokeTests
+{
+    internal sealed class Fake : IStudioGateway
+    {
+        public List<SheetSnapshot> Sheets { get; } =
+        [
+            Snap("L1", "A-110", "DENAH LANTAI 1", "denah"),
+            Snap("L2", "A-111", "DENAH LANTAI 2", "denah"),
+            Snap("T1", "A-201", "TAMPAK DEPAN", "tampak-bangunan"),
+        ];
+
+        private static SheetSnapshot Snap(string id, string n, string t, string k) =>
+            new(id, n, t, k, "", true, true, null, n + "|" + t, new Dictionary<string, string> { ["Drawn By"] = "" }, "PUPR_KOP_A3");
+
+        public event Action? ModelChanged { add { } remove { } }
+        public Task<StudioSnapshot> LoadAsync() => Task.FromResult(new StudioSnapshot(Sheets, ProjectState.Empty,
+            Prefs.Default with { KonfirmasiTerapkan = false, Thumbnail = false }, [("Lantai 1", 0)], ["PUPR_KOP_A3"], []));
+        public Task<ApplyReport> ApplyAsync(ApplyPlan plan) => Task.FromResult(new ApplyReport(0, []));
+        public Task<CreateReport> CreateAsync(IReadOnlyList<CreateRequest> reqs, IProgress<(int Done, int Total, string Title)> progress, CancellationToken ct) =>
+            Task.FromResult(new CreateReport([], false));
+        public Task<CreateReport> DuplicateAsync(IReadOnlyList<string> ids, DuplicateMode mode) => Task.FromResult(new CreateReport([], false));
+        public Task OpenSheetAsync(string uniqueId) => Task.CompletedTask;
+        public Task<byte[]?> ThumbnailAsync(string uniqueId) => Task.FromResult<byte[]?>(null);
+        public Task SaveAsync(Prefs? prefs, ProjectState? state, bool userLevel) => Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task LayersPanel_BindsRowsFromViewModel()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var pane = new StudioPane(vm);
+        pane.Measure(new System.Windows.Size(900, 600));
+        pane.Arrange(new System.Windows.Rect(0, 0, 900, 600));
+        pane.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() => { })); // let bindings resolve
+        var list = pane.LayersView.LayerList;
+        Assert.That(list, Is.Not.Null);
+        Assert.That(list.Items.Count, Is.EqualTo(vm.Layers.Rows.Count));
+        Assert.That(list.Items.Count, Is.EqualTo(6)); // A, A|1, L1, L2, A|2, T1
+    }
+
+    [Test]
+    public async Task PreviewWindow_ListsPlannedChanges()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        vm.Layers.Drop(["L2"], "L1", DropPosition.Sebelum);
+        var window = new PreviewWindow(vm, vm.BuildPlan(), confirm: true);
+        Assert.That(window.Rows.Count, Is.EqualTo(2));
+        Assert.That(window.Rows.Select(r => r.Lama), Is.EquivalentTo(new[] { "A-110", "A-111" }));
+        window.Close();
+    }
+}

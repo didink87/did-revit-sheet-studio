@@ -203,4 +203,13 @@ public class StudioViewModelTests
         var req = gw.Created.Single().Single();
         Assert.Equal(("A-112", "PUPR_KOP_A3", "v1"), (req.Name.Id.Format(), req.TitleBlockType, req.Views.Single().ExistingViewUniqueId));
     }
+
+    [Fact]
+    public async Task Refresh_NoDocument_ShowsStatusInsteadOfThrowing()
+    {
+        var (vm, gw) = await Loaded();
+        gw.LoadError = "Tidak ada dokumen Revit yang aktif";
+        await vm.SafeLoadAsync();
+        Assert.Equal("Tidak ada dokumen Revit yang aktif", vm.Status);
+    }
 }

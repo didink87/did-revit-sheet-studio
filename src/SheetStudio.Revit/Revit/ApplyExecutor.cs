@@ -32,14 +32,14 @@ public static class ApplyExecutor
         group.Start();
 
         var steps = plan.Renumber.Where(r => sheets.ContainsKey(r.UniqueId)).ToList();
-        using (var t = new Transaction(doc, "Nomor sementara"))
+        using (var t = new Transaction(doc, "Sheet Studio: Nomor sementara"))
         {
             t.Start();
             foreach (var r in steps) sheets[r.UniqueId].SheetNumber = r.Temp;
             t.Commit();
         }
 
-        using (var t = new Transaction(doc, "Terapkan perubahan lembar"))
+        using (var t = new Transaction(doc, "Sheet Studio: Terapkan perubahan lembar"))
         {
             t.Start();
             foreach (var r in steps)
@@ -68,7 +68,7 @@ public static class ApplyExecutor
             t.Commit();
         }
 
-        using (var t = new Transaction(doc, "Simpan urutan lembar"))
+        using (var t = new Transaction(doc, "Sheet Studio: Simpan urutan lembar"))
         {
             t.Start();
             StorageAdapter.Write(doc, null, ProjectStateJson.Serialize(plan.NewState));

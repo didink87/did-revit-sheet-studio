@@ -29,12 +29,16 @@ public sealed class StudioViewModel : ObservableObject
         Redo = new RelayCommand(() => Restore(_undo.Redo()), () => _undo.CanRedo);
         Apply = new RelayCommand(async () => await ApplyAsync(), () => !Current.IsEmpty && !_busy);
         Discard = new RelayCommand(DiscardAll, () => !Current.IsEmpty);
-        Refresh = new RelayCommand(async () => await LoadAsync());
+        Refresh = new RelayCommand(async () => await SafeLoadAsync());
         NewSheet = new RelayCommand(() => CreateRequested?.Invoke(NewCreateSheet()));
         Batch = new RelayCommand(() => BatchRequested?.Invoke(NewBatch()));
         NormalizeNumbers = new RelayCommand(() => Push(Current with { NormalizeAll = true }, "Semua nomor dirapikan sesuai urutan (belum diterapkan)"));
         OpenPreferences = new RelayCommand(() => PreferencesRequested?.Invoke(new PreferencesViewModel(this, Snapshot.Prefs)));
-        _gateway.ModelChanged += () => _ = OnModelChangedAsync();
+        _gateway.ModelChanged += async () =>
+        {
+            try { await OnModelChangedAsync(); }
+            catch (InvalidOperationException ex) { Status = ex.Message; }
+        };
     }
 
     public LayersViewModel Layers { get; }
@@ -95,6 +99,13 @@ public sealed class StudioViewModel : ObservableObject
         _undo.Reset(Current);
         Recompute();
         Raise(nameof(Snapshot), nameof(Profile), nameof(IsStrategyUrut));
+    }
+
+    /// <summary>LoadAsync for UI triggers: a missing document or Revit error becomes a status line, never a crash.</summary>
+    public async Task SafeLoadAsync()
+    {
+        try { await LoadAsync(); }
+        catch (Exception ex) when (ex is InvalidOperationException or OperationCanceledException) { Status = ex.Message; }
     }
 
     /// <summary>Applies a staged operation result: pushes it on the undo stack and refreshes everything.</summary>

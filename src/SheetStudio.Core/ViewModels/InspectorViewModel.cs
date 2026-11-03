@@ -138,6 +138,11 @@ public sealed class InspectorViewModel : ObservableObject
     public ICommand Duplicate { get; }
     public ICommand Delete { get; }
 
+    /// <summary>Raised when the user asks to edit the number (context menu); the view focuses the number fields.</summary>
+    public event Action? FocusNumber;
+
+    public void FocusNumberRequested() => FocusNumber?.Invoke();
+
     internal void Refresh()
     {
         _refreshing = true;
