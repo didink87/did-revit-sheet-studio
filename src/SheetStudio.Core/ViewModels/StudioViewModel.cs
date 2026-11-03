@@ -342,6 +342,7 @@ public sealed class StudioViewModel : ObservableObject
         var ok = report.Rows.Count(r => r.Ok);
         await ReloadAsync(ReloadReason.SetelahBuat, report.Dibatalkan ? "Pembuatan dibatalkan; model dikembalikan" : $"{ok} lembar dibuat" +
             (report.Rows.Count > ok ? $", {report.Rows.Count - ok} gagal" : ""));
+        Layers.Reveal(report.Rows.Where(r => r.Ok && r.UniqueId is not null).Select(r => r.UniqueId!).ToList());
     }
 
     public async Task SavePrefsAsync(Prefs prefs, bool userLevel)

@@ -284,6 +284,33 @@ public class StudioViewModelTests
     }
 
     [Fact]
+    public async Task AfterCreate_RevealsNewSheet_ClearsFilterExpandsSelects()
+    {
+        var (vm, gw) = await Loaded();
+        vm.Layers.Filter = "TAMPAK";
+        vm.Layers.ToggleCollapse("A|1", all: false);
+        string? scrolled = null;
+        vm.Layers.ScrollIntoViewRequested += k => scrolled = k;
+        gw.Sheets.Add(S("new-A-112", "A-112", "DENAH LANTAI 3", kind: "denah"));
+        await vm.AfterCreateAsync(new CreateReport([("DENAH LANTAI 3", true, null, "new-A-112")], false));
+        Assert.Equal("", vm.Layers.Filter);
+        Assert.Contains(vm.Layers.Rows, r => r.Key == "new-A-112");
+        Assert.Equal(new[] { "new-A-112" }, vm.Layers.SelectedSheetIds());
+        Assert.Equal("new-A-112", scrolled);
+    }
+
+    [Fact]
+    public async Task AfterCreate_FilterStillMatches_IsKept()
+    {
+        var (vm, gw) = await Loaded();
+        vm.Layers.Filter = "DENAH";
+        gw.Sheets.Add(S("new-A-112", "A-112", "DENAH LANTAI 3", kind: "denah"));
+        await vm.AfterCreateAsync(new CreateReport([("DENAH LANTAI 3", true, null, "new-A-112")], false));
+        Assert.Equal("DENAH", vm.Layers.Filter);
+        Assert.Contains(vm.Layers.Rows, r => r.Key == "new-A-112");
+    }
+
+    [Fact]
     public async Task I2_CreateKeepsStagedWork()
     {
         var (vm, gw) = await Loaded();

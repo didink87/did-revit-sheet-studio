@@ -125,7 +125,7 @@ public static class LayerListBuilder
     private static bool IsLocked(SheetSnapshot s, ProjectState state, string disc) =>
         disc == UnknownDiscipline || !s.Editable || state.Locked.Contains(s.UniqueId);
 
-    private static bool Matches(SheetSnapshot s, string filter) =>
+    internal static bool Matches(SheetSnapshot s, string filter) =>
         s.Number.Contains(filter.Trim(), StringComparison.OrdinalIgnoreCase) ||
         s.Title.Contains(filter.Trim(), StringComparison.OrdinalIgnoreCase);
 }

@@ -196,6 +196,36 @@ public sealed class LayersViewModel : ObservableObject
         Rebuild();
     }
 
+    /// <summary>Raised with the sheet id the panel should scroll into view.</summary>
+    public event Action<string>? ScrollIntoViewRequested;
+
+    /// <summary>Makes the given sheets visible: clears a hiding filter, expands their groups, selects them and asks the view to scroll to the first.</summary>
+    public void Reveal(IReadOnlyCollection<string> sheetIds)
+    {
+        var display = _studio.DisplaySheets();
+        var ordered = LayerListBuilder.OrderedSheets(display, _studio.Current.State, _studio.Profile);
+        var wanted = ordered.Where(s => sheetIds.Contains(s.UniqueId)).ToList();
+        if (wanted.Count == 0) return;
+
+        var filtering = _filter.Trim().Length > 0;
+        if (filtering && wanted.Any(s => !LayerListBuilder.Matches(s, _filter)))
+        {
+            _filter = "";
+            Raise(nameof(Filter));
+        }
+        foreach (var s in wanted)
+        {
+            var (disc, type) = LayerListBuilder.GroupOf(s.Number, _studio.Profile);
+            _collapsed.Remove(disc);
+            _collapsed.Remove(type);
+        }
+        Rebuild();
+
+        Selection.Click(wanted[0].UniqueId);
+        foreach (var s in wanted.Skip(1)) Selection.CtrlClick(s.UniqueId);
+        ScrollIntoViewRequested?.Invoke(wanted[0].UniqueId);
+    }
+
     public void RenameInline(string uniqueId, string title)
     {
         var sheet = _studio.Sheets.FirstOrDefault(s => s.UniqueId == uniqueId);

@@ -27,8 +27,25 @@ public partial class LayersPanel : UserControl
     public LayersPanel()
     {
         InitializeComponent();
-        DataContextChanged += (_, _) => BuildMoveTypeMenu();
+        DataContextChanged += OnDataContextChanged;
     }
+
+    private LayersViewModel? _subscribed;
+
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (_subscribed is not null) _subscribed.ScrollIntoViewRequested -= OnScrollIntoView;
+        _subscribed = Layers;
+        if (_subscribed is not null) _subscribed.ScrollIntoViewRequested += OnScrollIntoView;
+        BuildMoveTypeMenu();
+    }
+
+    private void OnScrollIntoView(string key) =>
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            var row = Layers?.Rows.FirstOrDefault(r => r.Key == key);
+            if (row is not null) LayerList.ScrollIntoView(row);
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
 
     private StudioViewModel? Vm => DataContext as StudioViewModel;
     private LayersViewModel? Layers => Vm?.Layers;
