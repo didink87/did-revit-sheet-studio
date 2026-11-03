@@ -1,0 +1,117 @@
+<Window x:Class="SheetStudio.Revit.Ui.BatchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:SheetStudio.Revit.Ui"
+        Title="Sheet Studio — Batch lembar" Width="1180" Height="720" WindowStartupLocation="CenterOwner"
+        FontFamily="Segoe UI" FontSize="12" ShowInTaskbar="False"
+        Background="{DynamicResource SS.Bg}" Foreground="{DynamicResource SS.Fg}">
+    <Window.Resources>
+        <ui:BoolToVisibility x:Key="Vis"/>
+        <CollectionViewSource x:Key="KindsByGroup" Source="{Binding Kinds}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Group"/>
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+    </Window.Resources>
+    <DockPanel Margin="10">
+        <!-- bottom: progress + run -->
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Pratinjau" Padding="10,4" Margin="0,0,6,0" Command="{Binding PreviewCommand}"/>
+                <Button x:Name="RunButton" Content="JALANKAN" Padding="14,4" Margin="0,0,6,0" FontWeight="Bold" Command="{Binding Run}"/>
+                <Button Content="Batal" Padding="10,4" Margin="0,0,6,0" Command="{Binding Cancel}"/>
+                <Button Content="Tutup" Padding="10,4" IsCancel="True"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="{Binding Summary}" FontWeight="SemiBold"/>
+                <DockPanel Visibility="{Binding IsRunning, Converter={StaticResource Vis}}">
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding ProgressText}" Margin="8,0,0,0" MinWidth="220"/>
+                    <ProgressBar Height="12" Value="{Binding ProgressPercent, Mode=OneWay}" Maximum="100"/>
+                </DockPanel>
+            </StackPanel>
+        </DockPanel>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- matrix -->
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="Preset" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox x:Name="PresetBox" Width="190" ItemsSource="{Binding PresetNames}"/>
+                    <Button Content="Muat" Padding="8,2" Margin="6,0,0,0" Click="OnLoadPreset"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,6,0,0">
+                    <TextBlock Text="LEVEL" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
+                    <ItemsControl ItemsSource="{Binding Levels}">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate><CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}" Margin="0,2,10,2"/></DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBlock Text="Kertas" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <ComboBox ItemsSource="{Binding KertasOptions}" SelectedItem="{Binding Kertas}" Width="60"/>
+                        <Button Content="Isi dari matriks ▸" Padding="8,2" Margin="8,0,0,0" Command="{Binding BuildFromMatrix}"/>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Top" Text="JENIS GAMBAR" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
+                <ListBox ItemsSource="{Binding Source={StaticResource KindsByGroup}}" BorderThickness="1" BorderBrush="{DynamicResource SS.Border}">
+                    <ListBox.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontFamily="Consolas" Margin="0,6,0,2" Foreground="{DynamicResource SS.Accent}"/>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListBox.GroupStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate><CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}"/></DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <!-- rows -->
+            <DockPanel Grid.Column="2">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                    <Button Content="Impor CSV…" Padding="8,2" Margin="0,0,6,0" Click="OnImport"/>
+                    <Button Content="Ekspor CSV…" Padding="8,2" Margin="0,0,6,0" Click="OnExport"/>
+                    <Button Content="Kosongkan" Padding="8,2" Command="{Binding Clear}"/>
+                    <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource SS.FgMuted}"
+                               Text="Kolom bisa diedit. JENIS = id jenis (mis. denah) atau kosong untuk judul bebas."/>
+                </StackPanel>
+                <DataGrid x:Name="RowsGrid" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False"
+                          HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" IsReadOnly="True" Width="70"/>
+                        <DataGridTextColumn Header="Nomor" Binding="{Binding PlannedNumber}" IsReadOnly="True" Width="70" FontFamily="Consolas"/>
+                        <DataGridTextColumn Header="Judul (hasil)" Binding="{Binding PlannedTitle}" IsReadOnly="True" Width="2*"/>
+                        <DataGridTextColumn Header="JENIS" Binding="{Binding KindId}" Width="*"/>
+                        <DataGridTextColumn Header="SUBJEK" Binding="{Binding Subjek}" Width="*"/>
+                        <DataGridTextColumn Header="LEVEL" Binding="{Binding LevelName}" Width="*"/>
+                        <DataGridTextColumn Header="NOMOR" Binding="{Binding Nomor}" Width="60"/>
+                        <DataGridTextColumn Header="JUDUL" Binding="{Binding Judul}" Width="*"/>
+                        <DataGridTextColumn Header="SKALA" Binding="{Binding Skala}" Width="50"/>
+                        <DataGridCheckBoxColumn Header="VIEW" Binding="{Binding BuatView}" Width="45"/>
+                        <DataGridTextColumn Header="Pesan" Binding="{Binding Pesan}" IsReadOnly="True" Width="2*"/>
+                    </DataGrid.Columns>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Status}" Value="Galat"><Setter Property="Foreground" Value="{DynamicResource SS.Danger}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="SudahAda"><Setter Property="Foreground" Value="{DynamicResource SS.FgMuted}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Duplikat"><Setter Property="Foreground" Value="{DynamicResource SS.Warn}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Baru"><Setter Property="Foreground" Value="{DynamicResource SS.Ok}"/></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                </DataGrid>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Window>

@@ -160,4 +160,25 @@ public class NamePickerTests
         Assert.Contains(nameof(vm.TitlePreview), raised);
         Assert.Contains(nameof(vm.StatusText), raised);
     }
+
+    [Fact]
+    public void NumberCells_CarrySeqLabelAndState()
+    {
+        var vm = Vm();
+        vm.SelectedKindId = "denah";
+        var cells = vm.NumberCells;
+        Assert.Equal(99, cells.Count);
+        Assert.Equal((10, "10", CellState.Terpakai), (cells[9].Seq, cells[9].Label, cells[9].State));
+        Assert.Equal(CellState.Dipilih, cells.Single(c => c.Seq == 12).State);
+        vm.PickCell.Execute(cells[19].Seq);
+        Assert.Equal(20, vm.ManualSeq);
+    }
+
+    [Fact]
+    public void PickTypeLabel_SetsSheetType()
+    {
+        var vm = Vm();
+        vm.PickType.Execute(5);
+        Assert.Equal(5, vm.SheetType);
+    }
 }

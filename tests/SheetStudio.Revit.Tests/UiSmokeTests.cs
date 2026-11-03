@@ -61,4 +61,55 @@ public class UiSmokeTests
         Assert.That(window.Rows.Select(r => r.Lama), Is.EquivalentTo(new[] { "A-110", "A-111" }));
         window.Close();
     }
+
+    private static void Pump(System.Windows.FrameworkElement e)
+    {
+        e.Measure(new System.Windows.Size(1000, 800));
+        e.Arrange(new System.Windows.Rect(0, 0, 1000, 800));
+        e.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() => { }));
+    }
+
+    [Test]
+    public async Task NamePicker_Instantiates_WithProfilePupr()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var create = vm.NewCreateSheet();
+        var picker = new NamePicker { DataContext = create.Picker };
+        Pump(picker);
+        Assert.That(picker.Disciplines.Items.Count, Is.LessThan(21));
+        create.Picker.ShowAllDisciplines = true;
+        Pump(picker);
+        Assert.That(picker.Disciplines.Items.Count, Is.EqualTo(21));
+        Assert.That(picker.NumberGrid.Items.Count, Is.EqualTo(99));
+    }
+
+    [Test]
+    public async Task CreateWindow_ConfirmDisabledWhenInvalid()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var create = vm.NewCreateSheet();
+        var window = new CreateSheetWindow(create);
+        Pump(window);
+        Assert.That(window.CreateButton.IsEnabled, Is.False);
+        create.Picker.SelectedKindId = "denah";
+        create.Picker.Subject = "LANTAI 3";
+        Pump(window);
+        Assert.That(window.CreateButton.IsEnabled, Is.True);
+        window.Close();
+    }
+
+    [Test]
+    public async Task BatchWindow_Instantiates()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var batch = vm.NewBatch();
+        var window = new BatchWindow(batch);
+        batch.LoadPreset("DENAH SEMUA LANTAI");
+        Pump(window);
+        Assert.That(window.RowsGrid.Items.Count, Is.EqualTo(1));
+        window.Close();
+    }
 }

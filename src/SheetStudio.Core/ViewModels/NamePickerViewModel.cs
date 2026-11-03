@@ -12,6 +12,7 @@ public sealed record DisciplineOption(string Code, string NamaId, string NamaEn,
 public sealed record SecondLetterOption(char? Huruf, string Nama, string Keterangan);
 public sealed record KindOption(string? Id, string Nama);
 public sealed record CreateName(SheetId Id, string Title, string? KindId, string Subjek);
+public sealed record NumberCell(int Seq, string Label, CellState State);
 
 /// <summary>Interactive sheet number + title picker: discipline chips, type slider, number map, title builder.</summary>
 public sealed class NamePickerViewModel : ObservableObject
@@ -63,6 +64,7 @@ public sealed class NamePickerViewModel : ObservableObject
         NextDiscipline = new RelayCommand(() => StepDiscipline(+1));
         PrevDiscipline = new RelayCommand(() => StepDiscipline(-1));
         PickCell = new RelayCommand(o => { if (o is int seq) Pick(seq); });
+        PickType = new RelayCommand(o => { if (o is int t) SheetType = t; else if (o is string str && int.TryParse(str, out var d)) SheetType = d; });
         AcceptSuggestions = new RelayCommand(Accept);
     }
 
@@ -168,6 +170,13 @@ public sealed class NamePickerViewModel : ObservableObject
     }
 
     public ICommand PickCell { get; }
+
+    /// <summary>The 10×10 map as bindable cells (01–99).</summary>
+    public IReadOnlyList<NumberCell> NumberCells =>
+        NumberMapCells.Select((state, i) => new NumberCell(i + 1, (i + 1).ToString("00"), state)).ToList();
+
+    /// <summary>Clicking a tick label under the slider.</summary>
+    public ICommand PickType { get; }
 
     // ── Judul ────────────────────────────────────────────────
     public IReadOnlyList<KindOption> KindOptions =>
@@ -307,7 +316,7 @@ public sealed class NamePickerViewModel : ObservableObject
     private void Changed(params string[] extra)
     {
         Raise(extra);
-        Raise(nameof(KindOptions), nameof(EffectiveSeq), nameof(NumberMapCells), nameof(NumberPreview), nameof(TitlePreview),
+        Raise(nameof(KindOptions), nameof(EffectiveSeq), nameof(NumberMapCells), nameof(NumberCells), nameof(NumberPreview), nameof(TitlePreview),
             nameof(Hints), nameof(Status), nameof(StatusText), nameof(CanConfirm), nameof(Result));
     }
 }
