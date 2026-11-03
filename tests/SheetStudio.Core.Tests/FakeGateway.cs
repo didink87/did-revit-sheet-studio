@@ -63,7 +63,15 @@ internal sealed class FakeGateway : IStudioGateway
     public Task OpenSheetAsync(string uniqueId) => Task.CompletedTask;
     public byte[]? Thumb { get; set; }
     public int ThumbCalls { get; private set; }
-    public Task<byte[]?> ThumbnailAsync(string uniqueId) { ThumbCalls++; return Task.FromResult(Thumb); }
+    public TaskCompletionSource? ThumbGate { get; set; }
+    public List<string> ThumbRequests { get; } = [];
+    public async Task<byte[]?> ThumbnailAsync(string uniqueId)
+    {
+        ThumbCalls++;
+        ThumbRequests.Add(uniqueId);
+        if (ThumbGate is { } gate) await gate.Task;
+        return Thumb;
+    }
 
     public Prefs? SavedPrefs { get; private set; }
     public Task SaveAsync(Prefs? prefs, ProjectState? state, bool userLevel)

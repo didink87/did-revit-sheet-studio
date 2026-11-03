@@ -12,7 +12,8 @@ public class PreferencesTests
         var d = Prefs.Default;
         Assert.Equal(("pupr", Strategy.Rentang, 1, 1, Kertas.A3), (d.ProfileId, d.Strategy, d.Mulai, d.Langkah, d.KertasDefault));
         Assert.Equal("PUPR_KOP_A2", d.TitleBlockPerKertas[Kertas.A2]);
-        Assert.True(d.Thumbnail && d.KonfirmasiTerapkan && d.BatchLewatiGagal);
+        Assert.False(d.Thumbnail);
+        Assert.True(d.KonfirmasiTerapkan && d.BatchLewatiGagal);
     }
 
     [Fact]

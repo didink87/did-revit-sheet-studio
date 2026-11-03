@@ -19,7 +19,7 @@ public sealed record Prefs(
 {
     public static Prefs Default { get; } = new("pupr", Strategy.Rentang, 1, 1,
         new Dictionary<Kertas, string> { [Kertas.A3] = "PUPR_KOP_A3", [Kertas.A2] = "PUPR_KOP_A2", [Kertas.A1] = "PUPR_KOP_A1" },
-        Kertas.A3, true, true, true);
+        Kertas.A3, false, true, true);
 
     public NumberingOptions Numbering => new(Strategy, Mulai, Langkah);
 }

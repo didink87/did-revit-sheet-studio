@@ -188,6 +188,27 @@ public class CreateTests
         finally { doc.Close(false); }
     }
 
+    [Test]
+    public void Thumbnail_RenumberKeepsCache(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var tb = LoadTitleBlock(app, doc, "A3");
+            var s = Sheet(doc, "A-110", "DENAH", tb);
+            var dir = NewTempDir();
+            ThumbnailService.Render(doc, s.UniqueId, dir);
+            var before = Directory.GetFiles(dir, "*.png").Length;
+
+            Tx(doc, () => s.SheetNumber = "A-120");
+            var bytes = ThumbnailService.Render(doc, s.UniqueId, dir);
+
+            Assert.That(bytes, Is.Not.Null);
+            Assert.That(Directory.GetFiles(dir, "*.png").Length, Is.EqualTo(before));
+        }
+        finally { doc.Close(false); }
+    }
+
     private sealed class SyncProgress(List<(int, int, string)> steps) : IProgress<(int, int, string)>
     {
         public void Report((int, int, string) value) => steps.Add(value);

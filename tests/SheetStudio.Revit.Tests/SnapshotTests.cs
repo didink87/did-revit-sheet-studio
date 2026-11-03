@@ -26,6 +26,39 @@ public class SnapshotTests
     }
 
     [Test]
+    public void Snapshot_TitleBlockPerSheet_FromSingleCollector(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var a3 = LoadTitleBlock(app, doc, "A3");
+            var a2 = LoadTitleBlock(app, doc, "A2");
+            Sheet(doc, "A-110", "DENAH", a3);
+            Sheet(doc, "A-111", "TAMPAK", a2);
+            Sheet(doc, "G-001", "DAFTAR GAMBAR");
+
+            var snap = SnapshotReader.Read(doc, Prefs.Default, ProjectState.Empty);
+
+            Assert.That(snap.Sheets.Single(x => x.Number == "A-110").TitleBlockType, Is.EqualTo("PUPR_KOP_A3"));
+            Assert.That(snap.Sheets.Single(x => x.Number == "A-111").TitleBlockType, Is.EqualTo("PUPR_KOP_A2"));
+            Assert.That(snap.Sheets.Single(x => x.Number == "G-001").TitleBlockType, Is.Empty);
+        }
+        finally { doc.Close(false); }
+    }
+
+    [Test]
+    public void Gateway_LoadPrefs_EqualsLoadPrefs(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            Assert.That(PreferencesStore.Serialize(RevitStudioGateway.LoadPrefs(doc)),
+                Is.EqualTo(PreferencesStore.Serialize(RevitStudioGateway.Load(doc).Prefs)));
+        }
+        finally { doc.Close(false); }
+    }
+
+    [Test]
     public void Snapshot_ReadsSheetsAndParams(Application app)
     {
         var doc = NewDoc(app);

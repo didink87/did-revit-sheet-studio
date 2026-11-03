@@ -186,14 +186,35 @@ public partial class LayersPanel : UserControl
     }
 
     // ── thumbnails ──────────────────────────────────────────────
+    private System.Windows.Threading.DispatcherTimer? _thumbTimer;
+
+    /// <summary>Debounced (250 ms): scrolling fast must not queue an export per row that flew past.</summary>
     private void OnScrollChanged(object sender, ScrollChangedEventArgs e)
     {
         if (Vm is null || !Vm.Snapshot.Prefs.Thumbnail) return;
-        var visible = new List<string>();
-        foreach (var item in Layers!.Rows)
+        if (_thumbTimer is null)
         {
-            if (item.Kind != RowKind.Lembar || item.Thumbnail is not null) continue;
-            if (LayerList.ItemContainerGenerator.ContainerFromItem(item) is ListBoxItem { IsVisible: true }) visible.Add(item.Key);
+            _thumbTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+            _thumbTimer.Tick += (_, _) => { _thumbTimer.Stop(); RequestVisibleThumbnails(); };
+        }
+        _thumbTimer.Stop();
+        _thumbTimer.Start();
+    }
+
+    /// <summary>Only realized containers inside the viewport; never loops all rows.</summary>
+    private void RequestVisibleThumbnails()
+    {
+        if (Vm is null || Layers is null || !Vm.Snapshot.Prefs.Thumbnail) return;
+        var sv = FindChild<ScrollViewer>(LayerList);
+        var panel = FindChild<VirtualizingStackPanel>(LayerList);
+        if (sv is null || panel is null) return;
+        var viewport = new Rect(0, 0, sv.ViewportWidth > 0 ? sv.ViewportWidth : sv.ActualWidth, sv.ActualHeight);
+        var visible = new List<string>();
+        foreach (var child in panel.Children)
+        {
+            if (child is not ListBoxItem { IsVisible: true, DataContext: LayerRowViewModel { Kind: RowKind.Lembar, Thumbnail: null } row } item) continue;
+            var bounds = item.TransformToAncestor(sv).TransformBounds(new Rect(0, 0, item.ActualWidth, item.ActualHeight));
+            if (bounds.IntersectsWith(viewport)) visible.Add(row.Key);
         }
         if (visible.Count > 0) _ = Layers.LoadThumbnailsAsync(visible);
     }

@@ -101,6 +101,7 @@ public sealed class StudioViewModel : ObservableObject
     public async Task LoadAsync()
     {
         IsStale = false; // before the await: a change arriving during the load must stay stale
+        Layers.ResetThumbnailRequests();
         try { ApplyFresh(await _gateway.LoadAsync()); }
         catch { IsStale = true; throw; }
     }
@@ -283,6 +284,7 @@ public sealed class StudioViewModel : ObservableObject
     private async Task ReloadRoundAsync(string? statusIfOk)
     {
         IsStale = false; // before the await: a change arriving during the load must stay stale
+        Layers.ResetThumbnailRequests();
         StudioSnapshot fresh;
         try { fresh = await _gateway.LoadAsync(); }
         catch { IsStale = true; throw; }

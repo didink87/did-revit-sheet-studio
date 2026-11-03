@@ -24,11 +24,19 @@ public sealed partial class RevitStudioGateway(IDocumentRunner runner, Func<stri
     {
         using var _ = StudioLog.Time("load");
         var (prefsJson, stateJson) = StorageAdapter.Read(doc);
-        var userJson = File.Exists(UserPrefsPath) ? File.ReadAllText(UserPrefsPath) : null;
-        var prefs = PreferencesStore.Merge(Prefs.Default, userJson, prefsJson);
+        var prefs = MergePrefs(prefsJson);
         var snapshot = SnapshotReader.Read(doc, prefs, ProjectStateJson.Deserialize(stateJson));
         StudioLog.Write("load", $"{snapshot.Sheets.Count} lembar");
         return snapshot;
+    }
+
+    /// <summary>Preferences only (defaults &lt; user file &lt; project storage): no sheet scan.</summary>
+    public static Prefs LoadPrefs(Document doc) => MergePrefs(StorageAdapter.Read(doc).Preferensi);
+
+    private static Prefs MergePrefs(string? projectPrefsJson)
+    {
+        var userJson = File.Exists(UserPrefsPath) ? File.ReadAllText(UserPrefsPath) : null;
+        return PreferencesStore.Merge(Prefs.Default, userJson, projectPrefsJson);
     }
 
     public async Task<ApplyReport> ApplyAsync(ApplyPlan plan)

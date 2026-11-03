@@ -20,6 +20,7 @@ public sealed class LayersViewModel : ObservableObject
     private readonly Dictionary<string, byte[]> _thumbs = [];
     private readonly Dictionary<string, (bool Ok, string? Reason)> _dropCache = [];
     private readonly HashSet<string> _thumbRequested = [];
+    private int _thumbGeneration;
 
     internal LayersViewModel(StudioViewModel studio)
     {
@@ -86,20 +87,25 @@ public sealed class LayersViewModel : ObservableObject
 
     public void CancelRename(LayerRowViewModel row) => row.IsEditing = false;
 
-    /// <summary>Loads missing previews for the given (visible) keys; cached per sheet version.</summary>
+    /// <summary>Loads missing previews for the given (visible) keys, cached per sheet. A newer call supersedes
+    /// an older one: the older loop stops before requesting its next key.</summary>
     public async Task LoadThumbnailsAsync(IEnumerable<string> keys)
     {
+        var generation = ++_thumbGeneration;
         var byId = _studio.Sheets.ToDictionary(s => s.UniqueId);
         foreach (var key in keys.Where(byId.ContainsKey).ToList())
         {
-            var cacheKey = key + "|" + byId[key].Versi;
-            if (!_thumbRequested.Add(cacheKey)) continue;
+            if (generation != _thumbGeneration) return;
+            if (!_thumbRequested.Add(key)) continue;
             var bytes = await _studio.Gateway.ThumbnailAsync(key);
             if (bytes is null) continue;
-            _thumbs[cacheKey] = bytes;
+            _thumbs[key] = bytes;
             foreach (var r in Rows.Where(r => r.Key == key)) r.Thumbnail = bytes;
         }
     }
+
+    /// <summary>Called on every reload: the model may have changed, so previews are asked for again (the gateway cache decides).</summary>
+    internal void ResetThumbnailRequests() => _thumbRequested.Clear();
 
     public SelectionModel Selection { get; } = new();
 
@@ -272,7 +278,7 @@ public sealed class LayersViewModel : ObservableObject
                 vm.BorrowedBy = orig.BorrowedBy;
                 vm.InSheetList = shown[r.Key].InSheetList;
                 vm.IsNew = _studio.NewSheetIds.Contains(r.Key);
-                vm.Thumbnail = _thumbs.GetValueOrDefault(r.Key + "|" + orig.Versi);
+                vm.Thumbnail = _thumbs.GetValueOrDefault(r.Key);
             }
             vm.IsSelected = Selection.IsSelected(r);
             desired.Add(vm);

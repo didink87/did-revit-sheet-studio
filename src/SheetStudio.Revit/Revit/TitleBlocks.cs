@@ -21,6 +21,16 @@ internal static class TitleBlocks
                ?? all.FirstOrDefault(s => s.Name == name);
     }
 
+    /// <summary>One collector for the whole model: first title block instance per owning sheet.</summary>
+    internal static Dictionary<ElementId, FamilyInstance> ByOwner(Document doc)
+    {
+        var result = new Dictionary<ElementId, FamilyInstance>();
+        foreach (var fi in new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_TitleBlocks)
+                     .OfClass(typeof(FamilyInstance)).Cast<FamilyInstance>())
+            result.TryAdd(fi.OwnerViewId, fi);
+        return result;
+    }
+
     public static FamilyInstance? On(ViewSheet sheet) =>
         new FilteredElementCollector(sheet.Document, sheet.Id).OfCategory(BuiltInCategory.OST_TitleBlocks)
             .OfClass(typeof(FamilyInstance)).Cast<FamilyInstance>().FirstOrDefault();

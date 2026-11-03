@@ -14,7 +14,7 @@ public sealed partial class RevitStudioGateway
     public async Task<CreateReport> CreateAsync(IReadOnlyList<CreateRequest> reqs, IProgress<(int Done, int Total, string Title)> progress, CancellationToken ct)
     {
         using var _ = StudioLog.Time("create", $"{reqs.Count} permintaan");
-        var prefs = await runner.Run(doc => Load(doc).Prefs);
+        var prefs = await runner.Run(LoadPrefs);
         var rows = new List<(string Title, bool Ok, string? Pesan, string? UniqueId)>();
         var created = new List<string>();
         var views = new List<string>();
@@ -43,7 +43,7 @@ public sealed partial class RevitStudioGateway
 
     public Task<CreateReport> DuplicateAsync(IReadOnlyList<string> ids, DuplicateMode mode) => runner.Run(doc =>
     {
-        var prefs = Load(doc).Prefs;
+        var prefs = LoadPrefs(doc);
         var profile = ProfileLoader.LoadBuiltIn(ProfileLoader.BuiltInIds.Contains(prefs.ProfileId) ? prefs.ProfileId : "pupr");
         return CreateExecutor.Duplicate(doc, ids, mode, profile, prefs.Numbering);
     });

@@ -13,11 +13,20 @@ public static class ThumbnailService
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SheetStudio", "thumbs", key);
     }
 
+    /// <summary>Cache version: title block type and placed views only, so renumbering or retitling does not re-export.</summary>
+    internal static string Version(ViewSheet sheet)
+    {
+        var tb = new FilteredElementCollector(sheet.Document, sheet.Id).OfCategory(BuiltInCategory.OST_TitleBlocks)
+            .OfClass(typeof(FamilyInstance)).Cast<FamilyInstance>().FirstOrDefault();
+        var key = (tb?.Symbol.Id.Value ?? -1) + "|" + string.Join(",", sheet.GetAllPlacedViews().OrderBy(id => id.Value));
+        return Convert.ToHexString(SHA1.HashData(Encoding.UTF8.GetBytes(key)))[..8];
+    }
+
     public static byte[]? Render(Document doc, string uniqueId, string cacheDir)
     {
         if (doc.GetElement(uniqueId) is not ViewSheet sheet) return null;
         Directory.CreateDirectory(cacheDir);
-        var version = Convert.ToHexString(SHA1.HashData(Encoding.UTF8.GetBytes(sheet.SheetNumber + "|" + sheet.Name)))[..8];
+        var version = Version(sheet);
         var target = Path.Combine(cacheDir, $"{uniqueId}-{version}.png");
         if (File.Exists(target)) return File.ReadAllBytes(target);
 

@@ -22,9 +22,10 @@ public static class SnapshotReader
 
     public static StudioSnapshot Read(Document doc, Prefs prefs, ProjectState state)
     {
+        var titleBlocks = TitleBlocks.ByOwner(doc);
         var sheets = new FilteredElementCollector(doc).OfClass(typeof(ViewSheet)).Cast<ViewSheet>()
             .Where(s => !s.IsPlaceholder)
-            .Select(s => Sheet(doc, s))
+            .Select(s => Sheet(doc, s, titleBlocks))
             .ToList();
 
         var levels = new FilteredElementCollector(doc).OfClass(typeof(Level)).Cast<Level>()
@@ -45,10 +46,10 @@ public static class SnapshotReader
         };
     }
 
-    private static SheetSnapshot Sheet(Document doc, ViewSheet s)
+    private static SheetSnapshot Sheet(Document doc, ViewSheet s, Dictionary<ElementId, FamilyInstance> titleBlocks)
     {
         var (editable, owner) = Ownership(doc, s.Id);
-        var tb = TitleBlocks.On(s);
+        titleBlocks.TryGetValue(s.Id, out var tb);
         return new SheetSnapshot(
             s.UniqueId,
             s.SheetNumber,
