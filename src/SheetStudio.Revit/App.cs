@@ -39,7 +39,7 @@ public sealed class App : IExternalApplication
         application.ViewActivated += (_, e) =>
         {
             if (e.PreviousActiveView?.Document?.Equals(e.Document) == true || !pane.IsVisible) return;
-            pane.Dispatcher.BeginInvoke(async () => await ViewModel.SafeLoadAsync());
+            pane.Dispatcher.BeginInvoke(async () => await ViewModel.OnShownAsync());
         };
         return Result.Succeeded;
     }

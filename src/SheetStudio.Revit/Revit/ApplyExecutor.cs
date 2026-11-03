@@ -14,9 +14,15 @@ public static class ApplyExecutor
 {
     public const string GroupName = "Sheet Studio: Terapkan";
 
+    /// <summary>Commits a transaction. Replaceable in tests to simulate a commit that Revit rolls back.</summary>
+    internal static Func<Transaction, TransactionStatus> CommitFn = t => t.Commit();
+
     public static ApplyReport Apply(Document doc, ApplyPlan plan)
     {
         var skipped = new List<(string, string)>();
+        if (plan.DocumentKey != SnapshotReader.DocumentKey(doc))
+            return new ApplyReport(0, [("", "Dokumen aktif berbeda dari yang dibaca panel; tidak ada yang diterapkan. Tekan ⟳ lalu ulangi.")]);
+
         var sheets = new Dictionary<string, ViewSheet>();
         foreach (var (uid, versi) in plan.ExpectedVersi)
         {
@@ -31,14 +37,28 @@ public static class ApplyExecutor
         using var group = new TransactionGroup(doc, GroupName);
         group.Start();
 
-        var steps = plan.Renumber.Where(r => sheets.ContainsKey(r.UniqueId)).ToList();
-        using (var t = new Transaction(doc, "Sheet Studio: Nomor sementara"))
+        ApplyReport Abort(string why)
         {
-            t.Start();
-            foreach (var r in steps) sheets[r.UniqueId].SheetNumber = r.Temp;
-            t.Commit();
+            if (group.GetStatus() == TransactionStatus.Started) group.RollBack();
+            return new ApplyReport(0, skipped.Concat(plan.ExpectedVersi.Keys.Where(sheets.ContainsKey).Select(id => (id, why))).ToList());
         }
 
+        // 1. deletions first (they free their numbers), then temporary numbers
+        var deletes = plan.Deletes.Where(sheets.ContainsKey).ToList();
+        var steps = plan.Renumber.Where(r => sheets.ContainsKey(r.UniqueId)).ToList();
+        using (var t = new Transaction(doc, "Sheet Studio: Hapus & nomor sementara"))
+        {
+            t.Start();
+            foreach (var uid in deletes)
+            {
+                doc.Delete(sheets[uid].Id);
+                applied.Add(uid);
+            }
+            foreach (var r in steps) sheets[r.UniqueId].SheetNumber = r.Temp;
+            if (CommitFn(t) != TransactionStatus.Committed) return Abort("Revit membatalkan transaksi (hapus/nomor sementara); tidak ada yang diterapkan");
+        }
+
+        // 2. final numbers and edits
         using (var t = new Transaction(doc, "Sheet Studio: Terapkan perubahan lembar"))
         {
             t.Start();
@@ -48,31 +68,30 @@ public static class ApplyExecutor
                 catch (Autodesk.Revit.Exceptions.ArgumentException)
                 {
                     t.RollBack();
-                    group.RollBack();
-                    var msg = $"Nomor {r.Final} sudah dipakai lembar lain di luar rencana; tidak ada yang diterapkan";
-                    return new ApplyReport(0, skipped.Concat(plan.ExpectedVersi.Keys.Where(sheets.ContainsKey).Select(id => (id, msg))).ToList());
+                    return Abort($"Nomor {r.Final} sudah dipakai lembar lain di luar rencana; tidak ada yang diterapkan");
                 }
             }
 
-            foreach (var e in plan.Edits.Where(e => sheets.ContainsKey(e.UniqueId)))
+            foreach (var e in plan.Edits.Where(e => sheets.ContainsKey(e.UniqueId) && !deletes.Contains(e.UniqueId)))
             {
-                var problem = ApplyEdit(doc, sheets[e.UniqueId], e);
+                string? problem;
+                try { problem = ApplyEdit(doc, sheets[e.UniqueId], e); }
+                catch (Exception ex) when (ex is Autodesk.Revit.Exceptions.ApplicationException or InvalidOperationException)
+                {
+                    problem = $"Lembar {sheets[e.UniqueId].SheetNumber}: {ex.Message}";
+                }
                 if (problem is null) applied.Add(e.UniqueId); else skipped.Add((e.UniqueId, problem));
             }
-
-            foreach (var uid in plan.Deletes.Where(sheets.ContainsKey))
-            {
-                doc.Delete(sheets[uid].Id);
-                applied.Add(uid);
-            }
-            t.Commit();
+            // a commit Revit rolls back (e.g. a failure posted at commit) must not leave temporary numbers behind
+            if (CommitFn(t) != TransactionStatus.Committed) return Abort("Revit membatalkan transaksi saat menerapkan; tidak ada yang diterapkan");
         }
 
+        // 3. panel state
         using (var t = new Transaction(doc, "Sheet Studio: Simpan urutan lembar"))
         {
             t.Start();
             StorageAdapter.Write(doc, null, ProjectStateJson.Serialize(plan.NewState));
-            t.Commit();
+            if (CommitFn(t) != TransactionStatus.Committed) return Abort("Revit membatalkan penyimpanan urutan; tidak ada yang diterapkan");
         }
 
         group.Assimilate();

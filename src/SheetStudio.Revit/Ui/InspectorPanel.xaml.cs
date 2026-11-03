@@ -28,11 +28,13 @@ public partial class InspectorPanel : UserControl
 
     private void OnTitleKey(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter) Vm?.ApplyTitle.Execute(null);
+        if (e.Key == Key.Enter) { Vm?.ApplyTitle.Execute(null); e.Handled = true; }
+        else if (e.Key == Key.Escape) e.Handled = true;
     }
 
     private void OnParamKey(object sender, KeyEventArgs e)
     {
+        if (e.Key is Key.Enter or Key.Escape) e.Handled = true;
         if (e.Key == Key.Enter && (sender as FrameworkElement)?.DataContext is ParamField f) Vm?.ApplyParam.Execute(f);
     }
 

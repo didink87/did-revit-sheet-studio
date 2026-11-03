@@ -21,7 +21,10 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
     /// <summary>"Rapikan semua nomor": renumber every group, not only the ones the user touched.</summary>
     public bool NormalizeAll { get; init; }
 
-    public int PendingCount => Changes.Keys.Union(Touched).Union(Relocked).Count() + (NormalizeAll ? 1 : 0);
+    /// <summary>The discipline groups were dragged into a new order.</summary>
+    public bool DisciplineOrderChanged { get; init; }
+
+    public int PendingCount => Changes.Keys.Union(Touched).Union(Relocked).Count() + (NormalizeAll ? 1 : 0) + (DisciplineOrderChanged ? 1 : 0);
 
     /// <summary>Groups whose numbers must be recomputed: source and target groups of moved, regrouped,
     /// manually numbered or deleted sheets. Null = all groups.</summary>
@@ -82,7 +85,9 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
 
         var byId = sheets.ToDictionary(s => s.UniqueId);
         var panel = PanelOrder(sheets, p);
-        movable = movable.OrderBy(id => panel.IndexOf(id)).ToList();
+        var panelIndex = Index(panel);
+        movable = movable.OrderBy(id => panelIndex[id]).ToList();
+        var movableSet = movable.ToHashSet();
 
         var changes = Changes.ToDictionary(kv => kv.Key, kv => kv.Value);
         var order = State.OrderPerGroup.ToDictionary(kv => kv.Key, kv => kv.Value);
@@ -100,10 +105,10 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
 
         // Insertion index counts moved items that sit above it in the target group.
         var targetList = targetGroup.Contains('|') ? GroupOrder(targetGroup, sheets, p).ToList() : [];
-        var adjusted = targetIndex - targetList.Take(Math.Max(0, targetIndex)).Count(movable.Contains);
+        var adjusted = targetIndex - targetList.Take(Math.Max(0, targetIndex)).Count(movableSet.Contains);
 
         foreach (var src in groupsBefore.Distinct()) // remove all moved sheets from their source groups
-            order[src] = GroupOrder(src, sheets, p).Where(x => !movable.Contains(x)).ToList();
+            order[src] = GroupOrder(src, sheets, p).Where(x => !movableSet.Contains(x)).ToList();
         for (var i = 0; i < movable.Count; i++) // regroup
         {
             var id = movable[i];
@@ -122,7 +127,7 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
         var staged = this with { Changes = changes, State = State with { OrderPerGroup = order } };
         foreach (var grp in targets.Distinct())
         {
-            var members = staged.GroupOrder(grp, sheets, p).Where(x => !movable.Contains(x)).ToList();
+            var members = staged.GroupOrder(grp, sheets, p).Where(x => !movableSet.Contains(x)).ToList();
             var incoming = movable.Where((_, i) => targets[i] == grp).ToList();
             var at = targetGroup.Contains('|') ? Math.Clamp(adjusted, 0, members.Count) : members.Count;
             members.InsertRange(at, incoming);
@@ -130,8 +135,8 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
         }
 
         var next = staged with { State = State with { OrderPerGroup = order } };
-        var changedPos = movable.Where((id, i) => groupsBefore[i] != targets[i] ||
-                                                   next.PanelOrder(sheets, p).IndexOf(id) != panel.IndexOf(id)).ToList();
+        var nextIndex = Index(next.PanelOrder(sheets, p));
+        var changedPos = movable.Where((id, i) => groupsBefore[i] != targets[i] || nextIndex[id] != panelIndex[id]).ToList();
         if (changedPos.Count == 0 && changes.Count == Changes.Count) return new OpResult(this, pesan);
         return new OpResult(next with { Touched = Touched.Union(movable).ToHashSet() }, pesan);
     }
@@ -173,7 +178,7 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
         current.Insert(Math.Clamp(targetIndex, 0, current.Count), disc);
         var ranks = current.Select(d => p.FindDiscipline(d)?.Order ?? 99).ToList();
         var inUdsOrder = ranks.Zip(ranks.Skip(1)).All(x => x.First <= x.Second);
-        var next = this with { State = State with { DisciplineOrder = current } };
+        var next = this with { State = State with { DisciplineOrder = current }, DisciplineOrderChanged = true };
         return new OpResult(next, inUdsOrder ? null : "Urutan disiplin tidak sesuai urutan UDS");
     }
 
@@ -212,6 +217,13 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
     /// <summary>All sheet ids in panel order.</summary>
     public List<string> PanelOrder(IReadOnlyList<SheetSnapshot> sheets, NamingProfile p) =>
         LayerListBuilder.OrderedSheets(EffectiveSheets(sheets, p), State, p).Select(s => s.UniqueId).ToList();
+
+    private static Dictionary<string, int> Index(List<string> ids)
+    {
+        var d = new Dictionary<string, int>(ids.Count);
+        for (var i = 0; i < ids.Count; i++) d[ids[i]] = i;
+        return d;
+    }
 
     private (List<string> Movable, int Locked) SplitMovable(IReadOnlyList<string> ids, IReadOnlyList<SheetSnapshot> sheets, NamingProfile p)
     {

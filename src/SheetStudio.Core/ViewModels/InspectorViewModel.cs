@@ -50,7 +50,7 @@ public sealed class InspectorViewModel : ObservableObject
         Uppercase = new RelayCommand(() => Push(BulkEdit.Uppercase(_studio.Current, _sel)), HasSelection);
         AcceptSuggestions = new RelayCommand(() => Push(BulkEdit.ApplySuggestions(_studio.Current, _sel, _studio.Profile)), HasSelection);
         ApplyParam = new RelayCommand(o => { if (o is ParamField f) Push(BulkEdit.SetParam(_studio.Current, _sel, f.Name, f.Value)); });
-        Duplicate = new RelayCommand(async o => await DuplicateAsync(o is DuplicateMode m ? m : DuplicateMode.LembarSaja), _ => HasSelection());
+        Duplicate = new AsyncRelayCommand(o => DuplicateAsync(o is DuplicateMode m ? m : DuplicateMode.LembarSaja), _ => HasSelection(), _studio.ReportError);
         Delete = new RelayCommand(() => _studio.Layers.MarkDeleteKeys(_sel.Select(s => s.UniqueId).ToList()), HasSelection);
         EditNumber = new RelayCommand(() =>
         {
@@ -186,8 +186,9 @@ public sealed class InspectorViewModel : ObservableObject
             Raise(nameof(SelectedCount), nameof(HasSelectionValue), nameof(IsSeqEnabled), nameof(Discipline), nameof(SheetType),
                 nameof(ManualSeq), nameof(TypeDescription), nameof(TitleIsMixed), nameof(TitleDisplay), nameof(Title), nameof(TitleBlockType),
                 nameof(TitleBlockTypes), nameof(InSheetList), nameof(DisciplineCodes));
-            foreach (var c in new[] { ApplyTitle, ApplyFindReplace, ApplyPrefixSuffix, Uppercase, AcceptSuggestions, Duplicate, Delete, EditNumber }.OfType<RelayCommand>())
+            foreach (var c in new[] { ApplyTitle, ApplyFindReplace, ApplyPrefixSuffix, Uppercase, AcceptSuggestions, Delete, EditNumber }.OfType<RelayCommand>())
                 c.RaiseCanExecuteChanged();
+            (Duplicate as AsyncRelayCommand)?.RaiseCanExecuteChanged();
         }
         finally { _refreshing = false; }
     }

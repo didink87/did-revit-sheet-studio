@@ -38,7 +38,7 @@ public static class SnapshotReader
             .OrderBy(v => v.Name)
             .ToList();
 
-        return new StudioSnapshot(sheets, state, prefs, levels, TitleBlocks.All(doc).Select(TitleBlocks.Display).ToList(), views);
+        return new StudioSnapshot(DocumentKey(doc), sheets, state, prefs, levels, TitleBlocks.All(doc).Select(TitleBlocks.Display).ToList(), views);
     }
 
     private static SheetSnapshot Sheet(Document doc, ViewSheet s)
@@ -72,6 +72,9 @@ public static class SnapshotReader
         }
         return result;
     }
+
+    /// <summary>Identity of a document for "is this still the one the panel read?": path, or title when unsaved.</summary>
+    public static string DocumentKey(Document doc) => doc.PathName is { Length: > 0 } p ? p : "tanpa-file:" + doc.Title;
 
     internal static (bool Editable, string? Owner) Ownership(Document doc, ElementId id)
     {

@@ -167,7 +167,7 @@ public class CreateTests
         {
             LoadTitleBlock(app, doc, "A3");
             var report = CreateExecutor.Create(doc, [Req("A-110", "DENAH 1")], Prefs.Default, true, null, CancellationToken.None);
-            CreateExecutor.DeleteCreated(doc, report.Rows.Select(r => r.UniqueId!).ToList());
+            CreateExecutor.DeleteCreated(doc, report.Rows.Select(r => r.UniqueId!).ToList(), report.CreatedViews);
             Assert.That(SheetCount(doc), Is.EqualTo(0));
         }
         finally { doc.Close(false); }
@@ -196,5 +196,24 @@ public class CreateTests
     private sealed class CancelAfterFirst(CancellationTokenSource cts) : IProgress<(int, int, string)>
     {
         public void Report((int, int, string) value) => cts.Cancel();
+    }
+
+    [Test]
+    public void DeleteCreated_AlsoRemovesCreatedViews(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            LoadTitleBlock(app, doc, "A3");
+            int Plans() => new FilteredElementCollector(doc).OfClass(typeof(ViewPlan)).Cast<ViewPlan>().Count(v => !v.IsTemplate);
+            var before = Plans();
+            var spec = new ViewSpec(ViewMode.BuatBaru, null, "Denah", LevelName(doc), 100, null);
+            var report = CreateExecutor.Create(doc, [Req("A-110", "DENAH 1", "denah", null, spec)], Prefs.Default, true, null, CancellationToken.None);
+            Assert.That(report.CreatedViews, Has.Count.EqualTo(1));
+            Assert.That(Plans(), Is.EqualTo(before + 1));
+            CreateExecutor.DeleteCreated(doc, report.Rows.Select(r => r.UniqueId!).ToList(), report.CreatedViews);
+            Assert.That(Plans(), Is.EqualTo(before));
+        }
+        finally { doc.Close(false); }
     }
 }

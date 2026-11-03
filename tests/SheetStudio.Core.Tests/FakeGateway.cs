@@ -19,17 +19,20 @@ internal sealed class FakeGateway : IStudioGateway
     public void RaiseModelChanged() => ModelChanged?.Invoke();
 
     public string? LoadError { get; set; }
+    public string DocumentKey { get; set; } = "doc1";
+    public string? ApplyError { get; set; }
 
     public Task<StudioSnapshot> LoadAsync()
     {
         Loads++;
         if (LoadError is not null) return Task.FromException<StudioSnapshot>(new InvalidOperationException(LoadError));
-        return Task.FromResult(new StudioSnapshot(Sheets.ToList(), State, Prefs, [("Lantai 1", 0), ("Lantai 2", 4), ("Lantai 3", 8)],
+        return Task.FromResult(new StudioSnapshot(DocumentKey, Sheets.ToList(), State, Prefs, [("Lantai 1", 0), ("Lantai 2", 4), ("Lantai 3", 8)],
             ["PUPR_KOP_A3", "PUPR_KOP_A2"], [new ViewInfo("v1", "DENAH LANTAI 1", "Denah", false), new ViewInfo("v2", "TAMPAK", "Tampak", true)]));
     }
 
     public Task<ApplyReport> ApplyAsync(ApplyPlan plan)
     {
+        if (ApplyError is not null) return Task.FromException<ApplyReport>(new Exception(ApplyError));
         Applied.Add(plan);
         State = plan.NewState;
         return Task.FromResult(new ApplyReport(plan.Renumber.Count + plan.Edits.Count + plan.Deletes.Count, []));

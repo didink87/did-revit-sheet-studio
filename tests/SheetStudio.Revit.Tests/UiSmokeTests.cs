@@ -24,7 +24,7 @@ public class UiSmokeTests
             new(id, n, t, k, "", true, true, null, n + "|" + t, new Dictionary<string, string> { ["Drawn By"] = "" }, "PUPR_KOP_A3");
 
         public event Action? ModelChanged { add { } remove { } }
-        public Task<StudioSnapshot> LoadAsync() => Task.FromResult(new StudioSnapshot(Sheets, ProjectState.Empty,
+        public Task<StudioSnapshot> LoadAsync() => Task.FromResult(new StudioSnapshot("doc1", Sheets, ProjectState.Empty,
             Prefs.Default with { KonfirmasiTerapkan = false, Thumbnail = false }, [("Lantai 1", 0)], ["PUPR_KOP_A3"], []));
         public Task<ApplyReport> ApplyAsync(ApplyPlan plan) => Task.FromResult(new ApplyReport(0, []));
         public Task<CreateReport> CreateAsync(IReadOnlyList<CreateRequest> reqs, IProgress<(int Done, int Total, string Title)> progress, CancellationToken ct) =>

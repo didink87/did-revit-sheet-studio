@@ -37,7 +37,7 @@ public sealed class ModelWatcher : IDisposable
 
     private void OnChanged(object? sender, DocumentChangedEventArgs e)
     {
-        if (e.GetTransactionNames().Any(n => n.StartsWith("Sheet Studio", StringComparison.Ordinal))) return;
+        if (ShouldIgnore(e.GetTransactionNames(), e.Operation)) return;
         var doc = e.GetDocument();
         var key = doc.PathName is { Length: > 0 } p ? p : doc.Title;
         if (!_knownSheets.TryGetValue(key, out var known))
@@ -55,6 +55,11 @@ public sealed class ModelWatcher : IDisposable
     }
 
     private void Raise() => Changed?.Invoke();
+
+    /// <summary>Our own commits are already reflected by the panel; Revit Undo/Redo of them is not.</summary>
+    public static bool ShouldIgnore(IEnumerable<string> transactionNames, UndoOperation operation) =>
+        operation == UndoOperation.TransactionCommitted &&
+        transactionNames.Any(n => n.StartsWith("Sheet Studio", StringComparison.Ordinal));
 
     public void Dispose()
     {

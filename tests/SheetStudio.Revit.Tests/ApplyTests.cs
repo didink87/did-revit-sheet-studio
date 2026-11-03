@@ -23,7 +23,7 @@ public class ApplyTests
         var e = (edits ?? []).ToList();
         var d = (deletes ?? []).Select(s => s.UniqueId).ToList();
         var ids = steps.Select(s => s.UniqueId).Concat(e.Select(x => x.UniqueId)).Concat(d).Distinct();
-        return new ApplyPlan(steps, e, d, ids.ToDictionary(id => id, id => versi[id]), state ?? ProjectState.Empty);
+        return new ApplyPlan(snap.DocumentKey, steps, e, d, ids.ToDictionary(id => id, id => versi[id]), state ?? ProjectState.Empty);
     }
 
     [Test]
@@ -154,6 +154,67 @@ public class ApplyTests
             var back = ProjectStateJson.Deserialize(StorageAdapter.Read(doc).StatusUrutan);
             Assert.That(back.OrderPerGroup["A|1"], Is.EqualTo(new[] { a.UniqueId }));
             Assert.That(back.Locked, Does.Contain(a.UniqueId));
+        }
+        finally { doc.Close(false); }
+    }
+
+    // ── final-review fixes ──────────────────────────────────────
+    [Test]
+    public void Apply_DeleteFirstOfThree_RenumbersOthers(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var a = Sheet(doc, "A-110", "DENAH 1");
+            var b = Sheet(doc, "A-111", "DENAH 2");
+            var c = Sheet(doc, "A-112", "DENAH 3");
+            var bId = b.UniqueId;
+            var report = ApplyExecutor.Apply(doc, Plan(doc, [(b, "A-110"), (c, "A-111")], deletes: [a]));
+            Assert.That(report.Skipped, Is.Empty, string.Join("; ", report.Skipped.Select(x => x.Pesan)));
+            Assert.That((((ViewSheet)doc.GetElement(bId)).SheetNumber, c.SheetNumber), Is.EqualTo(("A-110", "A-111")));
+        }
+        finally { doc.Close(false); }
+    }
+
+    [Test]
+    public void Apply_CommitRolledBack_LeavesNoTempNumbers(Application app)
+    {
+        var doc = NewDoc(app);
+        var original = ApplyExecutor.CommitFn;
+        try
+        {
+            var a = Sheet(doc, "A-110", "DENAH 1");
+            var b = Sheet(doc, "A-111", "DENAH 2");
+            var calls = 0;
+            ApplyExecutor.CommitFn = t => ++calls == 2 ? Rollback(t) : t.Commit(); // 2nd transaction "fails at commit"
+            var report = ApplyExecutor.Apply(doc, Plan(doc, [(a, "A-111"), (b, "A-110")]));
+            Assert.That(report.Applied, Is.EqualTo(0));
+            Assert.That(report.Skipped, Is.Not.Empty);
+            Assert.That((a.SheetNumber, b.SheetNumber), Is.EqualTo(("A-110", "A-111")));
+        }
+        finally
+        {
+            ApplyExecutor.CommitFn = original;
+            doc.Close(false);
+        }
+
+        static TransactionStatus Rollback(Transaction t) { t.RollBack(); return TransactionStatus.RolledBack; }
+    }
+
+    [Test]
+    public void Apply_WrongDocument_SkipsAll_AndKeepsStoredState(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var a = Sheet(doc, "A-110", "DENAH 1");
+            Tx(doc, () => StorageAdapter.Write(doc, null, "{\"keep\":1}"));
+            var plan = Plan(doc, [(a, "A-111")]) with { DocumentKey = "dokumen-lain" };
+            var report = ApplyExecutor.Apply(doc, plan);
+            Assert.That(report.Applied, Is.EqualTo(0));
+            Assert.That(report.Skipped.Single().Pesan, Does.Contain("Dokumen aktif berbeda"));
+            Assert.That(a.SheetNumber, Is.EqualTo("A-110"));
+            Assert.That(StorageAdapter.Read(doc).StatusUrutan, Is.EqualTo("{\"keep\":1}"));
         }
         finally { doc.Close(false); }
     }

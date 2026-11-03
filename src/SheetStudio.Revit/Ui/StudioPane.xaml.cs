@@ -24,7 +24,7 @@ public partial class StudioPane : UserControl, IDockablePaneProvider
         InspectorHost.Content = new InspectorPanel { DataContext = vm.Inspector };
         vm.PreferencesRequested += prefs => new PreferencesWindow(prefs) { Owner = Window.GetWindow(this) }.ShowDialog();
         vm.Inspector.EditNumberRequested += picker => new EditNumberWindow(picker, vm.Inspector) { Owner = Window.GetWindow(this) }.ShowDialog();
-        IsVisibleChanged += async (_, e) => { if (e.NewValue is true && vm.Sheets.Count == 0) await vm.SafeLoadAsync(); };
+        IsVisibleChanged += async (_, e) => { if (e.NewValue is true) await vm.OnShownAsync(); };
     }
 
     public StudioViewModel ViewModel { get; }

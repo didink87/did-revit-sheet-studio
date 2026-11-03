@@ -65,7 +65,7 @@ public sealed class BatchViewModel : ObservableObject
         Levels = new(studio.Snapshot.Levels.OrderBy(l => l.Elevation).Select(l => new Choice(l.Name, l.Name, "")));
         BuildFromMatrix = new RelayCommand(BuildMatrix);
         PreviewCommand = new RelayCommand(Preview, () => !_isRunning);
-        Run = new RelayCommand(async () => await RunAsync(), () => !_isRunning && _plan.Any(p => p.Status == PlanStatus.Baru));
+        Run = new AsyncRelayCommand(RunAsync, () => !_isRunning && _plan.Any(p => p.Status == PlanStatus.Baru), studio.ReportError);
         Cancel = new RelayCommand(() => _cts?.Cancel(), () => _isRunning);
         Clear = new RelayCommand(() => { Rows.Clear(); _plan = []; RaiseCommands(); });
     }
@@ -165,7 +165,8 @@ public sealed class BatchViewModel : ObservableObject
 
     private void RaiseCommands()
     {
-        foreach (var c in new[] { PreviewCommand, Run, Cancel }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
+        foreach (var c in new[] { PreviewCommand, Cancel }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
+        (Run as AsyncRelayCommand)?.RaiseCanExecuteChanged();
     }
 
     private static string GroupLabel(string disc, int type) => disc.Length == 1 ? $"{disc}-{type}" : $"{disc}{type}";

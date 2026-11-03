@@ -17,6 +17,7 @@ public sealed class LayersViewModel : ObservableObject
     private IReadOnlyList<LayerRow> _allRows = [];
     private string _filter = "";
     private readonly Dictionary<string, byte[]> _thumbs = [];
+    private readonly Dictionary<string, (bool Ok, string? Reason)> _dropCache = [];
     private readonly HashSet<string> _thumbRequested = [];
 
     internal LayersViewModel(StudioViewModel studio)
@@ -33,7 +34,7 @@ public sealed class LayersViewModel : ObservableObject
         BeginRename = new RelayCommand(StartRename, () => SingleSelectedSheet() is not null);
         ToggleLockSelected = new RelayCommand(() => _studio.Push(_studio.Current.ToggleLock(SelectedSheetIds())), () => SelectedSheetIds().Count > 0);
         ToggleEyeSelected = new RelayCommand(() => ToggleEyeIds(SelectedSheetIds()), () => SelectedSheetIds().Count > 0);
-        OpenSelected = new RelayCommand(async () => { if (SingleSelectedSheet() is { } id) await OpenAsync(id); }, () => SingleSelectedSheet() is not null);
+        OpenSelected = new AsyncRelayCommand(() => SingleSelectedSheet() is { } id ? OpenAsync(id) : Task.CompletedTask, () => SingleSelectedSheet() is not null, studio.ReportError);
     }
 
     public ICommand BeginRename { get; }
@@ -137,16 +138,25 @@ public sealed class LayersViewModel : ObservableObject
             reason = discIndex < 0 ? "Grup disiplin hanya bisa dilepas di grup disiplin lain" : null;
             return discIndex >= 0;
         }
+        var cacheKey = string.Join(",", keys) + "|" + targetKey + "|" + pos;
+        if (_dropCache.TryGetValue(cacheKey, out var cached)) { reason = cached.Reason; return cached.Ok; }
+        var ok = Decide(keys, targetKey, pos, out reason);
+        _dropCache[cacheKey] = (ok, reason);
+        return ok;
+    }
+
+    /// <summary>One MoveSelection + one Compute per candidate drop. Only errors the drop would add count —
+    /// a group that already had a warning still accepts a plain reorder.</summary>
+    private bool Decide(IReadOnlyList<string> keys, string targetKey, DropPosition pos, out string? reason)
+    {
         var (group, index) = Target(targetKey, pos);
         if (group is null) { reason = "Tidak bisa dilepas di sini"; return false; }
         var ids = Expand(keys);
         var r = _studio.Current.MoveSelection(ids, group, index, _studio.Sheets, _studio.Profile);
-        if (ReferenceEquals(r.Next, _studio.Current) && r.Pesan is not null) { reason = r.Pesan; return false; }
-        if (!Sequencer.CanAccept(ids, group, _studio.Sheets, _studio.Current, _studio.Profile, _studio.Numbering, out var why))
-        {
-            reason = why;
-            return false;
-        }
+        if (ReferenceEquals(r.Next, _studio.Current)) { reason = r.Pesan; return r.Pesan is null; }
+        var before = _studio.Outcome.Errors.ToHashSet();
+        var added = Sequencer.Compute(_studio.Sheets, r.Next, _studio.Profile, _studio.Numbering).Errors.Where(e => !before.Contains(e)).ToList();
+        if (added.Count > 0) { reason = added[0]; return false; }
         reason = r.Pesan;
         return true;
     }
@@ -206,6 +216,7 @@ public sealed class LayersViewModel : ObservableObject
 
     internal void Rebuild()
     {
+        _dropCache.Clear();
         var display = _studio.DisplaySheets();
         var state = _studio.Current.State;
         _allRows = LayerListBuilder.Build(display, state, _studio.Profile, new HashSet<string>(), _filter);
@@ -257,7 +268,8 @@ public sealed class LayersViewModel : ObservableObject
     {
         foreach (var r in _rows) r.IsSelected = Selection.IsSelected(r.Row);
         _studio.Inspector.Refresh();
-        foreach (var c in new[] { BeginRename, ToggleLockSelected, ToggleEyeSelected, OpenSelected }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
+        foreach (var c in new[] { BeginRename, ToggleLockSelected, ToggleEyeSelected }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
+        (OpenSelected as AsyncRelayCommand)?.RaiseCanExecuteChanged();
     }
 
     private IReadOnlyList<string> Expand(IReadOnlyList<string> keys)

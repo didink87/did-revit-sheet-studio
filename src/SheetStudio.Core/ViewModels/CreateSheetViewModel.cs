@@ -35,7 +35,7 @@ public sealed class CreateSheetViewModel : ObservableObject
             }
             RaiseCan();
         };
-        Create = new RelayCommand(async () => await CreateAsync(), CanCreate);
+        Create = new AsyncRelayCommand(CreateAsync, CanCreate, studio.ReportError);
     }
 
     public NamePickerViewModel Picker { get; }
@@ -133,5 +133,5 @@ public sealed class CreateSheetViewModel : ObservableObject
     private string? DefaultTitleBlock() =>
         _studio.Snapshot.Prefs.TitleBlockPerKertas.TryGetValue(_kertas, out var tb) ? tb : _studio.Snapshot.TitleBlockTypes.FirstOrDefault();
 
-    private void RaiseCan() => (Create as RelayCommand)?.RaiseCanExecuteChanged();
+    private void RaiseCan() => (Create as AsyncRelayCommand)?.RaiseCanExecuteChanged();
 }

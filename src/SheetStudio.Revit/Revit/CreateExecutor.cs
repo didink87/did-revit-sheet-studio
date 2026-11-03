@@ -18,6 +18,7 @@ public static class CreateExecutor
         IProgress<(int, int, string)>? progress, CancellationToken ct)
     {
         var rows = new List<(string Title, bool Ok, string? Pesan, string? UniqueId)>();
+        var createdViews = new List<string>();
         using var group = new TransactionGroup(doc, GroupName);
         group.Start();
         using (var t = new Transaction(doc, "Sheet Studio: Parameter"))
@@ -40,8 +41,9 @@ public static class CreateExecutor
                 t.Start();
                 try
                 {
-                    var (sheet, warning) = CreateOne(doc, req, prefs);
+                    var (sheet, warning, views) = CreateOne(doc, req, prefs);
                     t.Commit();
+                    createdViews.AddRange(views);
                     rows.Add((req.Name.Title, true, warning, sheet.UniqueId));
                 }
                 catch (Exception ex) when (ex is Autodesk.Revit.Exceptions.ApplicationException or InvalidOperationException or ArgumentException)
@@ -58,10 +60,10 @@ public static class CreateExecutor
             progress?.Report((i + 1, reqs.Count, req.Name.Title));
         }
         group.Assimilate();
-        return new CreateReport(rows, false);
+        return new CreateReport(rows, false, createdViews);
     }
 
-    private static (ViewSheet Sheet, string? Warning) CreateOne(Document doc, CreateRequest req, Prefs prefs)
+    private static (ViewSheet Sheet, string? Warning, IReadOnlyList<string> NewViews) CreateOne(Document doc, CreateRequest req, Prefs prefs)
     {
         var warnings = new List<string>();
         var tbName = req.TitleBlockType ?? prefs.TitleBlockPerKertas.GetValueOrDefault(req.Kertas);
@@ -75,6 +77,7 @@ public static class CreateExecutor
         sheet.LookupParameter(SnapshotReader.SubjectParam)?.Set(req.Name.Subjek);
 
         var views = new List<View>();
+        var newViews = new List<string>();
         foreach (var spec in req.Views)
         {
             string? w = null;
@@ -86,10 +89,11 @@ public static class CreateExecutor
             };
             if (w is not null) warnings.Add(w);
             if (view is not null) views.Add(view);
+            if (view is not null && spec.Mode == ViewMode.BuatBaru) newViews.Add(view.UniqueId);
         }
         ViewportPlacer.Place(doc, sheet, views, out var fits);
         if (!fits) warnings.Add("View tidak muat di area gambar; atur skala atau ukuran kertas");
-        return (sheet, warnings.Count == 0 ? null : string.Join("; ", warnings));
+        return (sheet, warnings.Count == 0 ? null : string.Join("; ", warnings), newViews);
     }
 
     private static View? ExistingView(Document doc, ViewSheet sheet, string? uid, out string? warning)
@@ -140,13 +144,15 @@ public static class CreateExecutor
         return new CreateReport(rows, false);
     }
 
-    /// <summary>Removes sheets created earlier in a cancelled or failed batch.</summary>
-    public static void DeleteCreated(Document doc, IReadOnlyList<string> uniqueIds)
+    /// <summary>Removes sheets (and the views made for them) created earlier in a cancelled or failed batch.</summary>
+    public static void DeleteCreated(Document doc, IReadOnlyList<string> sheetIds, IReadOnlyList<string>? viewIds = null)
     {
         using var t = new Transaction(doc, "Sheet Studio: Batalkan pembuatan");
         t.Start();
-        foreach (var uid in uniqueIds)
+        foreach (var uid in sheetIds)
             if (doc.GetElement(uid) is ViewSheet s) doc.Delete(s.Id);
+        foreach (var uid in viewIds ?? [])
+            if (doc.GetElement(uid) is View v && v.IsValidObject) doc.Delete(v.Id);
         t.Commit();
     }
 

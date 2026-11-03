@@ -13,6 +13,17 @@ public static class BulkEdit
     public static string EffectiveTitle(ChangeSet cs, SheetSnapshot s) =>
         cs.Changes.TryGetValue(s.UniqueId, out var c) && c.NewTitle is not null ? c.NewTitle : s.Title;
 
+    /// <summary>Titles Revit would reject (prohibited characters) are not staged; their messages go to <see cref="LastRejected"/>.</summary>
+    [ThreadStatic] private static List<string>? _rejected;
+
+    /// <summary>Returns and clears the titles refused by the last title edit.</summary>
+    public static IReadOnlyList<string> TakeRejected()
+    {
+        var r = _rejected ?? [];
+        _rejected = null;
+        return r;
+    }
+
     public static ChangeSet SetTitle(ChangeSet cs, IReadOnlyList<SheetSnapshot> sel, string title) =>
         MapTitles(cs, sel, _ => title);
 
@@ -60,11 +71,17 @@ public static class BulkEdit
 
     private static ChangeSet MapTitles(ChangeSet cs, IReadOnlyList<SheetSnapshot> sel, Func<string, string> map)
     {
+        _rejected = [];
         foreach (var s in sel)
         {
             var current = EffectiveTitle(cs, s);
             var next = TitleRules.Normalize(map(current));
             if (next.Length == 0 || next == current) continue;
+            if (next.Any(c => TitleRules.Prohibited.Contains(c)))
+            {
+                _rejected.Add($"{s.Number}: judul memuat karakter terlarang Revit ({string.Join(" ", next.Where(c => TitleRules.Prohibited.Contains(c)).Distinct())})");
+                continue;
+            }
             cs = cs.Upsert(new SheetChange(s.UniqueId, NewTitle: next == s.Title ? null : next)).Next;
             if (next == s.Title && cs.Changes.TryGetValue(s.UniqueId, out var c)) // back to original title
             {

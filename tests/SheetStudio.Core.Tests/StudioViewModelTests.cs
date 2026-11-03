@@ -240,4 +240,103 @@ public class StudioViewModelTests
         Assert.True(vm.IsStrategyUrut);
         Assert.Contains("PUPR_KOP_A3", prefs.TitleBlockTypes);
     }
+
+    // ── final-review fixes ──────────────────────────────────────
+    [Fact]
+    public async Task C3_ApplyGatewayThrows_StatusNotCrash()
+    {
+        var (vm, gw) = await Loaded();
+        vm.Layers.RenameInline("T1", "TAMPAK BARU");
+        gw.ApplyError = "Revit menolak";
+        await ((AsyncRelayCommand)vm.Apply).ExecuteAsync(null);
+        Assert.Contains("Revit menolak", vm.Status);
+        Assert.Equal(1, vm.PendingCount);
+    }
+
+    [Fact]
+    public async Task C3_ProhibitedTitle_NotStaged_AndApplyBlockedOnGalat()
+    {
+        var (vm, _) = await Loaded();
+        vm.Layers.RenameInline("T1", "DETAIL 1: TANGGA");
+        Assert.Equal(0, vm.PendingCount);
+        Assert.Contains("karakter terlarang", vm.Status);
+        // a full group (sequencer error) blocks Apply
+        vm.Push(vm.Current.Upsert(new SheetChange("L1", ManualSeq: 11)).Next);
+        vm.Push(vm.Current.ToggleLock(["L2"]).Next);
+        Assert.NotEmpty(vm.Outcome.Errors);
+        Assert.False(vm.Apply.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task I2_CreateKeepsStagedWork()
+    {
+        var (vm, gw) = await Loaded();
+        vm.Layers.RenameInline("T1", "TAMPAK BARU");
+        gw.Sheets.Add(S("N1", "A-112", "DENAH LANTAI 3", kind: "denah"));
+        await vm.AfterCreateAsync(new CreateReport([("DENAH LANTAI 3", true, null, "N1")], false));
+        Assert.Equal("TAMPAK BARU", Row(vm, "T1").Label);
+        Assert.True(Row(vm, "N1").IsNew);
+    }
+
+    [Fact]
+    public async Task I3_ExpectedVersiIsTheVersionWhenStaged()
+    {
+        var (vm, gw) = await Loaded();
+        vm.Layers.RenameInline("T1", "TAMPAK BARU");
+        var i = gw.Sheets.FindIndex(s => s.UniqueId == "T1");
+        gw.Sheets[i] = gw.Sheets[i] with { Number = "A-299", Versi = "A-299|TAMPAK DEPAN" }; // edited by hand in Revit
+        await vm.OnModelChangedAsync();
+        Assert.Equal("A-201|TAMPAK DEPAN", vm.BuildPlan().ExpectedVersi["T1"]);
+    }
+
+    [Fact]
+    public async Task I4_DocumentSwitch_WithPendingWork_KeepsItForTheOriginalDocument()
+    {
+        var (vm, gw) = await Loaded();
+        vm.Layers.RenameInline("T1", "TAMPAK BARU");
+        gw.DocumentKey = "doc2";
+        gw.Sheets.Clear(); // e.g. a family document is active now
+        await vm.OnShownAsync();
+        Assert.Equal(1, vm.PendingCount);
+        Assert.Contains("dokumen lain", vm.Status);
+        Assert.Equal("doc1", vm.BuildPlan().DocumentKey); // Apply would be refused by Revit-side check in doc2
+        Assert.Equal("TAMPAK BARU", Row(vm, "T1").Label);
+    }
+
+    [Fact]
+    public async Task I4_DocumentSwitch_WithoutPendingWork_LoadsNewDocument()
+    {
+        var (vm, gw) = await Loaded();
+        gw.DocumentKey = "doc2";
+        gw.Sheets.RemoveAll(s => s.UniqueId == "T1");
+        await vm.OnShownAsync();
+        Assert.Equal("doc2", vm.Snapshot.DocumentKey);
+        Assert.DoesNotContain(vm.Layers.Rows, r => r.Key == "T1");
+        Assert.Contains("Dokumen aktif berganti", vm.Status);
+    }
+
+    [Fact]
+    public async Task I6_DisciplineReorderIsPending()
+    {
+        var (vm, gw) = await Loaded();
+        gw.Sheets.Add(S("G1", "G-001", "DAFTAR GAMBAR"));
+        await vm.LoadAsync();
+        vm.Layers.Drop(["A"], "G", DropPosition.Ke);
+        Assert.Equal(1, vm.PendingCount);
+        Assert.True(vm.Apply.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task I5_DragOverLargeSelection_IsFast()
+    {
+        var gw = new FakeGateway { Sheets = Enumerable.Range(0, 1000).Select(i => S($"s{i}", $"{"GSAEP"[i % 5]}-{1 + i % 9}{1 + i / 50:00}")).ToList() };
+        var vm = new StudioViewModel(gw);
+        await vm.LoadAsync();
+        var keys = vm.Layers.Rows.Where(r => r.Kind == Layers.RowKind.Lembar).Take(200).Select(r => r.Key).ToList();
+        var target = vm.Layers.Rows.Where(r => r.Kind == Layers.RowKind.Lembar).Skip(500).First().Key;
+        vm.Layers.Evaluate(keys, target, 0.2); // warm-up
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        for (var i = 0; i < 5; i++) vm.Layers.Evaluate(keys, target, 0.2);
+        Assert.True(sw.ElapsedMilliseconds / 5 < 150, $"{sw.ElapsedMilliseconds / 5} ms per drag-over");
+    }
 }

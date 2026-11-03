@@ -15,8 +15,8 @@ public sealed class PreferencesViewModel : ObservableObject
     {
         _studio = studio;
         _p = current;
-        SaveProject = new RelayCommand(async () => await _studio.SavePrefsAsync(_p, userLevel: false));
-        SaveUser = new RelayCommand(async () => await _studio.SavePrefsAsync(_p, userLevel: true));
+        SaveProject = new AsyncRelayCommand(() => _studio.SavePrefsAsync(_p, userLevel: false), null, _studio.ReportError);
+        SaveUser = new AsyncRelayCommand(() => _studio.SavePrefsAsync(_p, userLevel: true), null, _studio.ReportError);
         ResetToDefault = new RelayCommand(() => { _p = Prefs.Default; Raise(string.Empty); });
     }
 

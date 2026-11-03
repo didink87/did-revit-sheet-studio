@@ -8,7 +8,9 @@ namespace SheetStudio.Core.ViewModels;
 
 public sealed record ViewInfo(string UniqueId, string Name, string Jenis, bool OnSheet);
 
+/// <param name="DocumentKey">Identity of the document the snapshot came from (path or title); Apply refuses another document.</param>
 public sealed record StudioSnapshot(
+    string DocumentKey,
     IReadOnlyList<SheetSnapshot> Sheets,
     ProjectState State,
     Prefs Prefs,
@@ -17,6 +19,7 @@ public sealed record StudioSnapshot(
     IReadOnlyList<ViewInfo> Views);
 
 public sealed record ApplyPlan(
+    string DocumentKey,
     IReadOnlyList<RenumberStep> Renumber,
     IReadOnlyList<SheetChange> Edits,
     IReadOnlyList<string> Deletes,
@@ -27,7 +30,9 @@ public sealed record ApplyReport(int Applied, IReadOnlyList<(string UniqueId, st
 
 public enum DuplicateMode { LembarSaja, DenganView, DenganViewDetailing }
 
-public sealed record CreateReport(IReadOnlyList<(string Title, bool Ok, string? Pesan, string? UniqueId)> Rows, bool Dibatalkan);
+/// <param name="CreatedViews">UniqueIds of views made for the new sheets, so a cancelled batch can remove them too.</param>
+public sealed record CreateReport(IReadOnlyList<(string Title, bool Ok, string? Pesan, string? UniqueId)> Rows, bool Dibatalkan,
+    IReadOnlyList<string>? CreatedViews = null);
 
 /// <summary>Everything the view models need from Revit. Implemented in SheetStudio.Revit via ExternalEvent.</summary>
 public interface IStudioGateway

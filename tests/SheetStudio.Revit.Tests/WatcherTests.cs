@@ -40,4 +40,13 @@ public class WatcherTests
         }
         finally { doc.Close(false); }
     }
+
+    [Test]
+    public void Watcher_UndoOfOwnTransaction_IsNotIgnored()
+    {
+        Assert.That(ModelWatcher.ShouldIgnore(["Sheet Studio: Terapkan"], Autodesk.Revit.DB.Events.UndoOperation.TransactionCommitted), Is.True);
+        Assert.That(ModelWatcher.ShouldIgnore(["Sheet Studio: Terapkan"], Autodesk.Revit.DB.Events.UndoOperation.TransactionUndone), Is.False);
+        Assert.That(ModelWatcher.ShouldIgnore(["Sheet Studio: Terapkan"], Autodesk.Revit.DB.Events.UndoOperation.TransactionRedone), Is.False);
+        Assert.That(ModelWatcher.ShouldIgnore(["Edit"], Autodesk.Revit.DB.Events.UndoOperation.TransactionCommitted), Is.False);
+    }
 }

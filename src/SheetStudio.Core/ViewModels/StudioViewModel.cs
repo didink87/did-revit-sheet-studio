@@ -19,6 +19,7 @@ public sealed class StudioViewModel : ObservableObject
     private readonly UndoStack _undo = new();
     private string _status = "";
     private bool _busy;
+    private readonly Dictionary<string, string> _baseVersi = [];
 
     public StudioViewModel(IStudioGateway gateway)
     {
@@ -27,9 +28,9 @@ public sealed class StudioViewModel : ObservableObject
         Inspector = new InspectorViewModel(this);
         Undo = new RelayCommand(() => Restore(_undo.Undo()), () => _undo.CanUndo);
         Redo = new RelayCommand(() => Restore(_undo.Redo()), () => _undo.CanRedo);
-        Apply = new RelayCommand(async () => await ApplyAsync(), () => !Current.IsEmpty && !_busy);
+        Apply = new AsyncRelayCommand(() => ApplyAsync(), () => !Current.IsEmpty && !_busy && !HasBlockingErrors, ReportError);
         Discard = new RelayCommand(DiscardAll, () => !Current.IsEmpty);
-        Refresh = new RelayCommand(async () => await SafeLoadAsync());
+        Refresh = new AsyncRelayCommand(SafeLoadAsync, null, ReportError);
         NewSheet = new RelayCommand(() => CreateRequested?.Invoke(NewCreateSheet()));
         Batch = new RelayCommand(() => BatchRequested?.Invoke(NewBatch()));
         NormalizeNumbers = new RelayCommand(() => Push(Current with { NormalizeAll = true }, "Semua nomor dirapikan sesuai urutan (belum diterapkan)"));
@@ -37,7 +38,7 @@ public sealed class StudioViewModel : ObservableObject
         _gateway.ModelChanged += async () =>
         {
             try { await OnModelChangedAsync(); }
-            catch (InvalidOperationException ex) { Status = ex.Message; }
+            catch (Exception ex) { ReportError(ex); }
         };
     }
 
@@ -45,7 +46,7 @@ public sealed class StudioViewModel : ObservableObject
     public InspectorViewModel Inspector { get; }
 
     public StudioSnapshot Snapshot { get; private set; } =
-        new([], ProjectState.Empty, Prefs.Default, [], [], []);
+        new("", [], ProjectState.Empty, Prefs.Default, [], [], []);
 
     public NamingProfile Profile { get; private set; } = ProfileLoader.LoadBuiltIn("pupr");
     public NumberingOptions Numbering => Snapshot.Prefs.Numbering;
@@ -75,6 +76,11 @@ public sealed class StudioViewModel : ObservableObject
 
     public int PendingCount => Current.PendingCount;
 
+    /// <summary>Sequencer errors (full range, taken manual number) or a title Revit would reject: Apply stays disabled.</summary>
+    public bool HasBlockingErrors { get; private set; }
+
+    public void ReportError(Exception ex) => Status = "Galat: " + ex.Message;
+
     public string Status
     {
         get => _status;
@@ -97,6 +103,7 @@ public sealed class StudioViewModel : ObservableObject
             : ProfileLoader.LoadBuiltIn("pupr");
         Current = ChangeSet.Start(Snapshot.State);
         _undo.Reset(Current);
+        _baseVersi.Clear();
         Recompute();
         Raise(nameof(Snapshot), nameof(Profile), nameof(IsStrategyUrut));
     }
@@ -105,7 +112,7 @@ public sealed class StudioViewModel : ObservableObject
     public async Task SafeLoadAsync()
     {
         try { await LoadAsync(); }
-        catch (Exception ex) when (ex is InvalidOperationException or OperationCanceledException) { Status = ex.Message; }
+        catch (Exception ex) { Status = ex.Message; }
     }
 
     /// <summary>Applies a staged operation result: pushes it on the undo stack and refreshes everything.</summary>
@@ -113,13 +120,24 @@ public sealed class StudioViewModel : ObservableObject
 
     public void Push(ChangeSet next, string? pesan = null)
     {
+        var rejected = Edit.BulkEdit.TakeRejected();
         if (!ReferenceEquals(next, Current))
         {
             Current = next;
             _undo.Push(next);
+            RememberBaseVersions();
             Recompute();
         }
-        Status = pesan ?? StatusFromOutcome();
+        Status = rejected.Count > 0 ? string.Join("; ", rejected) : pesan ?? StatusFromOutcome();
+    }
+
+    /// <summary>The version a sheet had when the user first staged something on it; Apply skips it if Revit's copy
+    /// changed since then, even after a refresh replaced the snapshot.</summary>
+    private void RememberBaseVersions()
+    {
+        var byId = Sheets.ToDictionary(s => s.UniqueId, s => s.Versi);
+        foreach (var id in Current.Changes.Keys.Concat(Current.Touched).Concat(Current.Relocked))
+            if (!_baseVersi.ContainsKey(id) && byId.TryGetValue(id, out var v)) _baseVersi[id] = v;
     }
 
     public async Task<bool> ApplyAsync()
@@ -152,32 +170,61 @@ public sealed class StudioViewModel : ObservableObject
             .Where(c => !c.Delete && (c.NewTitle is not null || c.InSheetList is not null || c.NewTitleBlockType is not null || c.NewParams is { Count: > 0 }))
             .ToList();
         var deletes = Current.Changes.Values.Where(c => c.Delete).Select(c => c.UniqueId).ToList();
+        var deleteSet = deletes.ToHashSet();
         var ids = renumber.Select(r => r.UniqueId).Concat(edits.Select(e => e.UniqueId)).Concat(deletes).Distinct();
-        var expected = ids.Where(byId.ContainsKey).ToDictionary(id => id, id => byId[id].Versi);
+        var expected = ids.Where(byId.ContainsKey).ToDictionary(id => id, id => _baseVersi.GetValueOrDefault(id, byId[id].Versi));
 
         // Persist the full panel order under the final group keys.
         var display = LayerListBuilder.OrderedSheets(DisplaySheets(), Current.State, Profile);
-        var order = display.Where(s => !deletes.Contains(s.UniqueId))
+        var order = display.Where(s => !deleteSet.Contains(s.UniqueId))
             .GroupBy(s => LayerListBuilder.GroupOf(s.Number, Profile).Type)
             .Where(g => g.Key != LayerListBuilder.UnknownType)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.Select(s => s.UniqueId).ToList());
         var state = Current.State with
         {
             OrderPerGroup = order,
-            Locked = Current.State.Locked.Where(id => !deletes.Contains(id)).ToHashSet(),
+            Locked = Current.State.Locked.Where(id => !deleteSet.Contains(id)).ToHashSet(),
         };
-        return new ApplyPlan(renumber, edits, deletes, expected, state);
+        return new ApplyPlan(Snapshot.DocumentKey, renumber, edits, deletes, expected, state);
     }
 
-    public async Task OnModelChangedAsync()
+    public Task OnModelChangedAsync() => ReloadKeepingChangesAsync();
+
+    /// <summary>Pane shown / view activated: first load, or reload keeping staged work (document switch aware).</summary>
+    public async Task OnShownAsync()
+    {
+        try
+        {
+            if (Snapshot.DocumentKey.Length == 0) await LoadAsync();
+            else await ReloadKeepingChangesAsync();
+        }
+        catch (Exception ex) { Status = ex.Message; }
+    }
+
+    /// <summary>Re-reads the model but keeps staged work (rebased). A different active document resets everything.</summary>
+    private async Task ReloadKeepingChangesAsync(string? statusIfOk = null)
     {
         var pending = Current;
-        Snapshot = await _gateway.LoadAsync();
+        var fresh = await _gateway.LoadAsync();
+        if (fresh.DocumentKey != Snapshot.DocumentKey)
+        {
+            if (pending.PendingCount > 0)
+            {
+                // Keep the staged work for its own document; Apply is refused elsewhere (Revit-side document check).
+                Status = $"{pending.PendingCount} perubahan tertunda milik dokumen lain — kembali ke dokumen itu untuk menerapkan, atau Buang";
+                return;
+            }
+            await LoadAsync();
+            Status = "Dokumen aktif berganti";
+            return;
+        }
+        Snapshot = fresh;
         var (next, dropped) = Rebase.Onto(pending, Snapshot.Sheets, Profile);
         Current = next;
+        foreach (var id in dropped) _baseVersi.Remove(id);
         _undo.Reset(Current);
         Recompute();
-        if (dropped.Count > 0) Status = $"{dropped.Count} perubahan dibuang karena lembarnya berubah atau terhapus di model";
+        Status = dropped.Count > 0 ? $"{dropped.Count} perubahan dibuang karena lembarnya terhapus di model" : statusIfOk ?? Status;
     }
 
     public CreateSheetViewModel NewCreateSheet() => new(this);
@@ -187,10 +234,9 @@ public sealed class StudioViewModel : ObservableObject
     public async Task AfterCreateAsync(CreateReport report)
     {
         foreach (var r in report.Rows) if (r.UniqueId is not null) NewSheetIds.Add(r.UniqueId);
-        await LoadAsync();
         var ok = report.Rows.Count(r => r.Ok);
-        Status = report.Dibatalkan ? "Pembuatan dibatalkan; model dikembalikan" : $"{ok} lembar dibuat" +
-            (report.Rows.Count > ok ? $", {report.Rows.Count - ok} gagal" : "");
+        await ReloadKeepingChangesAsync(report.Dibatalkan ? "Pembuatan dibatalkan; model dikembalikan" : $"{ok} lembar dibuat" +
+            (report.Rows.Count > ok ? $", {report.Rows.Count - ok} gagal" : ""));
     }
 
     public async Task SavePrefsAsync(Prefs prefs, bool userLevel)
@@ -226,10 +272,13 @@ public sealed class StudioViewModel : ObservableObject
     private void Recompute()
     {
         Outcome = Sequencer.Compute(Sheets, Current, Profile, Numbering);
+        HasBlockingErrors = Outcome.Errors.Count > 0 ||
+            DisplaySheets().Any(s => Current.Changes.ContainsKey(s.UniqueId) && TitleRules.Check(s.Title, Profile).Severity == Severity.Galat);
         Layers.Rebuild();
         Inspector.Refresh();
-        Raise(nameof(PendingCount), nameof(Current), nameof(Outcome));
-        foreach (var c in new[] { Undo, Redo, Apply, Discard }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
+        Raise(nameof(PendingCount), nameof(Current), nameof(Outcome), nameof(HasBlockingErrors));
+        foreach (var c in new[] { Undo, Redo, Discard }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
+        (Apply as AsyncRelayCommand)?.RaiseCanExecuteChanged();
     }
 
     private void Restore(ChangeSet? state)
@@ -244,6 +293,7 @@ public sealed class StudioViewModel : ObservableObject
     {
         Current = ChangeSet.Start(Snapshot.State);
         _undo.Reset(Current);
+        _baseVersi.Clear();
         Recompute();
         Status = "Perubahan dibuang";
     }

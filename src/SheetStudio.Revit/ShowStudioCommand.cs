@@ -15,7 +15,7 @@ public sealed class ShowStudioCommand : IExternalCommand
         else
         {
             pane.Show();
-            _ = App.ViewModel?.SafeLoadAsync();
+            _ = App.ViewModel?.OnShownAsync();
         }
         return Result.Succeeded;
     }
