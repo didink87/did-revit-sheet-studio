@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using SheetStudio.Core.Layers;
 using SheetStudio.Core.Numbering;
@@ -13,7 +14,7 @@ public sealed class LayersViewModel : ObservableObject
 {
     private readonly StudioViewModel _studio;
     private readonly HashSet<string> _collapsed = [];
-    private IReadOnlyList<LayerRowViewModel> _rows = [];
+    private readonly Dictionary<string, LayerRowViewModel> _vms = [];
     private IReadOnlyList<LayerRow> _allRows = [];
     private string _filter = "";
     private readonly Dictionary<string, byte[]> _thumbs = [];
@@ -57,7 +58,7 @@ public sealed class LayersViewModel : ObservableObject
     public DropEvaluation ShowDropHint(IReadOnlyList<string> keys, string targetKey, double yFraction)
     {
         var e = Evaluate(keys, targetKey, yFraction);
-        foreach (var r in _rows)
+        foreach (var r in Rows)
         {
             if (r.Key != targetKey) { r.DropHint = DropHint.None; r.DropReason = null; continue; }
             r.DropHint = !e.Allowed ? DropHint.Ditolak : e.Pos switch
@@ -73,7 +74,7 @@ public sealed class LayersViewModel : ObservableObject
 
     public void ClearDropHint()
     {
-        foreach (var r in _rows) { r.DropHint = DropHint.None; r.DropReason = null; }
+        foreach (var r in Rows) { r.DropHint = DropHint.None; r.DropReason = null; }
     }
 
     public void CommitRename(LayerRowViewModel row)
@@ -96,17 +97,14 @@ public sealed class LayersViewModel : ObservableObject
             var bytes = await _studio.Gateway.ThumbnailAsync(key);
             if (bytes is null) continue;
             _thumbs[cacheKey] = bytes;
-            foreach (var r in _rows.Where(r => r.Key == key)) r.Thumbnail = bytes;
+            foreach (var r in Rows.Where(r => r.Key == key)) r.Thumbnail = bytes;
         }
     }
 
     public SelectionModel Selection { get; } = new();
 
-    public IReadOnlyList<LayerRowViewModel> Rows
-    {
-        get => _rows;
-        private set => Set(ref _rows, value);
-    }
+    /// <summary>Created once, updated in place by Rebuild.</summary>
+    public ObservableCollection<LayerRowViewModel> Rows { get; } = [];
 
     public string Filter
     {
@@ -250,30 +248,37 @@ public sealed class LayersViewModel : ObservableObject
         var display = _studio.DisplaySheets();
         var state = _studio.Current.State;
         _allRows = LayerListBuilder.Build(display, state, _studio.Profile, new HashSet<string>(), _filter);
-        var visible = LayerListBuilder.Build(display, state, _studio.Profile, _collapsed, _filter);
+        var visible = LayerListBuilder.Collapse(_allRows, _collapsed);
         var byId = _studio.Sheets.ToDictionary(s => s.UniqueId);
         var shown = display.ToDictionary(s => s.UniqueId);
 
-        Rows = visible.Select(r =>
+        var desired = new List<LayerRowViewModel>(visible.Count);
+        var used = new HashSet<string>();
+        foreach (var r in visible)
         {
-            if (r.Kind != RowKind.Lembar) return new LayerRowViewModel(r) { IsSelected = Selection.IsSelected(r) };
-            var orig = byId[r.Key];
-            _studio.Current.Changes.TryGetValue(r.Key, out var c);
-            return new LayerRowViewModel(r)
+            if (!_vms.TryGetValue(r.Key, out var vm)) _vms[r.Key] = vm = new LayerRowViewModel(r);
+            else vm.Row = r;
+            used.Add(r.Key);
+            if (r.Kind == RowKind.Lembar)
             {
-                Number = orig.Number,
-                NewNumber = shown[r.Key].Number,
-                WarningText = _studio.WarningFor(shown[r.Key]),
-                Edited = c is not null && (c.NewTitle is not null || c.NewParams is { Count: > 0 } || c.NewTitleBlockType is not null || c.InSheetList is not null),
-                Deleted = c?.Delete == true,
-                Borrowed = orig.BorrowedBy is not null,
-                BorrowedBy = orig.BorrowedBy,
-                InSheetList = shown[r.Key].InSheetList,
-                IsNew = _studio.NewSheetIds.Contains(r.Key),
-                IsSelected = Selection.IsSelected(r),
-                Thumbnail = _thumbs.GetValueOrDefault(r.Key + "|" + orig.Versi),
-            };
-        }).ToList();
+                var orig = byId[r.Key];
+                _studio.Current.Changes.TryGetValue(r.Key, out var c);
+                vm.Number = orig.Number;
+                vm.NewNumber = shown[r.Key].Number;
+                vm.WarningText = _studio.WarningFor(shown[r.Key]);
+                vm.Edited = c is not null && (c.NewTitle is not null || c.NewParams is { Count: > 0 } || c.NewTitleBlockType is not null || c.InSheetList is not null);
+                vm.Deleted = c?.Delete == true;
+                vm.Borrowed = orig.BorrowedBy is not null;
+                vm.BorrowedBy = orig.BorrowedBy;
+                vm.InSheetList = shown[r.Key].InSheetList;
+                vm.IsNew = _studio.NewSheetIds.Contains(r.Key);
+                vm.Thumbnail = _thumbs.GetValueOrDefault(r.Key + "|" + orig.Versi);
+            }
+            vm.IsSelected = Selection.IsSelected(r);
+            desired.Add(vm);
+        }
+        foreach (var k in _vms.Keys.Where(k => !used.Contains(k)).ToList()) _vms.Remove(k);
+        CollectionSync.Apply(Rows, desired);
     }
 
     private string? SingleSelectedSheet()
@@ -285,8 +290,8 @@ public sealed class LayersViewModel : ObservableObject
     private void StartRename()
     {
         if (SingleSelectedSheet() is not { } id) return;
-        foreach (var r in _rows) r.IsEditing = false;
-        var row = _rows.FirstOrDefault(r => r.Key == id);
+        foreach (var r in Rows) r.IsEditing = false;
+        var row = Rows.FirstOrDefault(r => r.Key == id);
         if (row is null) return;
         row.EditText = row.Label;
         row.IsEditing = true;
@@ -296,7 +301,7 @@ public sealed class LayersViewModel : ObservableObject
 
     private void OnSelectionChanged()
     {
-        foreach (var r in _rows) r.IsSelected = Selection.IsSelected(r.Row);
+        foreach (var r in Rows) r.IsSelected = Selection.IsSelected(r.Row);
         _studio.Inspector.Refresh();
         foreach (var c in new[] { BeginRename, ToggleLockSelected, ToggleEyeSelected }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
         (OpenSelected as AsyncRelayCommand)?.RaiseCanExecuteChanged();

@@ -354,7 +354,11 @@ public sealed class StudioViewModel : ObservableObject
     }
 
     /// <summary>Snapshots as the panel shows them: new numbers, staged titles and visibility.</summary>
-    public IReadOnlyList<SheetSnapshot> DisplaySheets()
+    public IReadOnlyList<SheetSnapshot> DisplaySheets() => _display ??= ComputeDisplay();
+
+    private IReadOnlyList<SheetSnapshot>? _display;
+
+    private IReadOnlyList<SheetSnapshot> ComputeDisplay()
     {
         var numbers = Outcome.Results.ToDictionary(r => r.UniqueId, r => r.NewNumber);
         return Current.EffectiveSheets(Sheets, Profile).Select(s =>
@@ -378,6 +382,7 @@ public sealed class StudioViewModel : ObservableObject
     private void Recompute()
     {
         Outcome = Sequencer.Compute(Sheets, Current, Profile, Numbering);
+        _display = ComputeDisplay();
         HasBlockingErrors = Outcome.Errors.Count > 0 ||
             DisplaySheets().Any(s => Current.Changes.ContainsKey(s.UniqueId) && TitleRules.Check(s.Title, Profile).Severity == Severity.Galat);
         Layers.Rebuild();

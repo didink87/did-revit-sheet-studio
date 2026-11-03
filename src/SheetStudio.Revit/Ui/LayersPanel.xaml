@@ -108,11 +108,11 @@
 
                         <ToggleButton Grid.Column="0" Style="{StaticResource IconToggle}" IsChecked="{Binding InSheetList, Mode=OneWay}"
                                       Click="OnEyeClick" ToolTip="Muncul di daftar gambar">
-                            <TextBlock Text="👁" FontSize="11" Opacity="{Binding InSheetList, Converter={x:Static ui:LayersPanel.EyeOpacity}}"/>
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7B3;" FontSize="11" Opacity="{Binding InSheetList, Converter={x:Static ui:LayersPanel.EyeOpacity}}"/>
                         </ToggleButton>
                         <ToggleButton Grid.Column="1" Style="{StaticResource IconToggle}" IsChecked="{Binding Locked, Mode=OneWay}"
                                       Click="OnLockClick" ToolTip="Kunci: nomor tidak ikut berubah, tidak bisa digeser">
-                            <TextBlock Text="🔒" FontSize="11" Opacity="{Binding Locked, Converter={x:Static ui:LayersPanel.LockOpacity}}"/>
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE72E;" FontSize="11" Opacity="{Binding Locked, Converter={x:Static ui:LayersPanel.LockOpacity}}"/>
                         </ToggleButton>
 
                         <Border Grid.Column="2" x:Name="Body" Margin="{Binding Indent, Converter={StaticResource Indent}}"
@@ -129,13 +129,13 @@
                                 <TextBlock x:Name="Number" DockPanel.Dock="Left" MinWidth="58" Margin="0,0,8,0" VerticalAlignment="Center"
                                            FontFamily="Consolas" Text="{Binding NewNumber}" ToolTip="{Binding NumberTooltip}"/>
                                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="⚠" Foreground="{DynamicResource SS.Warn}" Margin="3,0" ToolTip="{Binding WarningText}"
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7BA;" Foreground="{DynamicResource SS.Warn}" Margin="3,0" ToolTip="{Binding WarningText}"
                                                Visibility="{Binding Warning, Converter={StaticResource Vis}}"/>
-                                    <TextBlock Text="✎" Foreground="{DynamicResource SS.Accent}" Margin="3,0" ToolTip="Judul/parameter diubah (belum diterapkan)"
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;" Foreground="{DynamicResource SS.Accent}" Margin="3,0" ToolTip="Judul/parameter diubah (belum diterapkan)"
                                                Visibility="{Binding Edited, Converter={StaticResource Vis}}"/>
-                                    <TextBlock Text="🔗" Margin="3,0" ToolTip="{Binding BorrowedBy, StringFormat=Dipinjam {0}}"
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE71B;" Margin="3,0" ToolTip="{Binding BorrowedBy, StringFormat=Dipinjam {0}}"
                                                Visibility="{Binding Borrowed, Converter={StaticResource Vis}}"/>
-                                    <TextBlock Text="★" Foreground="{DynamicResource SS.Ok}" Margin="3,0" ToolTip="Baru dibuat di sesi ini"
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE735;" Foreground="{DynamicResource SS.Ok}" Margin="3,0" ToolTip="Baru dibuat di sesi ini"
                                                Visibility="{Binding IsNew, Converter={StaticResource Vis}}"/>
                                     <TextBlock Text="{Binding Count}" Foreground="{DynamicResource SS.FgMuted}" Margin="6,0"
                                                Visibility="{Binding IsGroup, Converter={StaticResource Vis}}"/>

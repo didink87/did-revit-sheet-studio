@@ -382,4 +382,33 @@ public class StudioViewModelTests
         for (var i = 0; i < 5; i++) vm.Layers.Evaluate(keys, target, 0.2);
         Assert.True(sw.ElapsedMilliseconds / 5 < 150, $"{sw.ElapsedMilliseconds / 5} ms per drag-over");
     }
+
+    [Fact]
+    public async Task Rebuild_AfterRename_ReusesRowInstances()
+    {
+        var (vm, _) = await Loaded();
+        var l2 = Row(vm, "L2");
+        vm.Layers.RenameInline("L1", "DENAH BARU");
+        Assert.True(ReferenceEquals(l2, Row(vm, "L2")));
+        Assert.Equal("DENAH BARU", Row(vm, "L1").Label);
+    }
+
+    [Fact]
+    public async Task Push_500Sheets_Under300ms()
+    {
+        var gw = new FakeGateway
+        {
+            Sheets = Enumerable.Range(1, 5).SelectMany(t => Enumerable.Range(1, 99).Select(i => S($"s{t}-{i}", $"A-{t}{i:00}", kind: "denah"))).ToList(),
+        };
+        var vm = new StudioViewModel(gw);
+        await vm.LoadAsync();
+        vm.Layers.Click("s3-50");
+        vm.Layers.MoveDown.Execute(null); // warm-up
+        vm.Layers.MoveUp.Execute(null);
+        vm.Layers.Click("s2-50");
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        vm.Layers.MoveDown.Execute(null);
+        sw.Stop();
+        Assert.True(sw.ElapsedMilliseconds < 300, $"{sw.ElapsedMilliseconds} ms");
+    }
 }

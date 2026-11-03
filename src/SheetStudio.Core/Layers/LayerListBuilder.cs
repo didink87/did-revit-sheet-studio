@@ -45,6 +45,26 @@ public static class LayerListBuilder
         return rows;
     }
 
+    /// <summary>Applies a collapsed set to rows built with nothing collapsed; equals Build(..., collapsed, filter) for the same input.</summary>
+    public static IReadOnlyList<LayerRow> Collapse(IReadOnlyList<LayerRow> all, IReadOnlySet<string> collapsed)
+    {
+        if (collapsed.Count == 0) return all;
+        var rows = new List<LayerRow>(all.Count);
+        var hideBelow = int.MaxValue; // rows deeper than this indent are hidden
+        foreach (var r in all)
+        {
+            if (r.Indent > hideBelow) continue;
+            hideBelow = int.MaxValue;
+            if (r.Kind != RowKind.Lembar && collapsed.Contains(r.Key))
+            {
+                rows.Add(r with { Expanded = false });
+                hideBelow = r.Indent;
+            }
+            else rows.Add(r);
+        }
+        return rows;
+    }
+
     /// <summary>All sheets flattened in panel order (ignores filter and collapse).</summary>
     public static IReadOnlyList<SheetSnapshot> OrderedSheets(IReadOnlyList<SheetSnapshot> sheets, ProjectState state, NamingProfile p) =>
         Group(sheets, state, p).SelectMany(d => d.Types).SelectMany(t => t.Sheets).ToList();

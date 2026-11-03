@@ -89,4 +89,16 @@ public class LayerListTests
         Assert.Equal(1000, rows.Count(r => r.Kind == RowKind.Lembar));
         Assert.True(sw.ElapsedMilliseconds < 100, $"{sw.ElapsedMilliseconds} ms");
     }
+
+    [Fact]
+    public void Collapse_EqualsBuildWithCollapsed()
+    {
+        var sheets = new[] { S("1", "A-111"), S("2", "A-112"), S("3", "A-201"), S("4", "S-101"), S("5", "A-221") };
+        foreach (var c in new[] { new string[0], ["A"], ["A|1"], ["A", "A|2"] })
+        {
+            var set = new HashSet<string>(c);
+            Assert.Equal(LayerListBuilder.Build(sheets, State(), Profiles.Pupr, set, null),
+                LayerListBuilder.Collapse(LayerListBuilder.Build(sheets, State(), Profiles.Pupr, None, null), set));
+        }
+    }
 }
