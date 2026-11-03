@@ -97,8 +97,16 @@ public sealed class LayersViewModel : ObservableObject
         {
             if (generation != _thumbGeneration) return;
             if (!_thumbRequested.Add(key)) continue;
-            var bytes = await _studio.Gateway.ThumbnailAsync(key);
+            byte[]? bytes;
+            try { bytes = await _studio.Gateway.ThumbnailAsync(key); }
+            catch (Exception ex)
+            {
+                Diagnostics.StudioLog.Write("thumb-gagal", key + ": " + ex.Message);
+                _thumbRequested.Remove(key);
+                continue;
+            }
             if (bytes is null) continue;
+            if (_thumbs.TryGetValue(key, out var old) && old.AsSpan().SequenceEqual(bytes)) continue;
             _thumbs[key] = bytes;
             foreach (var r in Rows.Where(r => r.Key == key)) r.Thumbnail = bytes;
         }

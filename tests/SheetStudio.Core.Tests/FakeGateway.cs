@@ -64,11 +64,13 @@ internal sealed class FakeGateway : IStudioGateway
     public byte[]? Thumb { get; set; }
     public int ThumbCalls { get; private set; }
     public TaskCompletionSource? ThumbGate { get; set; }
+    public string? ThumbError { get; set; }
     public List<string> ThumbRequests { get; } = [];
     public async Task<byte[]?> ThumbnailAsync(string uniqueId)
     {
         ThumbCalls++;
         ThumbRequests.Add(uniqueId);
+        if (ThumbError is { } err) throw new InvalidOperationException(err);
         if (ThumbGate is { } gate) await gate.Task;
         return Thumb;
     }

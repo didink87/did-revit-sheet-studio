@@ -122,5 +122,31 @@ public class LayersInteractionTests
         Assert.Equal(2, gw.ThumbCalls);
     }
 
+    [Fact]
+    public async Task Thumbnails_AfterReload_RequestedAgainAndUpdated()
+    {
+        var (vm, gw) = await Loaded();
+        gw.Thumb = [1];
+        await vm.Layers.LoadThumbnailsAsync(["L1"]);
+        await vm.LoadAsync();
+        gw.Thumb = [2];
+        await vm.Layers.LoadThumbnailsAsync(["L1"]);
+        Assert.Equal(["L1", "L1"], gw.ThumbRequests);
+        Assert.Equal(new byte[] { 2 }, Row(vm, "L1").Thumbnail);
+    }
+
+    [Fact]
+    public async Task Thumbnails_GatewayThrows_ContinuesAndRetriesLater()
+    {
+        var (vm, gw) = await Loaded();
+        gw.Thumb = [1];
+        gw.ThumbError = "boom";
+        await vm.Layers.LoadThumbnailsAsync(["L1", "L2"]);
+        Assert.Equal(["L1", "L2"], gw.ThumbRequests);
+        gw.ThumbError = null;
+        await vm.Layers.LoadThumbnailsAsync(["L1"]);
+        Assert.Equal(new byte[] { 1 }, Row(vm, "L1").Thumbnail);
+    }
+
     private static (DropPosition, bool) Pick(DropEvaluation e) => (e.Pos, e.Allowed);
 }

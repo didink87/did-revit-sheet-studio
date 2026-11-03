@@ -31,12 +31,31 @@ public partial class LayersPanel : UserControl
     }
 
     private LayersViewModel? _subscribed;
+    private StudioViewModel? _subscribedVm;
+
+    private void OnRowsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => ScheduleThumbnails();
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(StudioViewModel.Snapshot)) ScheduleThumbnails();
+    }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (_subscribed is not null) _subscribed.ScrollIntoViewRequested -= OnScrollIntoView;
+        if (_subscribed is not null)
+        {
+            _subscribed.ScrollIntoViewRequested -= OnScrollIntoView;
+            _subscribed.Rows.CollectionChanged -= OnRowsChanged;
+        }
+        if (_subscribedVm is not null) _subscribedVm.PropertyChanged -= OnVmChanged;
         _subscribed = Layers;
-        if (_subscribed is not null) _subscribed.ScrollIntoViewRequested += OnScrollIntoView;
+        _subscribedVm = Vm;
+        if (_subscribed is not null)
+        {
+            _subscribed.ScrollIntoViewRequested += OnScrollIntoView;
+            _subscribed.Rows.CollectionChanged += OnRowsChanged;
+        }
+        if (_subscribedVm is not null) _subscribedVm.PropertyChanged += OnVmChanged;
         BuildMoveTypeMenu();
     }
 
@@ -189,7 +208,9 @@ public partial class LayersPanel : UserControl
     private System.Windows.Threading.DispatcherTimer? _thumbTimer;
 
     /// <summary>Debounced (250 ms): scrolling fast must not queue an export per row that flew past.</summary>
-    private void OnScrollChanged(object sender, ScrollChangedEventArgs e)
+    private void OnScrollChanged(object sender, ScrollChangedEventArgs e) => ScheduleThumbnails();
+
+    private void ScheduleThumbnails()
     {
         if (Vm is null || !Vm.Snapshot.Prefs.Thumbnail) return;
         if (_thumbTimer is null)
@@ -212,7 +233,7 @@ public partial class LayersPanel : UserControl
         var visible = new List<string>();
         foreach (var child in panel.Children)
         {
-            if (child is not ListBoxItem { IsVisible: true, DataContext: LayerRowViewModel { Kind: RowKind.Lembar, Thumbnail: null } row } item) continue;
+            if (child is not ListBoxItem { IsVisible: true, DataContext: LayerRowViewModel { Kind: RowKind.Lembar } row } item) continue;
             var bounds = item.TransformToAncestor(sv).TransformBounds(new Rect(0, 0, item.ActualWidth, item.ActualHeight));
             if (bounds.IntersectsWith(viewport)) visible.Add(row.Key);
         }
