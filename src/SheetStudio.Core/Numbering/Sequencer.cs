@@ -69,14 +69,14 @@ public static class Sequencer
         return reason is null;
     }
 
-    internal static string GroupLabel(string typeKey)
+    public static string GroupLabel(string typeKey)
     {
         var parts = typeKey.Split('|');
         return parts[0].Length == 1 ? $"{parts[0]}-{parts[1]}" : $"{parts[0]}{parts[1]}";
     }
 
     /// <summary>Range of sequences a sheet may take: its kind's range when the kind belongs to this group.</summary>
-    internal static (int From, int To) RangeFor(string disc, int type, string? kindId, NamingProfile p, NumberingOptions o)
+    public static (int From, int To) RangeFor(string disc, int type, string? kindId, NamingProfile p, NumberingOptions o)
     {
         var kind = p.FindKind(kindId);
         if (o.Strategy == Strategy.Rentang && kind is not null && kind.Disiplin == disc && kind.Tipe == type)
