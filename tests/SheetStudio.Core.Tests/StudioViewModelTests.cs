@@ -296,7 +296,7 @@ public class StudioViewModelTests
         vm.Layers.RenameInline("T1", "TAMPAK BARU");
         gw.DocumentKey = "doc2";
         gw.Sheets.Clear(); // e.g. a family document is active now
-        await vm.OnShownAsync();
+        await vm.ReloadAsync(ReloadReason.GantiDokumen);
         Assert.Equal(1, vm.PendingCount);
         Assert.Contains("dokumen lain", vm.Status);
         Assert.Equal("doc1", vm.BuildPlan().DocumentKey); // Apply would be refused by Revit-side check in doc2
@@ -309,7 +309,7 @@ public class StudioViewModelTests
         var (vm, gw) = await Loaded();
         gw.DocumentKey = "doc2";
         gw.Sheets.RemoveAll(s => s.UniqueId == "T1");
-        await vm.OnShownAsync();
+        await vm.ReloadAsync(ReloadReason.GantiDokumen);
         Assert.Equal("doc2", vm.Snapshot.DocumentKey);
         Assert.DoesNotContain(vm.Layers.Rows, r => r.Key == "T1");
         Assert.Contains("Dokumen aktif berganti", vm.Status);

@@ -42,8 +42,12 @@ public sealed class App : IExternalApplication
         _watcher.Changed += Gateway.RaiseModelChanged;
         application.ViewActivated += (_, e) =>
         {
-            if (e.PreviousActiveView?.Document?.Equals(e.Document) == true || !pane.IsVisible) return;
-            pane.Dispatcher.BeginInvoke(async () => await ViewModel.OnShownAsync());
+            if (e.PreviousActiveView?.Document?.Equals(e.Document) == true) return;
+            pane.Dispatcher.BeginInvoke(async () =>
+            {
+                try { await ViewModel.ReloadAsync(ReloadReason.GantiDokumen); }
+                catch (Exception ex) { ViewModel.ReportError(ex); }
+            });
         };
         return Result.Succeeded;
     }

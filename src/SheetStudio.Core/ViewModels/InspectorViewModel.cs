@@ -199,8 +199,8 @@ public sealed class InspectorViewModel : ObservableObject
 
     private async Task DuplicateAsync(DuplicateMode mode)
     {
-        var report = await _studio.Gateway.DuplicateAsync(_sel.Select(s => s.UniqueId).ToList(), mode);
-        await _studio.AfterCreateAsync(report);
+        var ids = _sel.Select(s => s.UniqueId).ToList();
+        await _studio.CreateThenReloadAsync(() => _studio.Gateway.DuplicateAsync(ids, mode));
     }
 
     private SheetId? Parse(SheetSnapshot s) => SheetId.Parse(s.Number, _studio.Profile) is { Ok: true } r ? r.Id : null;

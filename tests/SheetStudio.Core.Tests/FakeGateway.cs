@@ -14,6 +14,8 @@ internal sealed class FakeGateway : IStudioGateway
     public List<IReadOnlyList<CreateRequest>> Created { get; } = [];
     public int Loads { get; private set; }
     public TaskCompletionSource? CreateGate { get; set; }
+    public TaskCompletionSource? LoadGate { get; set; }
+    public string? CreateError { get; set; }
 
     public event Action? ModelChanged;
     public void RaiseModelChanged() => ModelChanged?.Invoke();
@@ -22,12 +24,13 @@ internal sealed class FakeGateway : IStudioGateway
     public string DocumentKey { get; set; } = "doc1";
     public string? ApplyError { get; set; }
 
-    public Task<StudioSnapshot> LoadAsync()
+    public async Task<StudioSnapshot> LoadAsync()
     {
         Loads++;
-        if (LoadError is not null) return Task.FromException<StudioSnapshot>(new InvalidOperationException(LoadError));
-        return Task.FromResult(new StudioSnapshot(DocumentKey, Sheets.ToList(), State, Prefs, [("Lantai 1", 0), ("Lantai 2", 4), ("Lantai 3", 8)],
-            ["PUPR_KOP_A3", "PUPR_KOP_A2"], [new ViewInfo("v1", "DENAH LANTAI 1", "Denah", false), new ViewInfo("v2", "TAMPAK", "Tampak", true)]));
+        if (LoadError is not null) throw new InvalidOperationException(LoadError);
+        if (LoadGate is not null) await LoadGate.Task;
+        return new StudioSnapshot(DocumentKey, Sheets.ToList(), State, Prefs, [("Lantai 1", 0), ("Lantai 2", 4), ("Lantai 3", 8)],
+            ["PUPR_KOP_A3", "PUPR_KOP_A2"], [new ViewInfo("v1", "DENAH LANTAI 1", "Denah", false), new ViewInfo("v2", "TAMPAK", "Tampak", true)]);
     }
 
     public Task<ApplyReport> ApplyAsync(ApplyPlan plan)
@@ -41,6 +44,7 @@ internal sealed class FakeGateway : IStudioGateway
     public async Task<CreateReport> CreateAsync(IReadOnlyList<CreateRequest> reqs, IProgress<(int Done, int Total, string Title)> progress, CancellationToken ct)
     {
         Created.Add(reqs);
+        if (CreateError is not null) throw new InvalidOperationException(CreateError);
         if (CreateGate is not null)
         {
             progress.Report((0, reqs.Count, reqs[0].Name.Title));

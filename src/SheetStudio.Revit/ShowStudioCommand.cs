@@ -12,11 +12,7 @@ public sealed class ShowStudioCommand : IExternalCommand
     {
         var pane = commandData.Application.GetDockablePane(PaneIds.Studio);
         if (pane.IsShown()) pane.Hide();
-        else
-        {
-            pane.Show();
-            _ = App.ViewModel?.OnShownAsync();
-        }
+        else pane.Show();
         return Result.Succeeded;
     }
 }

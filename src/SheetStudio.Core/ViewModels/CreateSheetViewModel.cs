@@ -123,8 +123,8 @@ public sealed class CreateSheetViewModel : ObservableObject
     public async Task CreateAsync()
     {
         if (!CanCreate()) return;
-        var report = await _studio.Gateway.CreateAsync([BuildRequest()], new Progress<(int, int, string)>(), CancellationToken.None);
-        await _studio.AfterCreateAsync(report);
+        await _studio.CreateThenReloadAsync(() =>
+            _studio.Gateway.CreateAsync([BuildRequest()], new Progress<(int, int, string)>(), CancellationToken.None));
         Closed?.Invoke();
     }
 

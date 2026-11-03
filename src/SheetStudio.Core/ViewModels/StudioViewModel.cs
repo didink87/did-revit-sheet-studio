@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using SheetStudio.Core.Changes;
+using SheetStudio.Core.Diagnostics;
 using SheetStudio.Core.Layers;
 using SheetStudio.Core.Model;
 using SheetStudio.Core.Naming;
@@ -8,6 +9,8 @@ using SheetStudio.Core.Preferences;
 using SheetStudio.Core.Profiles;
 
 namespace SheetStudio.Core.ViewModels;
+
+public enum ReloadReason { Tampil, ModelBerubah, GantiDokumen, SetelahBuat }
 
 /// <summary>
 /// Root view model of the Sheet Studio pane. Holds the snapshot, the staged ChangeSet with panel undo,
@@ -95,9 +98,12 @@ public sealed class StudioViewModel : ObservableObject
 
     public IStudioGateway Gateway => _gateway;
 
-    public async Task LoadAsync()
+    public async Task LoadAsync() => ApplyFresh(await _gateway.LoadAsync());
+
+    private void ApplyFresh(StudioSnapshot fresh)
     {
-        Snapshot = await _gateway.LoadAsync();
+        Snapshot = fresh;
+        IsStale = false;
         Profile = ProfileLoader.BuiltInIds.Contains(Snapshot.Prefs.ProfileId)
             ? ProfileLoader.LoadBuiltIn(Snapshot.Prefs.ProfileId)
             : ProfileLoader.LoadBuiltIn("pupr");
@@ -188,24 +194,97 @@ public sealed class StudioViewModel : ObservableObject
         return new ApplyPlan(Snapshot.DocumentKey, renumber, edits, deletes, expected, state);
     }
 
-    public Task OnModelChangedAsync() => ReloadKeepingChangesAsync();
+    public Task OnModelChangedAsync() => ReloadAsync(ReloadReason.ModelBerubah);
 
-    /// <summary>Pane shown / view activated: first load, or reload keeping staged work (document switch aware).</summary>
+    /// <summary>Pane shown: first load, or reload when the model changed while hidden. Errors become <see cref="Status"/>.</summary>
     public async Task OnShownAsync()
     {
-        try
-        {
-            if (Snapshot.DocumentKey.Length == 0) await LoadAsync();
-            else await ReloadKeepingChangesAsync();
-        }
+        try { await ReloadAsync(ReloadReason.Tampil); }
         catch (Exception ex) { Status = ex.Message; }
     }
 
-    /// <summary>Re-reads the model but keeps staged work (rebased). A different active document resets everything.</summary>
-    private async Task ReloadKeepingChangesAsync(string? statusIfOk = null)
+    /// <summary>False while the dockable pane is hidden: model changes only mark <see cref="IsStale"/> instead of loading.</summary>
+    public bool IsPaneVisible { get; set; } = true;
+
+    /// <summary>The model changed while the pane was hidden; the next show reloads.</summary>
+    public bool IsStale { get; private set; }
+
+    private bool _reloading;
+    private bool _again;
+    private string? _againStatus;
+    private TaskCompletionSource? _againDone;
+
+    /// <summary>
+    /// Single entry point for every reload. One round runs at a time; triggers arriving meanwhile coalesce into
+    /// exactly one follow-up round, and their tasks complete when that round does.
+    /// </summary>
+    public Task ReloadAsync(ReloadReason reason, string? statusIfOk = null)
     {
-        var pending = Current;
+        if (reason is ReloadReason.ModelBerubah or ReloadReason.GantiDokumen && !IsPaneVisible)
+        {
+            IsStale = true;
+            StudioLog.Write("reload", $"{reason} dilewati (pane tersembunyi)");
+            return Task.CompletedTask;
+        }
+        if (reason == ReloadReason.Tampil && Snapshot.DocumentKey.Length > 0 && !IsStale)
+        {
+            StudioLog.Write("reload", "Tampil dilewati (data masih baru)");
+            return Task.CompletedTask;
+        }
+        if (_reloading)
+        {
+            _again = true;
+            _againStatus = statusIfOk ?? _againStatus;
+            _againDone ??= new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            StudioLog.Write("reload", $"{reason} digabung ke putaran berikutnya");
+            return _againDone.Task;
+        }
+        StudioLog.Write("reload", reason.ToString());
+        return RunReloadLoopAsync(statusIfOk);
+    }
+
+    private async Task RunReloadLoopAsync(string? statusIfOk)
+    {
+        _reloading = true;
+        Exception? first = null;
+        try
+        {
+            try { await ReloadRoundAsync(statusIfOk); }
+            catch (Exception ex) { first = ex; }
+            while (_again)
+            {
+                var status = _againStatus;
+                var done = _againDone;
+                _again = false;
+                _againStatus = null;
+                _againDone = null;
+                try
+                {
+                    await ReloadRoundAsync(status);
+                    done?.TrySetResult();
+                }
+                catch (Exception ex)
+                {
+                    done?.TrySetException(ex);
+                    first ??= ex;
+                }
+            }
+        }
+        finally { _reloading = false; }
+        if (first is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(first).Throw();
+    }
+
+    /// <summary>One reload round: read the model first, only then take the staged work and rebase it onto the fresh snapshot
+    /// (edits made while the load was in flight are kept). A different active document resets everything.</summary>
+    private async Task ReloadRoundAsync(string? statusIfOk)
+    {
         var fresh = await _gateway.LoadAsync();
+        var pending = Current;
+        if (Snapshot.DocumentKey.Length == 0)
+        {
+            ApplyFresh(fresh);
+            return;
+        }
         if (fresh.DocumentKey != Snapshot.DocumentKey)
         {
             if (pending.PendingCount > 0)
@@ -214,17 +293,33 @@ public sealed class StudioViewModel : ObservableObject
                 Status = $"{pending.PendingCount} perubahan tertunda milik dokumen lain — kembali ke dokumen itu untuk menerapkan, atau Buang";
                 return;
             }
-            await LoadAsync();
+            ApplyFresh(fresh);
             Status = "Dokumen aktif berganti";
             return;
         }
         Snapshot = fresh;
+        IsStale = false;
         var (next, dropped) = Rebase.Onto(pending, Snapshot.Sheets, Profile);
         Current = next;
         foreach (var id in dropped) _baseVersi.Remove(id);
         _undo.Reset(Current);
         Recompute();
         Status = dropped.Count > 0 ? $"{dropped.Count} perubahan dibuang karena lembarnya terhapus di model" : statusIfOk ?? Status;
+    }
+
+    /// <summary>Runs a create/duplicate operation and always reloads afterwards, so sheets made before a failure still show.</summary>
+    public async Task<CreateReport> CreateThenReloadAsync(Func<Task<CreateReport>> run)
+    {
+        CreateReport report;
+        try { report = await run(); }
+        catch
+        {
+            try { await ReloadAsync(ReloadReason.SetelahBuat); }
+            catch (Exception ex) { StudioLog.Write("reload", "gagal setelah buat gagal: " + ex.Message); }
+            throw;
+        }
+        await AfterCreateAsync(report);
+        return report;
     }
 
     public CreateSheetViewModel NewCreateSheet() => new(this);
@@ -235,7 +330,7 @@ public sealed class StudioViewModel : ObservableObject
     {
         foreach (var r in report.Rows) if (r.UniqueId is not null) NewSheetIds.Add(r.UniqueId);
         var ok = report.Rows.Count(r => r.Ok);
-        await ReloadKeepingChangesAsync(report.Dibatalkan ? "Pembuatan dibatalkan; model dikembalikan" : $"{ok} lembar dibuat" +
+        await ReloadAsync(ReloadReason.SetelahBuat, report.Dibatalkan ? "Pembuatan dibatalkan; model dikembalikan" : $"{ok} lembar dibuat" +
             (report.Rows.Count > ok ? $", {report.Rows.Count - ok} gagal" : ""));
     }
 
