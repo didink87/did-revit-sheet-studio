@@ -20,6 +20,9 @@ public sealed record StudioSnapshot(
 {
     /// <summary>Stable identity of the document (survives Save As, unlike <see cref="DocumentKey"/>); empty when unknown.</summary>
     public string DocumentId { get; init; } = "";
+
+    /// <summary>Keys of every document currently open; a Save As is only adopted when the old key is no longer among them.</summary>
+    public IReadOnlySet<string> OpenDocumentKeys { get; init; } = new HashSet<string>();
 }
 
 public sealed record ApplyPlan(

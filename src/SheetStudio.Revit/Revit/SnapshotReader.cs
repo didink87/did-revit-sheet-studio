@@ -41,6 +41,7 @@ public static class SnapshotReader
         return new StudioSnapshot(DocumentKey(doc), sheets, state, prefs, levels, TitleBlocks.All(doc).Select(TitleBlocks.Display).ToList(), views)
         {
             DocumentId = doc.ProjectInformation?.UniqueId ?? "",
+            OpenDocumentKeys = doc.Application.Documents.Cast<Document>().Where(d => !d.IsLinked).Select(DocumentKey).ToHashSet(),
         };
     }
 

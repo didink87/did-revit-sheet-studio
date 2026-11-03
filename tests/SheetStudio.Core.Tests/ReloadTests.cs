@@ -135,6 +135,35 @@ public class ReloadTests
     }
 
     [Fact]
+    public async Task Reload_SameIdButOldDocStillOpen_DoesNotAdopt()
+    {
+        var (vm, gw) = await Loaded();
+        gw.DocumentId = "P1";
+        await vm.ReloadAsync(ReloadReason.ModelBerubah);
+        vm.Layers.Click("L1");
+        vm.Layers.MarkDelete();
+        gw.DocumentKey = "C:\\salinan.rvt";
+        gw.OpenKeys = ["doc1", "C:\\salinan.rvt"];
+        await vm.ReloadAsync(ReloadReason.ModelBerubah);
+        Assert.Equal("doc1", vm.Snapshot.DocumentKey);
+        Assert.Equal(1, vm.PendingCount);
+        Assert.Contains("milik dokumen lain", vm.Status);
+    }
+
+    [Fact]
+    public async Task Reload_EmptyDocumentId_DoesNotAdopt()
+    {
+        var (vm, gw) = await Loaded();
+        vm.Layers.Click("L1");
+        vm.Layers.MarkDelete();
+        gw.DocumentKey = "C:\\lain.rvt";
+        await vm.ReloadAsync(ReloadReason.ModelBerubah);
+        Assert.Equal("doc1", vm.Snapshot.DocumentKey);
+        Assert.Equal(1, vm.PendingCount);
+        Assert.Contains("milik dokumen lain", vm.Status);
+    }
+
+    [Fact]
     public async Task Create_GatewayThrows_StillReloads()
     {
         var (vm, gw) = await Loaded();
