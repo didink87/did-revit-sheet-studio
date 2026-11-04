@@ -81,18 +81,7 @@
                                        Visibility="{Binding TitleIsMixed, Converter={StaticResource Vis}}"/>
                         </Grid>
                         <Button Content="Terapkan judul" HorizontalAlignment="Right" Margin="0,4,0,6" Padding="8,1" Command="{Binding ApplyTitle}"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="46"/><ColumnDefinition/><ColumnDefinition Width="46"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                            <TextBlock Text="Cari" VerticalAlignment="Center"/>
-                            <TextBox Grid.Column="1" Text="{Binding Find, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Column="2" Text=" Ganti" VerticalAlignment="Center"/>
-                            <TextBox Grid.Column="3" Text="{Binding Replace, UpdateSourceTrigger=PropertyChanged}"/>
-                        </Grid>
-                        <DockPanel Margin="0,4,0,0">
-                            <Button DockPanel.Dock="Right" Content="Ganti" Padding="8,1" Command="{Binding ApplyFindReplace}"/>
-                            <CheckBox Content="kata utuh" IsChecked="{Binding WholeWord}" VerticalAlignment="Center"/>
-                        </DockPanel>
-                        <Grid Margin="0,8,0,0">
+                        <Grid Margin="0,4,0,0">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="46"/><ColumnDefinition/><ColumnDefinition Width="50"/><ColumnDefinition/></Grid.ColumnDefinitions>
                             <TextBlock Text="Awalan" VerticalAlignment="Center"/>
                             <TextBox Grid.Column="1" Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"/>

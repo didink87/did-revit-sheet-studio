@@ -56,7 +56,7 @@ public sealed class InspectorViewModel : ObservableObject
         {
             if (_sel.Count != 1) return;
             var picker = new NamePickerViewModel(_studio.Profile, _studio.Sheets, _studio.Current, _studio.Numbering,
-                _studio.Snapshot.Levels.OrderBy(l => l.Elevation).Select(l => l.Name).ToList(), _sel[0].UniqueId);
+                _studio.Snapshot.Levels.OrderBy(l => l.Elevation).Select(l => l.Name).ToList(), _sel[0].UniqueId, _studio.Titles);
             EditNumberRequested?.Invoke(picker);
         }, () => _sel.Count == 1);
     }

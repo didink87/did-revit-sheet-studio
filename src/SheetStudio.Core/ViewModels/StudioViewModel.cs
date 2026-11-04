@@ -98,6 +98,9 @@ public sealed class StudioViewModel : ObservableObject
 
     public IStudioGateway Gateway => _gateway;
 
+    /// <summary>Judul lembar tersimpan milik pengguna; App menggantinya dengan versi berkas.</summary>
+    public Naming.TitleLibrary Titles { get; set; } = new(null);
+
     public async Task LoadAsync()
     {
         IsStale = false; // before the await: a change arriving during the load must stay stale

@@ -19,8 +19,9 @@
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button Content="Pratinjau" Padding="10,4" Margin="0,0,6,0" Command="{Binding PreviewCommand}"/>
                 <Button x:Name="RunButton" Content="JALANKAN" Padding="14,4" Margin="0,0,6,0" FontWeight="Bold" Command="{Binding Run}"/>
-                <Button Content="Batal" Padding="10,4" Margin="0,0,6,0" Command="{Binding Cancel}"/>
-                <Button Content="Tutup" Padding="10,4" IsCancel="True"/>
+                <Button Content="Hentikan" Padding="10,4" Margin="0,0,6,0" Command="{Binding Cancel}" ToolTip="Hentikan proses yang sedang berjalan"
+                        Visibility="{Binding IsRunning, Converter={StaticResource Vis}}"/>
+                <Button Content="{Binding CloseLabel}" Padding="10,4" IsCancel="True" MinWidth="80"/>
             </StackPanel>
             <StackPanel>
                 <TextBlock Text="{Binding Summary}" FontWeight="SemiBold"/>

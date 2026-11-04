@@ -65,7 +65,7 @@ public sealed class EnumEquals : IValueConverter
     public object Convert(object value, Type t, object p, CultureInfo c) => string.Equals(value?.ToString(), p?.ToString(), StringComparison.Ordinal);
 
     public object ConvertBack(object value, Type t, object p, CultureInfo c) =>
-        value is true && p is string s ? Enum.Parse(t, s) : Binding.DoNothing;
+        value is true && p is string s ? Enum.Parse(Nullable.GetUnderlyingType(t) ?? t, s) : Binding.DoNothing;
 }
 
 internal static class Theme

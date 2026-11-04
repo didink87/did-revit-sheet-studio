@@ -27,6 +27,7 @@ public sealed class NamePickerViewModel : ObservableObject
     private readonly ChangeSet _cs;
     private readonly NumberingOptions _o;
     private readonly IReadOnlyList<string> _levels;
+    private readonly TitleLibrary _titles;
 
     private string _discipline = "A";
     private char? _second;
@@ -39,8 +40,9 @@ public sealed class NamePickerViewModel : ObservableObject
     private string _freeTitle = "";
 
     public NamePickerViewModel(NamingProfile p, IReadOnlyList<SheetSnapshot> sheets, ChangeSet cs, NumberingOptions o,
-        IReadOnlyList<string> levelNames, string? editingUniqueId = null)
+        IReadOnlyList<string> levelNames, string? editingUniqueId = null, TitleLibrary? titles = null)
     {
+        _titles = titles ?? new TitleLibrary(null);
         _p = p;
         _cs = cs;
         _o = o;
@@ -58,7 +60,7 @@ public sealed class NamePickerViewModel : ObservableObject
             _manualSeq = parsed.Id.Seq;
             _kindId = p.FindKind(e.KindId) is { } k && k.Disiplin == parsed.Id.Discipline && k.Tipe == parsed.Id.Type ? k.Id : null;
             _subject = e.Subjek;
-            _freeTitle = _kindId is null ? e.Title : "";
+            _freeTitle = e.Title;
         }
 
         NextDiscipline = new RelayCommand(() => StepDiscipline(+1));
@@ -66,6 +68,10 @@ public sealed class NamePickerViewModel : ObservableObject
         PickCell = new RelayCommand(o => { if (o is int seq) Pick(seq); });
         PickType = new RelayCommand(o => { if (o is int t) SheetType = t; else if (o is string str && int.TryParse(str, out var d)) SheetType = d; });
         AcceptSuggestions = new RelayCommand(Accept);
+        SaveTitle = new RelayCommand(() => { if (_titles.Add(TitlePreview)) Raise(nameof(SavedTitles), nameof(IsTitleSaved)); },
+            () => TitlePreview.Length > 0 && !_titles.Contains(TitlePreview));
+        RemoveSavedTitle = new RelayCommand(() => { if (_titles.Remove(TitlePreview)) Raise(nameof(SavedTitles), nameof(IsTitleSaved)); },
+            () => _titles.Contains(TitlePreview));
     }
 
     // ── Disiplin ─────────────────────────────────────────────
@@ -192,11 +198,12 @@ public sealed class NamePickerViewModel : ObservableObject
             _kindId = kind?.Id;
             if (kind is not null)
             {
+                _freeTitle = "";
                 _discipline = kind.Disiplin[..1];
                 _second = kind.Disiplin.Length == 2 ? kind.Disiplin[1] : null;
                 _type = kind.Tipe;
             }
-            Changed(nameof(SelectedKindId), nameof(SelectedDiscipline), nameof(SelectedSecondLetter), nameof(DisciplineOptions),
+            Changed(nameof(SelectedKindId), nameof(FreeTitle), nameof(SelectedDiscipline), nameof(SelectedSecondLetter), nameof(DisciplineOptions),
                 nameof(SecondLetters), nameof(DisciplineDescription), nameof(SheetType), nameof(TypeName), nameof(TypeDescription));
         }
     }
@@ -210,11 +217,29 @@ public sealed class NamePickerViewModel : ObservableObject
         set { if (Set(ref _subject, value ?? "")) Changed(); }
     }
 
+    /// <summary>Judul yang diketik pengguna. Mengetik judul sendiri melepas templat jenis gambar.</summary>
     public string FreeTitle
     {
         get => _freeTitle;
-        set { if (Set(ref _freeTitle, value ?? "")) Changed(); }
+        set
+        {
+            if (!Set(ref _freeTitle, value ?? "")) return;
+            if (_kindId is not null && _freeTitle.Length > 0)
+            {
+                _kindId = null;
+                Changed(nameof(SelectedKindId));
+            }
+            else Changed();
+        }
     }
+
+    /// <summary>Judul yang pernah disimpan pengguna (tombol Simpan) untuk dipilih lagi.</summary>
+    public IReadOnlyList<string> SavedTitles => _titles.Items.ToList();
+
+    public bool IsTitleSaved => TitlePreview.Length > 0 && _titles.Contains(TitlePreview);
+
+    public ICommand SaveTitle { get; }
+    public ICommand RemoveSavedTitle { get; }
 
     public string TitlePreview => TitleCheck.Normalized;
     public IReadOnlyList<AbbrevHint> Hints => TitleCheck.Hints;
@@ -238,7 +263,7 @@ public sealed class NamePickerViewModel : ObservableObject
     private TitleCheck TitleCheck => TitleRules.Check(RawTitle, _p);
 
     private string RawTitle =>
-        _p.FindKind(_kindId) is { } k ? k.TemplatJudul.Replace("{subjek}", _subject).Trim() : _freeTitle;
+        _freeTitle.Length == 0 && _p.FindKind(_kindId) is { } k ? k.TemplatJudul.Replace("{subjek}", _subject).Trim() : _freeTitle;
 
     private HashSet<int> UsedSeqs()
     {
@@ -317,6 +342,7 @@ public sealed class NamePickerViewModel : ObservableObject
     {
         Raise(extra);
         Raise(nameof(KindOptions), nameof(EffectiveSeq), nameof(NumberMapCells), nameof(NumberCells), nameof(NumberPreview), nameof(TitlePreview),
-            nameof(Hints), nameof(Status), nameof(StatusText), nameof(CanConfirm), nameof(Result));
+            nameof(Hints), nameof(Status), nameof(StatusText), nameof(CanConfirm), nameof(Result), nameof(IsTitleSaved));
+        foreach (var c in new[] { SaveTitle, RemoveSavedTitle }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
     }
 }

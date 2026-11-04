@@ -7,12 +7,13 @@
         Background="{DynamicResource SS.Bg}" Foreground="{DynamicResource SS.Fg}">
     <Window.Resources>
         <ui:EnumEquals x:Key="EnumEq"/>
+        <ui:NullToCollapsed x:Key="NullVis"/>
     </Window.Resources>
     <DockPanel Margin="10">
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
             <Button x:Name="CreateButton" Content="BUAT LEMBAR" MinWidth="120" Padding="12,4" Margin="0,0,6,0" FontWeight="Bold"
                     Command="{Binding Create}" IsDefault="True"/>
-            <Button Content="Batal" MinWidth="90" Padding="10,4" IsCancel="True"/>
+            <Button Content="Tutup" MinWidth="90" Padding="10,4" IsCancel="True" ToolTip="Kembali ke Revit tanpa membuat lembar"/>
         </StackPanel>
         <Grid>
             <Grid.ColumnDefinitions>
@@ -24,13 +25,19 @@
                 <ui:NamePicker DataContext="{Binding Picker}"/>
             </ScrollViewer>
             <StackPanel Grid.Column="2">
-                <TextBlock Text="KERTAS &amp; KOP" FontWeight="Bold" Margin="0,4,0,4" Foreground="{DynamicResource SS.FgMuted}"/>
+                <TextBlock Text="KERTAS &amp; KOP  (wajib dipilih)" FontWeight="Bold" Margin="0,4,0,4" Foreground="{DynamicResource SS.FgMuted}"/>
                 <StackPanel Orientation="Horizontal">
                     <RadioButton Content="A3" Margin="0,0,10,0" IsChecked="{Binding Kertas, Converter={StaticResource EnumEq}, ConverterParameter=A3}"/>
                     <RadioButton Content="A2" Margin="0,0,10,0" IsChecked="{Binding Kertas, Converter={StaticResource EnumEq}, ConverterParameter=A2}"/>
                     <RadioButton Content="A1" IsChecked="{Binding Kertas, Converter={StaticResource EnumEq}, ConverterParameter=A1}"/>
                 </StackPanel>
                 <ComboBox Margin="0,6,0,0" ItemsSource="{Binding TitleBlockTypes}" SelectedItem="{Binding TitleBlockType}" ToolTip="Title block (kop)"/>
+                <Border Margin="0,6,0,0" Padding="6,4" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource SS.Warn}"
+                        Visibility="{Binding Peringatan, Converter={StaticResource NullVis}}">
+                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource SS.Warn}" FontWeight="SemiBold">
+                        <Run Text="⚠ "/><Run Text="{Binding Peringatan, Mode=OneWay}"/>
+                    </TextBlock>
+                </Border>
 
                 <TextBlock Text="VIEW" FontWeight="Bold" Margin="0,14,0,4" Foreground="{DynamicResource SS.FgMuted}"/>
                 <StackPanel Orientation="Horizontal">

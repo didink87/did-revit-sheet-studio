@@ -173,25 +173,18 @@
         </ItemsControl>
 
         <!-- JUDUL -->
-        <TextBlock Style="{StaticResource Caption}" Text="JUDUL"/>
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="80"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition/><RowDefinition/><RowDefinition/>
-            </Grid.RowDefinitions>
-            <TextBlock Text="Jenis" VerticalAlignment="Center"/>
-            <ComboBox Grid.Column="1" Margin="0,2" ItemsSource="{Binding KindOptions}" DisplayMemberPath="Nama"
-                      SelectedValuePath="Id" SelectedValue="{Binding SelectedKindId}"/>
-            <TextBlock Grid.Row="1" Text="Subjek" VerticalAlignment="Center"/>
-            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" IsEditable="True" ItemsSource="{Binding SubjectOptions}"
-                      Text="{Binding Subject, UpdateSourceTrigger=PropertyChanged}" ToolTip="Level, arah tampak, atau kode potongan"/>
-            <TextBlock Grid.Row="2" Text="Bebas" VerticalAlignment="Center"/>
-            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{Binding FreeTitle, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="Dipakai bila jenis = BEBAS"/>
-        </Grid>
+        <TextBlock Style="{StaticResource Caption}" Text="JUDUL LEMBAR"/>
+        <DockPanel>
+            <Button DockPanel.Dock="Right" Content="Hapus dari daftar" Padding="8,2" Margin="4,0,0,0" Command="{Binding RemoveSavedTitle}"
+                    ToolTip="Buang judul ini dari daftar tersimpan"/>
+            <Button DockPanel.Dock="Right" Content="💾 Simpan" Padding="8,2" Margin="4,0,0,0" Command="{Binding SaveTitle}"
+                    ToolTip="Simpan judul ini agar bisa dipilih lagi lain kali (opsional)"/>
+            <ComboBox x:Name="TitleBox" IsEditable="True" IsTextSearchEnabled="False" ItemsSource="{Binding SavedTitles}"
+                      Text="{Binding FreeTitle, UpdateSourceTrigger=PropertyChanged}" FontSize="13" Padding="4,3"
+                      ToolTip="Ketik judul lembar, atau buka daftar untuk memilih judul yang pernah disimpan"/>
+        </DockPanel>
+        <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SS.FgMuted}"
+                   Text="Ketik judul, mis. DENAH LANTAI 1. Tekan Simpan bila judul ini ingin dipakai lagi lain kali; tidak disimpan pun tidak apa-apa."/>
 
         <!-- PRATINJAU -->
         <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="6" BorderThickness="1.5" x:Name="PreviewCard" BorderBrush="{DynamicResource SS.Border}">

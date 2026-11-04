@@ -77,7 +77,15 @@ public sealed class BatchViewModel : ObservableObject
     public IReadOnlyList<Kertas> KertasOptions { get; } = [Kertas.A3, Kertas.A2, Kertas.A1];
 
     public Kertas Kertas { get => _kertas; set => Set(ref _kertas, value); }
-    public bool IsRunning { get => _isRunning; private set { if (Set(ref _isRunning, value)) RaiseCommands(); } }
+    public bool IsRunning { get => _isRunning; private set { if (Set(ref _isRunning, value)) { RaiseCommands(); Raise(nameof(IsDone), nameof(CloseLabel)); } } }
+
+    /// <summary>Batch sudah dijalankan; tombol tutup menjadi "Selesai" agar tidak terkesan gagal.</summary>
+    public bool IsDone => Report is not null && !_isRunning;
+
+    public string CloseLabel => IsDone ? "✓ Selesai — kembali ke Revit" : "Tutup";
+
+    /// <summary>Diminta saat JALANKAN ditekan tapi kop untuk kertas tertentu belum ada; UI menampilkan pesan.</summary>
+    public event Action<string>? WarningRequested;
     public double ProgressPercent { get => _progress; private set => Set(ref _progress, value); }
     public string ProgressText { get => _progressText; private set => Set(ref _progressText, value); }
     public CreateReport? Report { get; private set; }
@@ -126,6 +134,11 @@ public sealed class BatchViewModel : ObservableObject
             TitleBlockType = _studio.Snapshot.Prefs.TitleBlockPerKertas.GetValueOrDefault(p.Request!.Kertas),
         }).ToList();
         if (reqs.Count == 0) return;
+        if (MissingTitleBlocks(reqs) is { } warn)
+        {
+            WarningRequested?.Invoke(warn);
+            return;
+        }
         _cts = new CancellationTokenSource();
         IsRunning = true;
         try
@@ -139,7 +152,7 @@ public sealed class BatchViewModel : ObservableObject
             await _studio.CreateThenReloadAsync(async () =>
             {
                 Report = await _studio.Gateway.CreateAsync(reqs, progress, token);
-                Raise(nameof(Report));
+                Raise(nameof(Report), nameof(IsDone), nameof(CloseLabel));
                 return Report;
             });
         }
@@ -149,6 +162,17 @@ public sealed class BatchViewModel : ObservableObject
             _cts.Dispose();
             _cts = null;
         }
+    }
+
+    /// <summary>Kertas yang kopnya (dari Preferensi) belum diatur atau tidak ada di model; null bila semua lengkap.</summary>
+    public string? MissingTitleBlocks(IEnumerable<CreateRequest> reqs)
+    {
+        var bad = reqs.Select(r => r.Kertas).Distinct()
+            .Select(k => (k, tb: _studio.Snapshot.Prefs.TitleBlockPerKertas.GetValueOrDefault(k)))
+            .Where(x => string.IsNullOrWhiteSpace(x.tb) || !_studio.Snapshot.TitleBlockTypes.Contains(x.tb))
+            .Select(x => string.IsNullOrWhiteSpace(x.tb) ? $"• {x.k}: kop belum dipilih" : $"• {x.k}: kop '{x.tb}' tidak ada di model")
+            .ToList();
+        return bad.Count == 0 ? null : "Kop (title block) untuk kertas berikut belum siap:\n" + string.Join("\n", bad);
     }
 
     private void BuildMatrix()

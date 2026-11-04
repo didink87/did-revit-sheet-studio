@@ -216,9 +216,92 @@ public class StudioViewModelTests
         Assert.Equal(new[] { "v1" }, create.AvailableViews.Select(v => v.UniqueId));
         create.SelectedViewId = "v1";
         Assert.True(create.Create.CanExecute(null));
+        create.Kertas = Create.Kertas.A3; // kertas & kop wajib dipilih; kop A3 diisi dari preferensi
         await create.CreateAsync();
         var req = gw.Created.Single().Single();
         Assert.Equal(("A-112", "PUPR_KOP_A3", "v1"), (req.Name.Id.Format(), req.TitleBlockType, req.Views.Single().ExistingViewUniqueId));
+    }
+
+    [Fact]
+    public async Task Create_WithoutKertasOrKop_WarnsAndDoesNotCreate()
+    {
+        var (vm, gw) = await Loaded();
+        var create = vm.NewCreateSheet();
+        create.Picker.FreeTitle = "DENAH LANTAI 3";
+        Assert.Null(create.Kertas);
+        Assert.Null(create.TitleBlockType);
+        Assert.Contains("kertas", create.Peringatan);
+        Assert.Contains("kop", create.Peringatan);
+        string? shown = null;
+        create.WarningRequested += m => shown = m;
+        await create.CreateAsync();
+        Assert.NotNull(shown);
+        Assert.Empty(gw.Created);
+
+        create.Kertas = Create.Kertas.A1; // kop A1 tidak ada di model (fake hanya punya A3, A2)
+        Assert.Null(create.TitleBlockType);
+        Assert.Contains("kop", create.Peringatan);
+        create.TitleBlockType = "PUPR_KOP_A2";
+        Assert.Null(create.Peringatan);
+        await create.CreateAsync();
+        Assert.Equal("PUPR_KOP_A2", gw.Created.Single().Single().TitleBlockType);
+    }
+
+    [Fact]
+    public async Task Create_TypedTitle_GuessesViewJenis()
+    {
+        var (vm, _) = await Loaded();
+        var create = vm.NewCreateSheet();
+        create.Picker.FreeTitle = "TAMPAK DEPAN";
+        Assert.Equal("Tampak", create.NewViewJenis);
+        Assert.Equal("Potongan", CreateSheetViewModel.GuessViewJenis("potongan a-a"));
+        Assert.Null(CreateSheetViewModel.GuessViewJenis("DETAIL TANGGA"));
+    }
+
+    [Fact]
+    public async Task Create_SavedTitles_OptionalSaveAndRemove()
+    {
+        var (vm, _) = await Loaded();
+        var create = vm.NewCreateSheet();
+        create.Picker.FreeTitle = "denah lantai 3";
+        Assert.False(create.Picker.IsTitleSaved);
+        Assert.True(create.Picker.SaveTitle.CanExecute(null));
+        create.Picker.SaveTitle.Execute(null);
+        Assert.Equal(new[] { "DENAH LANTAI 3" }, create.Picker.SavedTitles);
+        Assert.True(create.Picker.IsTitleSaved);
+        Assert.False(create.Picker.SaveTitle.CanExecute(null));
+        Assert.Equal(new[] { "DENAH LANTAI 3" }, vm.NewCreateSheet().Picker.SavedTitles); // dipakai lagi di dialog berikutnya
+        create.Picker.RemoveSavedTitle.Execute(null);
+        Assert.Empty(create.Picker.SavedTitles);
+    }
+
+    [Fact]
+    public async Task Batch_MissingKop_WarnsAndDoesNotRun()
+    {
+        var (vm, gw) = await Loaded();
+        var batch = vm.NewBatch();
+        batch.Kertas = Create.Kertas.A1; // kop A1 tidak ada di model
+        batch.LoadPreset("DENAH SEMUA LANTAI");
+        batch.Preview();
+        string? shown = null;
+        batch.WarningRequested += m => shown = m;
+        await batch.RunAsync();
+        Assert.Contains("A1", shown);
+        Assert.Empty(gw.Created);
+        Assert.Equal("Tutup", batch.CloseLabel);
+    }
+
+    [Fact]
+    public async Task Batch_AfterRun_CloseLabelSaysSelesai()
+    {
+        var (vm, _) = await Loaded();
+        var batch = vm.NewBatch();
+        Assert.Equal("Tutup", batch.CloseLabel);
+        batch.LoadPreset("DENAH SEMUA LANTAI");
+        batch.Preview();
+        await batch.RunAsync();
+        Assert.True(batch.IsDone);
+        Assert.StartsWith("✓ Selesai", batch.CloseLabel);
     }
 
     [Fact]

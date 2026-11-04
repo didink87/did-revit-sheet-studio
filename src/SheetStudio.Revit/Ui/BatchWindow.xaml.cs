@@ -18,8 +18,11 @@ public partial class BatchWindow : Window
         {
             if (!vm.IsRunning) return;
             e.Cancel = true;
-            MessageBox.Show(this, "Batch masih berjalan. Tekan Batal dulu.", "Sheet Studio");
+            MessageBox.Show(this, "Batch masih berjalan. Tekan Hentikan dulu.", "Sheet Studio");
         };
+        vm.WarningRequested += msg => MessageBox.Show(this, msg + Environment.NewLine + Environment.NewLine +
+            "Atur kop per kertas di ⚙ Preferensi, atau ganti pilihan Kertas, lalu tekan JALANKAN lagi.",
+            "Sheet Studio — Kop belum dipilih", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     private void OnLoadPreset(object sender, RoutedEventArgs e)

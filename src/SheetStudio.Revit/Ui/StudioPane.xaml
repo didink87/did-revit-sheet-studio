@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="clr-namespace:SheetStudio.Revit.Ui"
              xmlns:vm="clr-namespace:SheetStudio.Core.ViewModels;assembly=SheetStudio.Core"
-             MinWidth="560" FontFamily="Segoe UI" FontSize="12"
+             MinWidth="220" FontFamily="Segoe UI" FontSize="12"
              Background="{DynamicResource SS.Bg}" Foreground="{DynamicResource SS.Fg}">
     <UserControl.InputBindings>
         <KeyBinding Key="A" Modifiers="Ctrl" Command="{Binding Layers.SelectAllCommand}"/>
@@ -38,61 +38,65 @@
     </UserControl.Resources>
 
     <DockPanel>
-        <!-- toolbar -->
-        <Border DockPanel.Dock="Top" Background="{DynamicResource SS.Panel}" BorderBrush="{DynamicResource SS.Border}" BorderThickness="0,0,0,1" Padding="6">
-            <DockPanel>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                    <Button Style="{StaticResource ToolButton}" Content="＋ Baru" Command="{Binding NewSheet}" ToolTip="Buat satu lembar (pemilih nama interaktif)"/>
-                    <Button Style="{StaticResource ToolButton}" Content="⧉ Batch" Command="{Binding Batch}" ToolTip="Buat banyak lembar sekaligus"/>
-                    <Button Style="{StaticResource ToolButton}" Content="⟳" Command="{Binding Refresh}" ToolTip="Baca ulang model (F5)"/>
-                    <Button Style="{StaticResource ToolButton}" Content="⇅ Rapikan nomor" Command="{Binding NormalizeNumbers}"
+        <!-- toolbar: tombol membungkus ke baris berikut bila pane sempit -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource SS.Panel}" BorderBrush="{DynamicResource SS.Border}" BorderThickness="0,0,0,1" Padding="6,6,6,4">
+            <StackPanel>
+                <WrapPanel>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="＋ Baru" Command="{Binding NewSheet}" ToolTip="Buat satu lembar (pemilih nama interaktif)"/>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="⧉ Batch" Command="{Binding Batch}" ToolTip="Buat banyak lembar sekaligus"/>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="⟳" Command="{Binding Refresh}" ToolTip="Baca ulang model (F5)"/>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="⇅ Rapikan nomor" Command="{Binding NormalizeNumbers}"
                             ToolTip="Hitung ulang SEMUA nomor dari urutan panel (biasanya hanya grup yang Anda ubah)"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <TextBlock Text="Penomoran:" VerticalAlignment="Center" Margin="8,0,4,0" Foreground="{DynamicResource SS.FgMuted}"/>
-                    <ToggleButton Content="{Binding IsStrategyUrut, Converter={x:Static ui:StudioPane.StrategyLabel}}" IsChecked="{Binding IsStrategyUrut}" Padding="8,3"
-                                  ToolTip="Rentang: nomor dari rentang jenis gambar (mis. denah A-110…139). Urut: nomor berurutan per tipe."/>
-                    <Button Style="{StaticResource ToolButton}" Content="⚙" Margin="6,0,0,0" Command="{Binding OpenPreferences}" ToolTip="Preferensi"/>
-                </StackPanel>
-                <Grid Margin="6,0">
-                    <TextBox x:Name="Search" Text="{Binding Layers.Filter, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Padding="22,2,4,2"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="Penomoran:" VerticalAlignment="Center" Margin="4,0,4,0" Foreground="{DynamicResource SS.FgMuted}"/>
+                        <ToggleButton Content="{Binding IsStrategyUrut, Converter={x:Static ui:StudioPane.StrategyLabel}}" IsChecked="{Binding IsStrategyUrut}" Padding="8,3"
+                                      ToolTip="Rentang: nomor dari rentang jenis gambar (mis. denah A-110…139). Urut: nomor berurutan per tipe."/>
+                        <Button Style="{StaticResource ToolButton}" Content="⚙" Margin="6,0,0,0" Command="{Binding OpenPreferences}" ToolTip="Preferensi"/>
+                    </StackPanel>
+                </WrapPanel>
+                <Grid>
+                    <TextBox x:Name="Search" Text="{Binding Layers.Filter, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Padding="22,2,4,2"
+                             ToolTip="Saring lembar menurut nomor atau judul"/>
                     <TextBlock Text="🔍" Margin="5,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{DynamicResource SS.FgMuted}"/>
                 </Grid>
-            </DockPanel>
+            </StackPanel>
         </Border>
 
         <!-- pending bar -->
-        <Border DockPanel.Dock="Bottom" Background="{DynamicResource SS.Panel}" BorderBrush="{DynamicResource SS.Border}" BorderThickness="0,1,0,0" Padding="6">
-            <DockPanel>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <Button Style="{StaticResource ToolButton}" Content="↶" Command="{Binding Undo}" ToolTip="Urungkan di panel (Ctrl+Z)"/>
-                    <Button Style="{StaticResource ToolButton}" Content="↷" Command="{Binding Redo}" ToolTip="Ulangi (Ctrl+Y)"/>
-                    <Button Style="{StaticResource ToolButton}" Content="Pratinjau daftar" Click="OnPreview"/>
-                    <Button Style="{StaticResource ToolButton}" Content="Buang" Command="{Binding Discard}"/>
-                    <Button Style="{StaticResource PrimaryButton}" Content="TERAPKAN" Command="{Binding Apply}"
-                            ToolTip="Tulis semua perubahan ke model sebagai satu langkah Undo"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="●" Foreground="{DynamicResource SS.Accent}" Margin="0,0,4,0"/>
-                    <TextBlock Text="{Binding PendingCount, StringFormat={}{0} perubahan tertunda}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding Status}" Margin="12,0,0,0" Foreground="{DynamicResource SS.FgMuted}" TextTrimming="CharacterEllipsis" MaxWidth="420"/>
-                </StackPanel>
-            </DockPanel>
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource SS.Panel}" BorderBrush="{DynamicResource SS.Border}" BorderThickness="0,1,0,0" Padding="6,6,6,2">
+            <StackPanel>
+                <WrapPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,4">
+                        <TextBlock Text="●" Foreground="{DynamicResource SS.Accent}" Margin="0,0,4,0"/>
+                        <TextBlock Text="{Binding PendingCount, StringFormat={}{0} perubahan tertunda}" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <Button Style="{StaticResource ToolButton}" Content="↶" Command="{Binding Undo}" ToolTip="Urungkan di panel (Ctrl+Z)"/>
+                        <Button Style="{StaticResource ToolButton}" Content="↷" Command="{Binding Redo}" ToolTip="Ulangi (Ctrl+Y)"/>
+                        <Button Style="{StaticResource ToolButton}" Content="Pratinjau daftar" Click="OnPreview"/>
+                        <Button Style="{StaticResource ToolButton}" Content="Buang" Command="{Binding Discard}"/>
+                        <Button Style="{StaticResource PrimaryButton}" Content="TERAPKAN" Command="{Binding Apply}"
+                                ToolTip="Tulis semua perubahan ke model sebagai satu langkah Undo"/>
+                    </StackPanel>
+                </WrapPanel>
+                <TextBlock Text="{Binding Status}" Margin="0,0,0,2" Foreground="{DynamicResource SS.FgMuted}" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding Status}"/>
+            </StackPanel>
         </Border>
 
-        <!-- layers | inspector -->
-        <Grid>
+        <!-- layers | inspector: berdampingan bila lebar, bertumpuk bila sempit (lihat ApplyLayout) -->
+        <Grid x:Name="MainGrid">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="300"/>
+                <ColumnDefinition Width="*" MinWidth="220"/>
                 <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="300" MinWidth="240"/>
+                <ColumnDefinition Width="300" MinWidth="200"/>
             </Grid.ColumnDefinitions>
-            <DockPanel Grid.Column="0">
+            <DockPanel x:Name="LayersArea" Grid.Column="0">
                 <TextBlock DockPanel.Dock="Top" Text="LAPISAN — URUTAN LEMBAR" Margin="8,6,8,4" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
                 <ui:LayersPanel x:Name="LayersView"/>
             </DockPanel>
-            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="{DynamicResource SS.Border}"/>
-            <DockPanel Grid.Column="2" Background="{DynamicResource SS.Panel}">
+            <GridSplitter x:Name="Splitter" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{DynamicResource SS.Border}"/>
+            <DockPanel x:Name="InspectorArea" Grid.Column="2" Background="{DynamicResource SS.Panel}">
                 <TextBlock DockPanel.Dock="Top" Text="INSPEKTUR" Margin="8,6,8,4" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
                 <ContentControl x:Name="InspectorHost"/>
             </DockPanel>

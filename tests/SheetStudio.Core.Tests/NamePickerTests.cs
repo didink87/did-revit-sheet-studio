@@ -134,6 +134,24 @@ public class NamePickerTests
     }
 
     [Fact]
+    public void TypingTitle_ReleasesKindTemplate()
+    {
+        var vm = Vm();
+        vm.SelectedKindId = "denah";
+        vm.Subject = "Lantai 3";
+        vm.FreeTitle = "DENAH KHUSUS";
+        Assert.Null(vm.SelectedKindId);
+        Assert.Equal("DENAH KHUSUS", vm.TitlePreview);
+    }
+
+    [Fact]
+    public void Editing_TitleBoxShowsCurrentTitle()
+    {
+        var vm = Vm("a");
+        Assert.Equal(("DENAH LANTAI 1", "denah"), (vm.FreeTitle, vm.SelectedKindId));
+    }
+
+    [Fact]
     public void EmptyTitle_CannotConfirm()
     {
         var vm = Vm();

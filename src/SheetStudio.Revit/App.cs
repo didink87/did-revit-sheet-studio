@@ -34,7 +34,11 @@ public sealed class App : IExternalApplication
         {
             if (ui.ActiveUIDocument?.Document.GetElement(uid) is Autodesk.Revit.DB.ViewSheet s) ui.ActiveUIDocument.RequestViewChange(s);
         }));
-        ViewModel = new StudioViewModel(Gateway);
+        ViewModel = new StudioViewModel(Gateway)
+        {
+            Titles = new Core.Naming.TitleLibrary(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SheetStudio", "judul-tersimpan.json")),
+        };
         var pane = new StudioPane(ViewModel);
         application.RegisterDockablePane(PaneIds.Studio, "Sheet Studio", pane);
 
