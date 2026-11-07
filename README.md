@@ -33,7 +33,7 @@ Lampirkan file log hari itu saat melaporkan masalah.
 
 ## Tiga sistem dalam satu panel
 
-Tab ribbon **Sheet Studio → Lembar → Sheet Studio** membuka/menutup panel.
+Tab ribbon **DID → panel DID → Sheet Studio** membuka/menutup panel. (Panel DID dipakai bersama Family Browser dan Face View.)
 
 | Bagian | Fungsi |
 |---|---|
