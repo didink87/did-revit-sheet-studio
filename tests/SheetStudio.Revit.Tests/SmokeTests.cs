@@ -13,7 +13,7 @@ public class SmokeTests
         var result = new App().OnStartup(app);
 
         Assert.That(result, Is.EqualTo(Result.Succeeded));
-        Assert.That(app.GetRibbonPanels(App.TabName).Select(p => p.Name), Does.Contain("Lembar"));
+        Assert.That(app.GetRibbonPanels(App.TabName).Select(p => p.Name), Does.Contain(App.PanelName));
         Assert.That(App.ViewModel, Is.Not.Null);
         // Revit builds registered panes lazily, so prove registration by the duplicate-id rejection.
         Assert.That(() => app.RegisterDockablePane(PaneIds.Studio, "dup", new StudioPane(App.ViewModel!)),

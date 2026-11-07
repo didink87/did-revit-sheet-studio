@@ -9,7 +9,9 @@ namespace SheetStudio.Revit;
 
 public sealed class App : IExternalApplication
 {
-    public const string TabName = "Sheet Studio";
+    // Shared with Family Browser and Face View: one "DID" tab, one "DID" panel.
+    public const string TabName = "DID";
+    public const string PanelName = "DID";
 
     public static ExternalEventQueue? Queue { get; private set; }
     public static RevitStudioGateway? Gateway { get; private set; }
@@ -20,11 +22,14 @@ public sealed class App : IExternalApplication
     {
         StudioLog.Sink = new FileLogSink(FileLogSink.DefaultDir).Write;
         using var _ = StudioLog.Time("startup");
-        application.CreateRibbonTab(TabName);
-        var panel = application.CreateRibbonPanel(TabName, "Lembar");
+        try { application.CreateRibbonTab(TabName); } catch (Autodesk.Revit.Exceptions.ArgumentException) { /* tab already created by another DID add-in */ }
+        var panel = application.GetRibbonPanels(TabName).FirstOrDefault(p => p.Name == PanelName)
+                    ?? application.CreateRibbonPanel(TabName, PanelName);
         var asm = typeof(App).Assembly;
         panel.AddItem(new PushButtonData("SheetStudio", "Sheet\nStudio", asm.Location, typeof(ShowStudioCommand).FullName)
         {
+            LargeImage = LoadIcon(asm, "sheet32.png"),
+            Image = LoadIcon(asm, "sheet16.png"),
             ToolTip = "Buka/tutup panel Sheet Studio: buat, urutkan (lapisan), dan edit lembar",
         });
 
@@ -60,5 +65,17 @@ public sealed class App : IExternalApplication
     {
         _watcher?.Dispose();
         return Result.Succeeded;
+    }
+
+    private static System.Windows.Media.Imaging.BitmapImage LoadIcon(System.Reflection.Assembly asm, string name)
+    {
+        using var s = asm.GetManifestResourceStream($"SheetStudio.Revit.Resources.{name}")!;
+        var img = new System.Windows.Media.Imaging.BitmapImage();
+        img.BeginInit();
+        img.StreamSource = s;
+        img.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+        img.EndInit();
+        img.Freeze();
+        return img;
     }
 }
