@@ -6,13 +6,42 @@ Plugin Revit untuk **membuat, mengurutkan, dan mengedit lembar (sheet)** dengan 
 - Aturan penamaan: `docs/reference/02-penamaan-lembar-aia-ncs.md`
 - Plan & keputusan: `docs/superpowers/plans/2026-11-03-sheet-studio.md`
 
-## Instal (opt-in)
+## Instalasi
+
+Butuh **Revit 2026** (Windows). Tutup Revit sebelum memasang atau memperbarui.
+
+### Jalur 1 — Setup sederhana (tanpa terminal)
+
+1. Buka halaman [Releases](https://github.com/didink87/did-revit-sheet-studio/releases), unduh `SheetStudio-<versi>-Revit2026.zip`.
+2. Ekstrak **seluruh** isi ZIP ke satu folder.
+3. Klik-ganda **`Setup.bat`** → pilih **[1] Pasang / perbarui**.
+4. Buka Revit 2026 → tab **DID** → **Sheet Studio**. Bila muncul dialog keamanan add-in, pilih **Always Load**.
+
+Setup menyalin add-in ke `%AppData%\Autodesk\Revit\Addins\2026\SheetStudio\` dan menulis `SheetStudio.addin`. Copot: jalankan `Setup.bat` → **[2] Copot**.
+
+### Jalur 2 — Terminal (dari kode sumber)
+
+Butuh [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) dan Git.
 
 ```
+git clone https://github.com/didink87/did-revit-sheet-studio.git
+cd did-revit-sheet-studio
 dotnet build src/SheetStudio.Revit -c Release -p:InstallAddin=true
 ```
 
-Menyalin `SheetStudio.addin` ke `%AppData%\Autodesk\Revit\Addins\2026\` dan menunjuk ke `bin\Release\SheetStudio.Revit.dll`. Pakai **Release**: build Debug lebih lambat (target memberi peringatan bila dipasang dari Debug). Revit yang sudah terbuka perlu ditutup–buka lagi. Hapus file `.addin` itu untuk mencopot.
+Menyalin `SheetStudio.addin` ke `%AppData%\Autodesk\Revit\Addins\2026\` dan menunjuk ke `bin\Release\SheetStudio.Revit.dll`. Pakai **Release**: build Debug lebih lambat (target memberi peringatan bila dipasang dari Debug). Perbarui: `git pull` lalu ulangi perintah build. Copot: hapus file `.addin` itu.
+
+Kedua jalur menulis manifest yang sama (`SheetStudio.addin`), jadi jalur terakhir yang dijalankan yang berlaku.
+
+### Membuat paket rilis (pengembang)
+
+```
+powershell -ExecutionPolicy Bypass -File setup/Build-Release.ps1 -Version 1.0.0
+```
+
+Hasil: `dist/SheetStudio-1.0.0-Revit2026.zip` (isi: `bin\`, `Setup.bat`, `Install-SheetStudio.ps1`, `BACA-DULU.txt`, `PANDUAN.md`).
+
+Panduan pemakaian ringkas: [`docs/PANDUAN.md`](docs/PANDUAN.md).
 
 ## Diagnosa
 
