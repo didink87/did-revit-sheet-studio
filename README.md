@@ -66,7 +66,7 @@ Tab ribbon **DID → panel DID → Sheet Studio** membuka/menutup panel. (Panel 
 
 | Bagian | Fungsi |
 |---|---|
-| **Lapisan** (kiri) | Urutan set ala panel Layers Photoshop: grup Disiplin › Tipe, multi-pilih, drag-drop, gembok, mata, thumbnail |
+| **Lapisan** (kiri) | Urutan set kek Layers Photoshop: grup Disiplin › Tipe, multi-pilih, drag-drop, gembok, mata, thumbnail |
 | **Inspektur** (kanan) | Edit lembar terpilih (satu/banyak): disiplin, tipe (slider), nomor, judul, cari-ganti, awalan/akhiran, parameter kop, title block, duplikat, hapus |
 | **＋ Baru / ⧉ Batch** | Pemilih nama interaktif (kartu disiplin, slider tipe, peta nomor 10×10) dan batch (matriks jenis × level, CSV, preset) |
 
