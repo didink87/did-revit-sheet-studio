@@ -2,11 +2,12 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:SheetStudio.Revit.Ui"
-        Title="Sheet Studio — Batch lembar" Width="1180" Height="720" WindowStartupLocation="CenterOwner"
+        Title="Sheet Studio — Batch sheets" Width="1180" Height="720" WindowStartupLocation="CenterOwner"
         FontFamily="Segoe UI" FontSize="12" ShowInTaskbar="False"
         Background="{DynamicResource SS.Bg}" Foreground="{DynamicResource SS.Fg}">
     <Window.Resources>
         <ui:BoolToVisibility x:Key="Vis"/>
+        <ui:PlanStatusLabel x:Key="StatusLabel"/>
         <CollectionViewSource x:Key="KindsByGroup" Source="{Binding Kinds}">
             <CollectionViewSource.GroupDescriptions>
                 <PropertyGroupDescription PropertyName="Group"/>
@@ -17,9 +18,9 @@
         <!-- bottom: progress + run -->
         <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <Button Content="Pratinjau" Padding="10,4" Margin="0,0,6,0" Command="{Binding PreviewCommand}"/>
-                <Button x:Name="RunButton" Content="JALANKAN" Padding="14,4" Margin="0,0,6,0" FontWeight="Bold" Command="{Binding Run}"/>
-                <Button Content="Hentikan" Padding="10,4" Margin="0,0,6,0" Command="{Binding Cancel}" ToolTip="Hentikan proses yang sedang berjalan"
+                <Button Content="Preview" Padding="10,4" Margin="0,0,6,0" Command="{Binding PreviewCommand}"/>
+                <Button x:Name="RunButton" Content="RUN" Padding="14,4" Margin="0,0,6,0" FontWeight="Bold" Command="{Binding Run}"/>
+                <Button Content="Stop" Padding="10,4" Margin="0,0,6,0" Command="{Binding Cancel}" ToolTip="Stop the running process"
                         Visibility="{Binding IsRunning, Converter={StaticResource Vis}}"/>
                 <Button Content="{Binding CloseLabel}" Padding="10,4" IsCancel="True" MinWidth="80"/>
             </StackPanel>
@@ -44,7 +45,7 @@
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
                     <TextBlock Text="Preset" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox x:Name="PresetBox" Width="190" ItemsSource="{Binding PresetNames}"/>
-                    <Button Content="Muat" Padding="8,2" Margin="6,0,0,0" Click="OnLoadPreset"/>
+                    <Button Content="Load" Padding="8,2" Margin="6,0,0,0" Click="OnLoadPreset"/>
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Bottom" Margin="0,6,0,0">
                     <TextBlock Text="LEVEL" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
@@ -55,12 +56,12 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock Text="Kertas" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Paper" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <ComboBox ItemsSource="{Binding KertasOptions}" SelectedItem="{Binding Kertas}" Width="60"/>
-                        <Button Content="Isi dari matriks ▸" Padding="8,2" Margin="8,0,0,0" Command="{Binding BuildFromMatrix}"/>
+                        <Button Content="Fill from matrix ▸" Padding="8,2" Margin="8,0,0,0" Command="{Binding BuildFromMatrix}"/>
                     </StackPanel>
                 </StackPanel>
-                <TextBlock DockPanel.Dock="Top" Text="JENIS GAMBAR" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
+                <TextBlock DockPanel.Dock="Top" Text="DRAWING KINDS" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
                 <ListBox ItemsSource="{Binding Source={StaticResource KindsByGroup}}" BorderThickness="1" BorderBrush="{DynamicResource SS.Border}">
                     <ListBox.GroupStyle>
                         <GroupStyle>
@@ -80,26 +81,26 @@
             <!-- rows -->
             <DockPanel Grid.Column="2">
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
-                    <Button Content="Impor CSV…" Padding="8,2" Margin="0,0,6,0" Click="OnImport"/>
-                    <Button Content="Ekspor CSV…" Padding="8,2" Margin="0,0,6,0" Click="OnExport"/>
-                    <Button Content="Kosongkan" Padding="8,2" Command="{Binding Clear}"/>
+                    <Button Content="Import CSV…" Padding="8,2" Margin="0,0,6,0" Click="OnImport"/>
+                    <Button Content="Export CSV…" Padding="8,2" Margin="0,0,6,0" Click="OnExport"/>
+                    <Button Content="Clear" Padding="8,2" Command="{Binding Clear}"/>
                     <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource SS.FgMuted}"
-                               Text="Kolom bisa diedit. JENIS = id jenis (mis. denah) atau kosong untuk judul bebas."/>
+                               Text="Columns are editable. KIND = kind id (e.g. denah) or empty for a free title."/>
                 </StackPanel>
                 <DataGrid x:Name="RowsGrid" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False"
                           HeadersVisibility="Column" GridLinesVisibility="Horizontal">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" IsReadOnly="True" Width="70"/>
-                        <DataGridTextColumn Header="Nomor" Binding="{Binding PlannedNumber}" IsReadOnly="True" Width="70" FontFamily="Consolas"/>
-                        <DataGridTextColumn Header="Judul (hasil)" Binding="{Binding PlannedTitle}" IsReadOnly="True" Width="2*"/>
-                        <DataGridTextColumn Header="JENIS" Binding="{Binding KindId}" Width="*"/>
-                        <DataGridTextColumn Header="SUBJEK" Binding="{Binding Subjek}" Width="*"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status, Converter={StaticResource StatusLabel}}" IsReadOnly="True" Width="70"/>
+                        <DataGridTextColumn Header="Number" Binding="{Binding PlannedNumber}" IsReadOnly="True" Width="70" FontFamily="Consolas"/>
+                        <DataGridTextColumn Header="Title (result)" Binding="{Binding PlannedTitle}" IsReadOnly="True" Width="2*"/>
+                        <DataGridTextColumn Header="KIND" Binding="{Binding KindId}" Width="*"/>
+                        <DataGridTextColumn Header="SUBJECT" Binding="{Binding Subjek}" Width="*"/>
                         <DataGridTextColumn Header="LEVEL" Binding="{Binding LevelName}" Width="*"/>
-                        <DataGridTextColumn Header="NOMOR" Binding="{Binding Nomor}" Width="60"/>
-                        <DataGridTextColumn Header="JUDUL" Binding="{Binding Judul}" Width="*"/>
-                        <DataGridTextColumn Header="SKALA" Binding="{Binding Skala}" Width="50"/>
+                        <DataGridTextColumn Header="NUMBER" Binding="{Binding Nomor}" Width="60"/>
+                        <DataGridTextColumn Header="TITLE" Binding="{Binding Judul}" Width="*"/>
+                        <DataGridTextColumn Header="SCALE" Binding="{Binding Skala}" Width="50"/>
                         <DataGridCheckBoxColumn Header="VIEW" Binding="{Binding BuatView}" Width="45"/>
-                        <DataGridTextColumn Header="Pesan" Binding="{Binding Pesan}" IsReadOnly="True" Width="2*"/>
+                        <DataGridTextColumn Header="Message" Binding="{Binding Pesan}" IsReadOnly="True" Width="2*"/>
                     </DataGrid.Columns>
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">

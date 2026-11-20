@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
 using Autodesk.Revit.UI;
+using SheetStudio.Core.Create;
 
 namespace SheetStudio.Revit.Ui;
 
@@ -66,6 +67,20 @@ public sealed class EnumEquals : IValueConverter
 
     public object ConvertBack(object value, Type t, object p, CultureInfo c) =>
         value is true && p is string s ? Enum.Parse(Nullable.GetUnderlyingType(t) ?? t, s) : Binding.DoNothing;
+}
+
+/// <summary>Plan status enum → English label (Batch grid).</summary>
+public sealed class PlanStatusLabel : IValueConverter
+{
+    public object Convert(object value, Type t, object p, CultureInfo c) => ViewKindLabels.Label(value as PlanStatus?);
+    public object ConvertBack(object value, Type t, object p, CultureInfo c) => Binding.DoNothing;
+}
+
+/// <summary>Stored view-kind id (Denah, Tampak…) → English label.</summary>
+public sealed class ViewKindLabel : IValueConverter
+{
+    public object Convert(object value, Type t, object p, CultureInfo c) => ViewKindLabels.Label(value as string);
+    public object ConvertBack(object value, Type t, object p, CultureInfo c) => Binding.DoNothing;
 }
 
 internal static class Theme

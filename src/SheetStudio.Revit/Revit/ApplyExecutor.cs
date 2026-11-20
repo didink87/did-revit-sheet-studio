@@ -12,7 +12,7 @@ namespace SheetStudio.Revit.Revit;
 /// </summary>
 public static class ApplyExecutor
 {
-    public const string GroupName = "Sheet Studio: Terapkan";
+    public const string GroupName = "Sheet Studio: Apply";
 
     /// <summary>Commits a transaction. Replaceable in tests to simulate a commit that Revit rolls back.</summary>
     internal static Func<Transaction, TransactionStatus> CommitFn = t => t.Commit();
@@ -21,15 +21,15 @@ public static class ApplyExecutor
     {
         var skipped = new List<(string, string)>();
         if (plan.DocumentKey != SnapshotReader.DocumentKey(doc))
-            return new ApplyReport(0, [("", "Dokumen aktif berbeda dari yang dibaca panel; tidak ada yang diterapkan. Tekan ⟳ lalu ulangi.")]);
+            return new ApplyReport(0, [("", "The active document differs from the one the panel read; nothing was applied. Press ⟳ and try again.")]);
 
         var sheets = new Dictionary<string, ViewSheet>();
         foreach (var (uid, versi) in plan.ExpectedVersi)
         {
-            if (doc.GetElement(uid) is not ViewSheet s) { skipped.Add((uid, "Lembar tidak ada lagi di model")); continue; }
-            if (SheetSnapshot.MakeVersi(s.SheetNumber, s.Name) != versi) { skipped.Add((uid, $"Lembar {s.SheetNumber} berubah sejak dibaca")); continue; }
+            if (doc.GetElement(uid) is not ViewSheet s) { skipped.Add((uid, "The sheet no longer exists in the model")); continue; }
+            if (SheetSnapshot.MakeVersi(s.SheetNumber, s.Name) != versi) { skipped.Add((uid, $"Sheet {s.SheetNumber} changed since it was read")); continue; }
             var (editable, owner) = SnapshotReader.Ownership(doc, s.Id);
-            if (!editable) { skipped.Add((uid, $"Lembar {s.SheetNumber} sedang dipinjam {owner}")); continue; }
+            if (!editable) { skipped.Add((uid, $"Sheet {s.SheetNumber} is borrowed by {owner}")); continue; }
             sheets[uid] = s;
         }
 
@@ -46,7 +46,7 @@ public static class ApplyExecutor
         // 1. deletions first (they free their numbers), then temporary numbers
         var deletes = plan.Deletes.Where(sheets.ContainsKey).ToList();
         var steps = plan.Renumber.Where(r => sheets.ContainsKey(r.UniqueId)).ToList();
-        using (var t = new Transaction(doc, "Sheet Studio: Hapus & nomor sementara"))
+        using (var t = new Transaction(doc, "Sheet Studio: Delete & temporary numbers"))
         {
             t.Start();
             foreach (var uid in deletes)
@@ -55,11 +55,11 @@ public static class ApplyExecutor
                 applied.Add(uid);
             }
             foreach (var r in steps) sheets[r.UniqueId].SheetNumber = r.Temp;
-            if (CommitFn(t) != TransactionStatus.Committed) return Abort("Revit membatalkan transaksi (hapus/nomor sementara); tidak ada yang diterapkan");
+            if (CommitFn(t) != TransactionStatus.Committed) return Abort("Revit cancelled the transaction (delete/temporary numbers); nothing was applied");
         }
 
         // 2. final numbers and edits
-        using (var t = new Transaction(doc, "Sheet Studio: Terapkan perubahan lembar"))
+        using (var t = new Transaction(doc, "Sheet Studio: Apply sheet changes"))
         {
             t.Start();
             foreach (var r in steps)
@@ -68,7 +68,7 @@ public static class ApplyExecutor
                 catch (Autodesk.Revit.Exceptions.ArgumentException)
                 {
                     t.RollBack();
-                    return Abort($"Nomor {r.Final} sudah dipakai lembar lain di luar rencana; tidak ada yang diterapkan");
+                    return Abort($"Number {r.Final} is already used by another sheet outside the plan; nothing was applied");
                 }
             }
 
@@ -78,20 +78,20 @@ public static class ApplyExecutor
                 try { problem = ApplyEdit(doc, sheets[e.UniqueId], e); }
                 catch (Exception ex) when (ex is Autodesk.Revit.Exceptions.ApplicationException or InvalidOperationException)
                 {
-                    problem = $"Lembar {sheets[e.UniqueId].SheetNumber}: {ex.Message}";
+                    problem = $"Sheet {sheets[e.UniqueId].SheetNumber}: {ex.Message}";
                 }
                 if (problem is null) applied.Add(e.UniqueId); else skipped.Add((e.UniqueId, problem));
             }
             // a commit Revit rolls back (e.g. a failure posted at commit) must not leave temporary numbers behind
-            if (CommitFn(t) != TransactionStatus.Committed) return Abort("Revit membatalkan transaksi saat menerapkan; tidak ada yang diterapkan");
+            if (CommitFn(t) != TransactionStatus.Committed) return Abort("Revit cancelled the transaction while applying; nothing was applied");
         }
 
         // 3. panel state
-        using (var t = new Transaction(doc, "Sheet Studio: Simpan urutan lembar"))
+        using (var t = new Transaction(doc, "Sheet Studio: Save sheet order"))
         {
             t.Start();
             StorageAdapter.Write(doc, null, ProjectStateJson.Serialize(plan.NewState));
-            if (CommitFn(t) != TransactionStatus.Committed) return Abort("Revit membatalkan penyimpanan urutan; tidak ada yang diterapkan");
+            if (CommitFn(t) != TransactionStatus.Committed) return Abort("Revit cancelled saving the order; nothing was applied");
         }
 
         group.Assimilate();
@@ -107,7 +107,7 @@ public static class ApplyExecutor
         if (e.NewTitleBlockType is not null)
         {
             var symbol = TitleBlocks.Find(doc, e.NewTitleBlockType);
-            if (symbol is null) problems.Add($"Title block '{e.NewTitleBlockType}' tidak ditemukan");
+            if (symbol is null) problems.Add($"Title block '{e.NewTitleBlockType}' not found");
             else
             {
                 if (!symbol.IsActive) symbol.Activate();
@@ -119,7 +119,7 @@ public static class ApplyExecutor
         foreach (var (name, value) in e.NewParams ?? new Dictionary<string, string>())
         {
             var p = s.LookupParameter(name);
-            if (p is null || p.IsReadOnly) { problems.Add($"Parameter '{name}' tidak bisa diisi"); continue; }
+            if (p is null || p.IsReadOnly) { problems.Add($"Parameter '{name}' cannot be set"); continue; }
             var ok = p.StorageType switch
             {
                 StorageType.String => p.Set(value),
@@ -127,8 +127,8 @@ public static class ApplyExecutor
                 StorageType.Double => double.TryParse(value, out var d) && p.Set(d),
                 _ => false,
             };
-            if (!ok) problems.Add($"Parameter '{name}' menolak nilai '{value}'");
+            if (!ok) problems.Add($"Parameter '{name}' rejected the value '{value}'");
         }
-        return problems.Count == 0 ? null : $"Lembar {s.SheetNumber}: " + string.Join("; ", problems);
+        return problems.Count == 0 ? null : $"Sheet {s.SheetNumber}: " + string.Join("; ", problems);
     }
 }

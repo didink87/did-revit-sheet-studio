@@ -34,7 +34,7 @@ public class WatcherTests
         watcher.Changed += () => raised++;
         try
         {
-            Tx(doc, () => Autodesk.Revit.DB.ViewSheet.Create(doc, Autodesk.Revit.DB.ElementId.InvalidElementId), "Sheet Studio: Terapkan");
+            Tx(doc, () => Autodesk.Revit.DB.ViewSheet.Create(doc, Autodesk.Revit.DB.ElementId.InvalidElementId), "Sheet Studio: Apply");
             Tx(doc, () => Autodesk.Revit.DB.Level.Create(doc, 10));
             Assert.That(raised, Is.EqualTo(0));
         }
@@ -44,10 +44,17 @@ public class WatcherTests
     [Test]
     public void Watcher_UndoOfOwnTransaction_IsNotIgnored()
     {
-        Assert.That(ModelWatcher.ShouldIgnore(["Sheet Studio: Terapkan"], Autodesk.Revit.DB.Events.UndoOperation.TransactionCommitted), Is.True);
-        Assert.That(ModelWatcher.ShouldIgnore(["Sheet Studio: Terapkan"], Autodesk.Revit.DB.Events.UndoOperation.TransactionUndone), Is.False);
-        Assert.That(ModelWatcher.ShouldIgnore(["Sheet Studio: Terapkan"], Autodesk.Revit.DB.Events.UndoOperation.TransactionRedone), Is.False);
+        Assert.That(ModelWatcher.ShouldIgnore(["Sheet Studio: Apply"], Autodesk.Revit.DB.Events.UndoOperation.TransactionCommitted), Is.True);
+        Assert.That(ModelWatcher.ShouldIgnore(["Sheet Studio: Apply"], Autodesk.Revit.DB.Events.UndoOperation.TransactionUndone), Is.False);
+        Assert.That(ModelWatcher.ShouldIgnore(["Sheet Studio: Apply"], Autodesk.Revit.DB.Events.UndoOperation.TransactionRedone), Is.False);
         Assert.That(ModelWatcher.ShouldIgnore(["Edit"], Autodesk.Revit.DB.Events.UndoOperation.TransactionCommitted), Is.False);
+    }
+
+    [Test]
+    public void ExecutorTransactionNames_UseIgnoredPrefixAndAreEnglish()
+    {
+        Assert.That(ApplyExecutor.GroupName, Is.EqualTo("Sheet Studio: Apply"));
+        Assert.That(CreateExecutor.GroupName, Does.StartWith("Sheet Studio"));
     }
 
     private static Autodesk.Revit.DB.ElementId PlaceViewport(Autodesk.Revit.DB.Document doc, Autodesk.Revit.DB.ViewSheet sheet)

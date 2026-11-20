@@ -12,7 +12,7 @@ namespace SheetStudio.Revit.Revit;
 /// <summary>Creates and duplicates sheets. One TransactionGroup per call, one sub-transaction per sheet.</summary>
 public static class CreateExecutor
 {
-    public const string GroupName = "Sheet Studio: Buat Lembar";
+    public const string GroupName = "Sheet Studio: Create sheets";
 
     public static CreateReport Create(Document doc, IReadOnlyList<CreateRequest> reqs, Prefs prefs, bool lewatiGagal,
         IProgress<(int, int, string)>? progress, CancellationToken ct)
@@ -33,10 +33,10 @@ public static class CreateExecutor
             if (ct.IsCancellationRequested)
             {
                 group.RollBack();
-                return new CreateReport(rows.Select(r => (r.Title, false, (string?)"Dibatalkan", (string?)null)).ToList(), true);
+                return new CreateReport(rows.Select(r => (r.Title, false, (string?)"Cancelled", (string?)null)).ToList(), true);
             }
             var req = reqs[i];
-            using (var t = new Transaction(doc, $"Sheet Studio: Buat lembar {req.Name.Id.Format()}"))
+            using (var t = new Transaction(doc, $"Sheet Studio: Create sheet {req.Name.Id.Format()}"))
             {
                 t.Start();
                 try
@@ -53,7 +53,7 @@ public static class CreateExecutor
                     if (!lewatiGagal)
                     {
                         group.RollBack();
-                        return new CreateReport(rows.Select(r => (r.Title, false, r.Ok ? "Dibatalkan karena baris lain gagal" : r.Pesan, (string?)null)).ToList(), false);
+                        return new CreateReport(rows.Select(r => (r.Title, false, r.Ok ? "Cancelled because another row failed" : r.Pesan, (string?)null)).ToList(), false);
                     }
                 }
             }
@@ -67,7 +67,7 @@ public static class CreateExecutor
     {
         var warnings = new List<string>();
         var tbName = req.TitleBlockType ?? prefs.TitleBlockPerKertas.GetValueOrDefault(req.Kertas);
-        var tb = TitleBlocks.Find(doc, tbName) ?? throw new InvalidOperationException($"Title block '{tbName}' tidak ditemukan");
+        var tb = TitleBlocks.Find(doc, tbName) ?? throw new InvalidOperationException($"Title block '{tbName}' not found");
         if (!tb.IsActive) tb.Activate();
 
         var sheet = ViewSheet.Create(doc, tb.Id);
@@ -92,18 +92,18 @@ public static class CreateExecutor
             if (view is not null && spec.Mode == ViewMode.BuatBaru) newViews.Add(view.UniqueId);
         }
         ViewportPlacer.Place(doc, sheet, views, out var fits);
-        if (!fits) warnings.Add("View tidak muat di area gambar; atur skala atau ukuran kertas");
+        if (!fits) warnings.Add("The view does not fit in the drawing area; adjust the scale or paper size");
         return (sheet, warnings.Count == 0 ? null : string.Join("; ", warnings), newViews);
     }
 
     private static View? ExistingView(Document doc, ViewSheet sheet, string? uid, out string? warning)
     {
         warning = null;
-        if (uid is null || doc.GetElement(uid) is not View view) { warning = "View yang dipilih tidak ditemukan"; return null; }
+        if (uid is null || doc.GetElement(uid) is not View view) { warning = "The selected view was not found"; return null; }
         if (Viewport.CanAddViewToSheet(doc, sheet.Id, view.Id)) return view;
         var owner = new FilteredElementCollector(doc).OfClass(typeof(Viewport)).Cast<Viewport>()
             .Where(v => v.ViewId == view.Id).Select(v => (doc.GetElement(v.SheetId) as ViewSheet)?.SheetNumber).FirstOrDefault();
-        warning = $"View '{view.Name}' sudah dipakai di lembar {owner ?? "lain"}";
+        warning = $"View '{view.Name}' is already used on sheet {owner ?? "another"}";
         return null;
     }
 
@@ -117,12 +117,12 @@ public static class CreateExecutor
             DuplicateMode.DenganViewDetailing => SheetDuplicateOption.DuplicateSheetWithViewsAndDetailing,
             _ => SheetDuplicateOption.DuplicateEmptySheet,
         };
-        using var group = new TransactionGroup(doc, "Sheet Studio: Duplikat");
+        using var group = new TransactionGroup(doc, "Sheet Studio: Duplicate");
         group.Start();
         foreach (var uid in ids)
         {
-            if (doc.GetElement(uid) is not ViewSheet sheet) { rows.Add((uid, false, "Lembar tidak ada lagi", null)); continue; }
-            using var t = new Transaction(doc, $"Sheet Studio: Duplikat {sheet.SheetNumber}");
+            if (doc.GetElement(uid) is not ViewSheet sheet) { rows.Add((uid, false, "The sheet no longer exists", null)); continue; }
+            using var t = new Transaction(doc, $"Sheet Studio: Duplicate {sheet.SheetNumber}");
             t.Start();
             try
             {
@@ -147,7 +147,7 @@ public static class CreateExecutor
     /// <summary>Removes sheets (and the views made for them) created earlier in a cancelled or failed batch.</summary>
     public static void DeleteCreated(Document doc, IReadOnlyList<string> sheetIds, IReadOnlyList<string>? viewIds = null)
     {
-        using var t = new Transaction(doc, "Sheet Studio: Batalkan pembuatan");
+        using var t = new Transaction(doc, "Sheet Studio: Undo creation");
         t.Start();
         foreach (var uid in sheetIds)
             if (doc.GetElement(uid) is ViewSheet s) doc.Delete(s.Id);
@@ -159,7 +159,7 @@ public static class CreateExecutor
     private static string NextFree(Document doc, ViewSheet original, NamingProfile p, NumberingOptions o)
     {
         var parsed = SheetId.Parse(original.SheetNumber, p);
-        if (!parsed.Ok) throw new InvalidOperationException("Nomor asli bukan format UDS; beri nomor manual");
+        if (!parsed.Ok) throw new InvalidOperationException("The original number is not in UDS format; give a manual number");
         var group = LayerListBuilder.TypeKey(parsed.Id.Discipline, parsed.Id.Type);
         var used = new FilteredElementCollector(doc).OfClass(typeof(ViewSheet)).Cast<ViewSheet>()
             .Select(s => SheetId.Parse(s.SheetNumber, p)).Where(r => r.Ok && LayerListBuilder.TypeKey(r.Id.Discipline, r.Id.Type) == group)
@@ -169,6 +169,6 @@ public static class CreateExecutor
             if (!used.Contains(s)) return new SheetId(parsed.Id.Discipline, parsed.Id.Type, s).Format();
         for (var s = from; s <= to; s++)
             if (!used.Contains(s)) return new SheetId(parsed.Id.Discipline, parsed.Id.Type, s).Format();
-        throw new InvalidOperationException($"Rentang {original.SheetNumber[..^2]}xx penuh");
+        throw new InvalidOperationException($"Range {original.SheetNumber[..^2]}xx is full");
     }
 }

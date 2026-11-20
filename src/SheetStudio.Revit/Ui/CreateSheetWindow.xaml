@@ -2,18 +2,19 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:SheetStudio.Revit.Ui"
-        Title="Sheet Studio — Lembar baru" Width="820" Height="760" WindowStartupLocation="CenterOwner"
+        Title="Sheet Studio — New sheet" Width="820" Height="760" WindowStartupLocation="CenterOwner"
         FontFamily="Segoe UI" FontSize="12" ShowInTaskbar="False"
         Background="{DynamicResource SS.Bg}" Foreground="{DynamicResource SS.Fg}">
     <Window.Resources>
         <ui:EnumEquals x:Key="EnumEq"/>
         <ui:NullToCollapsed x:Key="NullVis"/>
+        <ui:ViewKindLabel x:Key="KindLabel"/>
     </Window.Resources>
     <DockPanel Margin="10">
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button x:Name="CreateButton" Content="BUAT LEMBAR" MinWidth="120" Padding="12,4" Margin="0,0,6,0" FontWeight="Bold"
+            <Button x:Name="CreateButton" Content="CREATE SHEET" MinWidth="120" Padding="12,4" Margin="0,0,6,0" FontWeight="Bold"
                     Command="{Binding Create}" IsDefault="True"/>
-            <Button Content="Tutup" MinWidth="90" Padding="10,4" IsCancel="True" ToolTip="Kembali ke Revit tanpa membuat lembar"/>
+            <Button Content="Close" MinWidth="90" Padding="10,4" IsCancel="True" ToolTip="Return to Revit without creating a sheet"/>
         </StackPanel>
         <Grid>
             <Grid.ColumnDefinitions>
@@ -25,13 +26,13 @@
                 <ui:NamePicker DataContext="{Binding Picker}"/>
             </ScrollViewer>
             <StackPanel Grid.Column="2">
-                <TextBlock Text="KERTAS &amp; KOP  (wajib dipilih)" FontWeight="Bold" Margin="0,4,0,4" Foreground="{DynamicResource SS.FgMuted}"/>
+                <TextBlock Text="PAPER &amp; TITLE BLOCK  (required)" FontWeight="Bold" Margin="0,4,0,4" Foreground="{DynamicResource SS.FgMuted}"/>
                 <StackPanel Orientation="Horizontal">
                     <RadioButton Content="A3" Margin="0,0,10,0" IsChecked="{Binding Kertas, Converter={StaticResource EnumEq}, ConverterParameter=A3}"/>
                     <RadioButton Content="A2" Margin="0,0,10,0" IsChecked="{Binding Kertas, Converter={StaticResource EnumEq}, ConverterParameter=A2}"/>
                     <RadioButton Content="A1" IsChecked="{Binding Kertas, Converter={StaticResource EnumEq}, ConverterParameter=A1}"/>
                 </StackPanel>
-                <ComboBox Margin="0,6,0,0" ItemsSource="{Binding TitleBlockTypes}" SelectedItem="{Binding TitleBlockType}" ToolTip="Title block (kop)"/>
+                <ComboBox Margin="0,6,0,0" ItemsSource="{Binding TitleBlockTypes}" SelectedItem="{Binding TitleBlockType}" ToolTip="Title block"/>
                 <Border Margin="0,6,0,0" Padding="6,4" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource SS.Warn}"
                         Visibility="{Binding Peringatan, Converter={StaticResource NullVis}}">
                     <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource SS.Warn}" FontWeight="SemiBold">
@@ -41,13 +42,13 @@
 
                 <TextBlock Text="VIEW" FontWeight="Bold" Margin="0,14,0,4" Foreground="{DynamicResource SS.FgMuted}"/>
                 <StackPanel Orientation="Horizontal">
-                    <RadioButton Content="Tanpa" Margin="0,0,10,0" IsChecked="{Binding ViewMode, Converter={StaticResource EnumEq}, ConverterParameter=Tanpa}"/>
-                    <RadioButton Content="Pakai yang ada" Margin="0,0,10,0" IsChecked="{Binding ViewMode, Converter={StaticResource EnumEq}, ConverterParameter=PakaiYangAda}"/>
-                    <RadioButton Content="Buat baru" IsChecked="{Binding ViewMode, Converter={StaticResource EnumEq}, ConverterParameter=BuatBaru}"/>
+                    <RadioButton Content="None" Margin="0,0,10,0" IsChecked="{Binding ViewMode, Converter={StaticResource EnumEq}, ConverterParameter=Tanpa}"/>
+                    <RadioButton Content="Use existing" Margin="0,0,10,0" IsChecked="{Binding ViewMode, Converter={StaticResource EnumEq}, ConverterParameter=PakaiYangAda}"/>
+                    <RadioButton Content="Create new" IsChecked="{Binding ViewMode, Converter={StaticResource EnumEq}, ConverterParameter=BuatBaru}"/>
                 </StackPanel>
 
                 <StackPanel x:Name="ExistingPanel" Margin="0,8,0,0">
-                    <TextBox Text="{Binding ViewSearch, UpdateSourceTrigger=PropertyChanged}" ToolTip="Cari view (hanya yang belum di lembar)"/>
+                    <TextBox Text="{Binding ViewSearch, UpdateSourceTrigger=PropertyChanged}" ToolTip="Search views (only those not on a sheet)"/>
                     <ListBox Height="220" Margin="0,4,0,0" ItemsSource="{Binding AvailableViews}" SelectedValuePath="UniqueId"
                              SelectedValue="{Binding SelectedViewId}">
                         <ListBox.ItemTemplate>
@@ -64,11 +65,13 @@
                 <Grid x:Name="NewPanel" Margin="0,8,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="90"/><ColumnDefinition/></Grid.ColumnDefinitions>
                     <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                    <TextBlock Text="Jenis view" VerticalAlignment="Center"/>
-                    <ComboBox Grid.Column="1" Margin="0,2" ItemsSource="{Binding ViewJenisOptions}" SelectedItem="{Binding NewViewJenis}"/>
+                    <TextBlock Text="View kind" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="1" Margin="0,2" ItemsSource="{Binding ViewJenisOptions}" SelectedItem="{Binding NewViewJenis}">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource KindLabel}}"/></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
                     <TextBlock Grid.Row="1" Text="Level" VerticalAlignment="Center"/>
                     <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{Binding LevelNames}" SelectedItem="{Binding LevelName}"/>
-                    <TextBlock Grid.Row="2" Text="Skala 1 :" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Row="2" Text="Scale 1 :" VerticalAlignment="Center"/>
                     <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{Binding Skala, UpdateSourceTrigger=PropertyChanged}"/>
                     <TextBlock Grid.Row="3" Text="View template" VerticalAlignment="Center"/>
                     <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding ViewTemplate, UpdateSourceTrigger=PropertyChanged}"/>

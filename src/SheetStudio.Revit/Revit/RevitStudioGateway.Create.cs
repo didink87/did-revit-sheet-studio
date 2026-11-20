@@ -23,7 +23,7 @@ public sealed partial class RevitStudioGateway
             if (ct.IsCancellationRequested)
             {
                 await runner.Run(doc => { CreateExecutor.DeleteCreated(doc, created, views); return true; });
-                return new CreateReport(rows.Select(r => (r.Title, false, (string?)"Dibatalkan", (string?)null)).ToList(), true);
+                return new CreateReport(rows.Select(r => (r.Title, false, (string?)"Cancelled", (string?)null)).ToList(), true);
             }
             var chunk = reqs.Skip(start).Take(ChunkSize).ToList();
             var offset = start;
@@ -35,7 +35,7 @@ public sealed partial class RevitStudioGateway
             if (!prefs.BatchLewatiGagal && report.Rows.Any(r => !r.Ok))
             {
                 await runner.Run(doc => { CreateExecutor.DeleteCreated(doc, created, views); return true; });
-                return new CreateReport(rows.Select(r => (r.Title, false, r.Ok ? "Dibatalkan karena baris lain gagal" : r.Pesan, (string?)null)).ToList(), false);
+                return new CreateReport(rows.Select(r => (r.Title, false, r.Ok ? "Cancelled because another row failed" : r.Pesan, (string?)null)).ToList(), false);
             }
         }
         return new CreateReport(rows, false, views);

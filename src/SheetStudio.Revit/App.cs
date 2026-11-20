@@ -30,7 +30,7 @@ public sealed class App : IExternalApplication
         {
             LargeImage = LoadIcon(asm, "sheet32.png"),
             Image = LoadIcon(asm, "sheet16.png"),
-            ToolTip = "Buka/tutup panel Sheet Studio: buat, urutkan (lapisan), dan edit lembar",
+            ToolTip = "Show/hide the Sheet Studio panel: create, reorder (layers), and edit sheets",
         });
 
         Queue = new ExternalEventQueue();

@@ -16,20 +16,20 @@ public partial class PreviewWindow : Window
         foreach (var r in plan.Renumber)
         {
             var s = byId[r.UniqueId];
-            rows.Add(new PreviewRow("Nomor", s.Number, r.Final, plan.Edits.FirstOrDefault(e => e.UniqueId == r.UniqueId)?.NewTitle ?? s.Title));
+            rows.Add(new PreviewRow("Number", s.Number, r.Final, plan.Edits.FirstOrDefault(e => e.UniqueId == r.UniqueId)?.NewTitle ?? s.Title));
         }
         foreach (var e in plan.Edits.Where(e => plan.Renumber.All(r => r.UniqueId != e.UniqueId)))
         {
             var s = byId[e.UniqueId];
-            rows.Add(new PreviewRow("Ubah", s.Number, s.Number, e.NewTitle is null ? s.Title + " (parameter/tampilan)" : $"{s.Title} → {e.NewTitle}"));
+            rows.Add(new PreviewRow("Edit", s.Number, s.Number, e.NewTitle is null ? s.Title + " (parameters/display)" : $"{s.Title} → {e.NewTitle}"));
         }
-        foreach (var id in plan.Deletes) rows.Add(new PreviewRow("Hapus", byId[id].Number, "—", byId[id].Title));
+        foreach (var id in plan.Deletes) rows.Add(new PreviewRow("Delete", byId[id].Number, "—", byId[id].Title));
         Rows = rows;
         Grid.ItemsSource = rows;
-        Header.Text = $"{plan.Renumber.Count} nomor berubah · {plan.Edits.Count} lembar diubah · {plan.Deletes.Count} dihapus." +
-                      (confirm ? " Semua masuk sebagai satu langkah Undo di Revit." : "");
+        Header.Text = $"{plan.Renumber.Count} renumbered · {plan.Edits.Count} edited · {plan.Deletes.Count} deleted." +
+                      (confirm ? " Everything goes in as a single Undo step in Revit." : "");
         OkButton.Visibility = confirm ? Visibility.Visible : Visibility.Collapsed;
-        CancelButton.Content = confirm ? "Batal" : "Tutup";
+        CancelButton.Content = confirm ? "Cancel" : "Close";
     }
 
     public IReadOnlyList<PreviewRow> Rows { get; }

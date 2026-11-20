@@ -19,7 +19,7 @@ public class LayerListTests
         Assert.Equal(new[] { 0, 1, 2 }, rows.Take(3).Select(r => r.Indent));
         Assert.Equal("A|1", rows.Single(r => r.Number == "A-111").GroupKey);
         Assert.Equal("ARSITEKTUR", rows.Single(r => r.Key == "A").Label);
-        Assert.Equal("DENAH", rows.Single(r => r.Key == "A|1").Label);
+        Assert.Equal("PLANS", rows.Single(r => r.Key == "A|1").Label);
         Assert.Equal(2, rows.Single(r => r.Key == "A").Count);
     }
 

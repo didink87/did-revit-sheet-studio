@@ -32,7 +32,7 @@ public class NamePickerTests
         var vm = Vm();
         vm.SheetType = 3;
         Assert.Equal("Sections", vm.TypeName);
-        Assert.StartsWith("Potongan", vm.TypeDescription);
+        Assert.StartsWith("Sections", vm.TypeDescription);
         Assert.Contains(vm.KindOptions, k => k.Id == "potongan-bangunan");
         Assert.Null(vm.KindOptions[^1].Id); // "BEBAS" last
         Assert.Equal(10, vm.TypeTickLabels.Count);

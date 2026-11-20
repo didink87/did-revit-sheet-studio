@@ -6,7 +6,7 @@
    "Code": "G",
    "NamaId": "Umum",
    "NamaEn": "General",
-   "Keterangan": "Sampul, daftar lembar, legenda simbol, singkatan, catatan umum, ringkasan peraturan.",
+   "Keterangan": "Cover, sheet list, symbol legend, abbreviations, general notes, code summary.",
    "Order": 1,
    "Umum": true,
    "HurufKedua": []
@@ -15,7 +15,7 @@
    "Code": "H",
    "NamaId": "Bahan Berbahaya",
    "NamaEn": "Hazardous Materials",
-   "Keterangan": "Penanganan dan pembersihan bahan berbahaya.",
+   "Keterangan": "Handling and abatement of hazardous materials.",
    "Order": 2,
    "Umum": false,
    "HurufKedua": []
@@ -24,7 +24,7 @@
    "Code": "V",
    "NamaId": "Survei / Pemetaan",
    "NamaEn": "Survey / Mapping",
-   "Keterangan": "Data survei dan pemetaan lokasi.",
+   "Keterangan": "Site survey and mapping data.",
    "Order": 3,
    "Umum": false,
    "HurufKedua": []
@@ -33,7 +33,7 @@
    "Code": "B",
    "NamaId": "Geoteknik",
    "NamaEn": "Geotechnical",
-   "Keterangan": "Data penyelidikan tanah dan boring.",
+   "Keterangan": "Soil investigation and boring data.",
    "Order": 4,
    "Umum": false,
    "HurufKedua": []
@@ -42,7 +42,7 @@
    "Code": "C",
    "NamaId": "Sipil",
    "NamaEn": "Civil",
-   "Keterangan": "Pekerjaan sipil tapak: jalan, drainase, utilitas luar.",
+   "Keterangan": "Site civil work: roads, drainage, external utilities.",
    "Order": 5,
    "Umum": true,
    "HurufKedua": []
@@ -51,7 +51,7 @@
    "Code": "L",
    "NamaId": "Lansekap",
    "NamaEn": "Landscape",
-   "Keterangan": "Rencana lansekap, penanaman, hardscape.",
+   "Keterangan": "Landscape plans, planting, hardscape.",
    "Order": 6,
    "Umum": true,
    "HurufKedua": []
@@ -60,7 +60,7 @@
    "Code": "S",
    "NamaId": "Struktur",
    "NamaEn": "Structural",
-   "Keterangan": "Pondasi, kolom, balok, pelat, rangka atap.",
+   "Keterangan": "Foundations, columns, beams, slabs, roof framing.",
    "Order": 7,
    "Umum": true,
    "HurufKedua": []
@@ -69,39 +69,39 @@
    "Code": "A",
    "NamaId": "Arsitektur",
    "NamaEn": "Architectural",
-   "Keterangan": "Tapak, denah, tampak, potongan, rencana, detail, perspektif arsitektur.",
+   "Keterangan": "Architectural site, plans, elevations, sections, details, perspectives.",
    "Order": 8,
    "Umum": true,
    "HurufKedua": [
     {
      "Huruf": "S",
-     "Nama": "Tapak arsitektur",
-     "Keterangan": "Gambar tapak arsitektur (cek NCS)"
+     "Nama": "Architectural site",
+     "Keterangan": "Architectural site drawings (check NCS)"
     },
     {
      "Huruf": "D",
-     "Nama": "Demolisi",
-     "Keterangan": "Gambar pembongkaran (contoh AD107 di PDF AIA)"
+     "Nama": "Demolition",
+     "Keterangan": "Demolition drawings (example AD107 in the AIA PDF)"
     },
     {
      "Huruf": "E",
-     "Nama": "Elemen",
-     "Keterangan": "Elemen arsitektur (cek NCS)"
+     "Nama": "Elements",
+     "Keterangan": "Architectural elements (check NCS)"
     },
     {
      "Huruf": "I",
      "Nama": "Interior",
-     "Keterangan": "Interior pada set arsitektur (cek NCS)"
+     "Keterangan": "Interiors in the architectural set (check NCS)"
     },
     {
      "Huruf": "F",
-     "Nama": "Finishing",
-     "Keterangan": "Rencana finishing (cek NCS)"
+     "Nama": "Finishes",
+     "Keterangan": "Finish plans (check NCS)"
     },
     {
      "Huruf": "G",
-     "Nama": "Grafis",
-     "Keterangan": "Signage dan grafis (cek NCS)"
+     "Nama": "Graphics",
+     "Keterangan": "Signage and graphics (check NCS)"
     }
    ]
   },
@@ -109,7 +109,7 @@
    "Code": "I",
    "NamaId": "Interior",
    "NamaEn": "Interiors",
-   "Keterangan": "Desain interior, furnitur, finishing interior.",
+   "Keterangan": "Interior design, furniture, interior finishes.",
    "Order": 9,
    "Umum": true,
    "HurufKedua": []
@@ -118,14 +118,14 @@
    "Code": "Q",
    "NamaId": "Peralatan",
    "NamaEn": "Equipment",
-   "Keterangan": "Peralatan khusus (dapur, laboratorium, rumah sakit).",
+   "Keterangan": "Specialty equipment (kitchen, laboratory, hospital).",
    "Order": 10,
    "Umum": false,
    "HurufKedua": [
     {
      "Huruf": "H",
-     "Nama": "Peralatan rumah sakit",
-     "Keterangan": "Contoh QH601 di PDF AIA"
+     "Nama": "Hospital equipment",
+     "Keterangan": "Example QH601 in the AIA PDF"
     }
    ]
   },
@@ -133,14 +133,14 @@
    "Code": "F",
    "NamaId": "Proteksi Kebakaran",
    "NamaEn": "Fire Protection",
-   "Keterangan": "Sprinkler, hidran, APAR, alarm kebakaran.",
+   "Keterangan": "Sprinklers, hydrants, extinguishers, fire alarm.",
    "Order": 11,
    "Umum": true,
    "HurufKedua": [
     {
      "Huruf": "A",
-     "Nama": "Alarm kebakaran",
-     "Keterangan": "Contoh FA601 di PDF AIA"
+     "Nama": "Fire alarm",
+     "Keterangan": "Example FA601 in the AIA PDF"
     }
    ]
   },
@@ -148,7 +148,7 @@
    "Code": "P",
    "NamaId": "Plambing",
    "NamaEn": "Plumbing",
-   "Keterangan": "Air bersih, air kotor, air hujan, sanitair.",
+   "Keterangan": "Clean water, waste water, rainwater, sanitary fixtures.",
    "Order": 12,
    "Umum": true,
    "HurufKedua": []
@@ -157,7 +157,7 @@
    "Code": "D",
    "NamaId": "Proses",
    "NamaEn": "Process",
-   "Keterangan": "Sistem proses industri.",
+   "Keterangan": "Industrial process systems.",
    "Order": 13,
    "Umum": false,
    "HurufKedua": []
@@ -166,19 +166,19 @@
    "Code": "M",
    "NamaId": "Mekanikal",
    "NamaEn": "Mechanical",
-   "Keterangan": "Tata udara, ventilasi, pipa mekanikal.",
+   "Keterangan": "Air conditioning, ventilation, mechanical piping.",
    "Order": 14,
    "Umum": true,
    "HurufKedua": [
     {
      "Huruf": "H",
      "Nama": "HVAC",
-     "Keterangan": "Contoh MH402 di PDF AIA"
+     "Keterangan": "Example MH402 in the AIA PDF"
     },
     {
      "Huruf": "P",
-     "Nama": "Pipa mekanikal",
-     "Keterangan": "Contoh MP501 di PDF AIA"
+     "Nama": "Mechanical piping",
+     "Keterangan": "Example MP501 in the AIA PDF"
     }
    ]
   },
@@ -186,19 +186,19 @@
    "Code": "E",
    "NamaId": "Elektrikal",
    "NamaEn": "Electrical",
-   "Keterangan": "Penerangan, daya, panel, pembumian.",
+   "Keterangan": "Lighting, power, panels, grounding.",
    "Order": 15,
    "Umum": true,
    "HurufKedua": [
     {
      "Huruf": "L",
-     "Nama": "Penerangan",
-     "Keterangan": "Contoh EL103 di PDF AIA"
+     "Nama": "Lighting",
+     "Keterangan": "Example EL103 in the AIA PDF"
     },
     {
      "Huruf": "P",
-     "Nama": "Daya",
-     "Keterangan": "Contoh EP110 di PDF AIA"
+     "Nama": "Power",
+     "Keterangan": "Example EP110 in the AIA PDF"
     }
    ]
   },
@@ -206,7 +206,7 @@
    "Code": "W",
    "NamaId": "Energi Terdistribusi",
    "NamaEn": "Distributed Energy",
-   "Keterangan": "Pembangkit energi setempat (surya, dll).",
+   "Keterangan": "On-site energy generation (solar, etc.).",
    "Order": 16,
    "Umum": false,
    "HurufKedua": []
@@ -215,7 +215,7 @@
    "Code": "T",
    "NamaId": "Telekomunikasi",
    "NamaEn": "Telecommunications",
-   "Keterangan": "Data, telepon, CCTV, tata suara.",
+   "Keterangan": "Data, telephone, CCTV, public address.",
    "Order": 17,
    "Umum": true,
    "HurufKedua": []
@@ -224,14 +224,14 @@
    "Code": "R",
    "NamaId": "Kondisi Eksisting",
    "NamaEn": "Resource",
-   "Keterangan": "Kondisi atau bangunan eksisting.",
+   "Keterangan": "Existing conditions or buildings.",
    "Order": 18,
    "Umum": false,
    "HurufKedua": [
     {
      "Huruf": "A",
-     "Nama": "Arsitektur eksisting",
-     "Keterangan": "Contoh RA102 di PDF AIA"
+     "Nama": "Existing architecture",
+     "Keterangan": "Example RA102 in the AIA PDF"
     }
    ]
   },
@@ -239,7 +239,7 @@
    "Code": "X",
    "NamaId": "Disiplin Lain",
    "NamaEn": "Other Disciplines",
-   "Keterangan": "Disiplin lain di luar daftar.",
+   "Keterangan": "Other disciplines outside the list.",
    "Order": 19,
    "Umum": false,
    "HurufKedua": []
@@ -248,7 +248,7 @@
    "Code": "Z",
    "NamaId": "Kontraktor / Shop Drawing",
    "NamaEn": "Contractor / Shop Drawings",
-   "Keterangan": "Gambar kerja dari kontraktor.",
+   "Keterangan": "Contractor shop drawings.",
    "Order": 20,
    "Umum": false,
    "HurufKedua": []
@@ -257,7 +257,7 @@
    "Code": "O",
    "NamaId": "Operasional",
    "NamaEn": "Operations",
-   "Keterangan": "Gambar operasional dan pemeliharaan.",
+   "Keterangan": "Operations and maintenance drawings.",
    "Order": 21,
    "Umum": false,
    "HurufKedua": []
@@ -267,52 +267,52 @@
   {
    "Digit": 0,
    "Nama": "General",
-   "Keterangan": "Umum: legenda simbol, singkatan, catatan umum."
+   "Keterangan": "General: symbol legend, abbreviations, general notes."
   },
   {
    "Digit": 1,
    "Nama": "Plans",
-   "Keterangan": "Denah: pandangan horizontal — denah, rencana tapak, plafon, atap, pola lantai."
+   "Keterangan": "Plans: horizontal views — floor plans, site plans, ceilings, roof, floor patterns."
   },
   {
    "Digit": 2,
    "Nama": "Elevations",
-   "Keterangan": "Tampak: pandangan vertikal."
+   "Keterangan": "Elevations: vertical views."
   },
   {
    "Digit": 3,
    "Nama": "Sections",
-   "Keterangan": "Potongan: potongan bangunan, potongan tapak, wall section."
+   "Keterangan": "Sections: building sections, site sections, wall sections."
   },
   {
    "Digit": 4,
    "Nama": "Large-Scale Views",
-   "Keterangan": "Skala besar: denah/tampak/potongan diperbesar (toilet, tangga, core) — bukan detail."
+   "Keterangan": "Large scale: enlarged plans/elevations/sections (toilet, stair, core) — not details."
   },
   {
    "Digit": 5,
    "Nama": "Details",
-   "Keterangan": "Detail."
+   "Keterangan": "Details."
   },
   {
    "Digit": 6,
    "Nama": "Schedules and Diagrams",
-   "Keterangan": "Schedule dan diagram."
+   "Keterangan": "Schedules and diagrams."
   },
   {
    "Digit": 7,
    "Nama": "User Defined",
-   "Keterangan": "Bebas: tipe lain, termasuk lembar detail tipikal."
+   "Keterangan": "User defined: other types, including typical detail sheets."
   },
   {
    "Digit": 8,
    "Nama": "User Defined",
-   "Keterangan": "Bebas: tipe lain di luar kategori."
+   "Keterangan": "User defined: other types outside the categories."
   },
   {
    "Digit": 9,
    "Nama": "3D Representations",
-   "Keterangan": "3D: isometri, perspektif, foto."
+   "Keterangan": "3D: isometric, perspective, photos."
   }
  ],
  "Jenis": [],

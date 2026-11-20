@@ -82,7 +82,7 @@ public class CreateTests
             var report = CreateExecutor.Create(doc, [Req("A-110", "DENAH 1", tb: "TIDAK_ADA"), Req("A-111", "DENAH 2")],
                 Prefs.Default, true, null, CancellationToken.None);
             Assert.That(report.Rows[0].Ok, Is.False);
-            Assert.That(report.Rows[0].Pesan, Does.Contain("Title block 'TIDAK_ADA' tidak ditemukan"));
+            Assert.That(report.Rows[0].Pesan, Does.Contain("Title block 'TIDAK_ADA' not found"));
             Assert.That(report.Rows[1].Ok, Is.True);
             Assert.That(SheetCount(doc), Is.EqualTo(1));
         }
@@ -134,7 +134,7 @@ public class CreateTests
             var report = CreateExecutor.Create(doc, [Req("A-111", "DENAH 2", null, null, new ViewSpec(ViewMode.PakaiYangAda, plan.UniqueId, null, null, 0, null))],
                 Prefs.Default, true, null, CancellationToken.None);
             Assert.That(report.Rows.Single().Ok, Is.True);
-            Assert.That(report.Rows.Single().Pesan, Does.Contain("sudah dipakai di lembar A-110"));
+            Assert.That(report.Rows.Single().Pesan, Does.Contain("already used on sheet A-110"));
             Assert.That(ByNumber(doc, "A-111").GetAllViewports(), Is.Empty);
         }
         finally { doc.Close(false); }

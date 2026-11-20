@@ -83,7 +83,7 @@ public partial class StudioPane : UserControl, IDockablePaneProvider
 
     private sealed class StrategyLabelConverter : IValueConverter
     {
-        public object Convert(object value, Type t, object p, CultureInfo c) => value is true ? "Urut" : "Rentang";
+        public object Convert(object value, Type t, object p, CultureInfo c) => value is true ? "Sequential" : "Range";
         public object ConvertBack(object value, Type t, object p, CultureInfo c) => Binding.DoNothing;
     }
 }

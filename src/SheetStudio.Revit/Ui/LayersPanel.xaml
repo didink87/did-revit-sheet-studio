@@ -74,26 +74,26 @@
 
             <ListBox.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Ubah judul" InputGestureText="F2" Command="{Binding Layers.BeginRename}"/>
-                    <MenuItem Header="Ubah nomor / tipe…" Click="OnEditNumber"/>
-                    <MenuItem Header="Pindah ke tipe" x:Name="MoveTypeMenu"/>
+                    <MenuItem Header="Rename title" InputGestureText="F2" Command="{Binding Layers.BeginRename}"/>
+                    <MenuItem Header="Edit number / type…" Click="OnEditNumber"/>
+                    <MenuItem Header="Move to type" x:Name="MoveTypeMenu"/>
                     <Separator/>
-                    <MenuItem Header="Naik satu" InputGestureText="Ctrl+]" Command="{Binding Layers.MoveUp}"/>
-                    <MenuItem Header="Turun satu" InputGestureText="Ctrl+[" Command="{Binding Layers.MoveDown}"/>
-                    <MenuItem Header="Ke paling atas grup" InputGestureText="Ctrl+Shift+]" Command="{Binding Layers.MoveTop}"/>
-                    <MenuItem Header="Ke paling bawah grup" InputGestureText="Ctrl+Shift+[" Command="{Binding Layers.MoveBottom}"/>
+                    <MenuItem Header="Move up" InputGestureText="Ctrl+]" Command="{Binding Layers.MoveUp}"/>
+                    <MenuItem Header="Move down" InputGestureText="Ctrl+[" Command="{Binding Layers.MoveDown}"/>
+                    <MenuItem Header="To top of group" InputGestureText="Ctrl+Shift+]" Command="{Binding Layers.MoveTop}"/>
+                    <MenuItem Header="To bottom of group" InputGestureText="Ctrl+Shift+[" Command="{Binding Layers.MoveBottom}"/>
                     <Separator/>
-                    <MenuItem Header="Kunci / buka kunci" Command="{Binding Layers.ToggleLockSelected}"/>
-                    <MenuItem Header="Tampil di daftar gambar on/off" Command="{Binding Layers.ToggleEyeSelected}"/>
+                    <MenuItem Header="Lock / unlock" Command="{Binding Layers.ToggleLockSelected}"/>
+                    <MenuItem Header="Show in sheet list on/off" Command="{Binding Layers.ToggleEyeSelected}"/>
                     <Separator/>
-                    <MenuItem Header="Duplikat">
-                        <MenuItem Header="Lembar saja" InputGestureText="Ctrl+D" Command="{Binding Inspector.Duplicate}" CommandParameter="{x:Static vm:DuplicateMode.LembarSaja}"/>
-                        <MenuItem Header="Dengan view" Command="{Binding Inspector.Duplicate}" CommandParameter="{x:Static vm:DuplicateMode.DenganView}"/>
-                        <MenuItem Header="Dengan view + detailing" Command="{Binding Inspector.Duplicate}" CommandParameter="{x:Static vm:DuplicateMode.DenganViewDetailing}"/>
+                    <MenuItem Header="Duplicate">
+                        <MenuItem Header="Sheet only" InputGestureText="Ctrl+D" Command="{Binding Inspector.Duplicate}" CommandParameter="{x:Static vm:DuplicateMode.LembarSaja}"/>
+                        <MenuItem Header="With views" Command="{Binding Inspector.Duplicate}" CommandParameter="{x:Static vm:DuplicateMode.DenganView}"/>
+                        <MenuItem Header="With views + detailing" Command="{Binding Inspector.Duplicate}" CommandParameter="{x:Static vm:DuplicateMode.DenganViewDetailing}"/>
                     </MenuItem>
-                    <MenuItem Header="Buka lembar" InputGestureText="Enter" Command="{Binding Layers.OpenSelected}"/>
+                    <MenuItem Header="Open sheet" InputGestureText="Enter" Command="{Binding Layers.OpenSelected}"/>
                     <Separator/>
-                    <MenuItem Header="Tandai hapus" InputGestureText="Del" Command="{Binding Layers.DeleteSelected}"/>
+                    <MenuItem Header="Mark for deletion" InputGestureText="Del" Command="{Binding Layers.DeleteSelected}"/>
                 </ContextMenu>
             </ListBox.ContextMenu>
 
@@ -158,11 +158,11 @@
                         </Popup>
 
                         <ToggleButton Grid.Column="1" Style="{StaticResource IconToggle}" IsChecked="{Binding InSheetList, Mode=OneWay}"
-                                      Click="OnEyeClick" ToolTip="Muncul di daftar gambar">
+                                      Click="OnEyeClick" ToolTip="Show in sheet list">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7B3;" FontSize="11" Opacity="{Binding InSheetList, Converter={x:Static ui:LayersPanel.EyeOpacity}}"/>
                         </ToggleButton>
                         <ToggleButton Grid.Column="2" Style="{StaticResource IconToggle}" IsChecked="{Binding Locked, Mode=OneWay}"
-                                      Click="OnLockClick" ToolTip="Kunci: nomor tidak ikut berubah, tidak bisa digeser">
+                                      Click="OnLockClick" ToolTip="Lock: number does not change and the sheet cannot be moved">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE72E;" FontSize="11" Opacity="{Binding Locked, Converter={x:Static ui:LayersPanel.LockOpacity}}"/>
                         </ToggleButton>
 
@@ -182,11 +182,11 @@
                                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7BA;" Foreground="{DynamicResource SS.Warn}" Margin="3,0" ToolTip="{Binding WarningText}"
                                                Visibility="{Binding Warning, Converter={StaticResource Vis}}"/>
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;" Foreground="{DynamicResource SS.Accent}" Margin="3,0" ToolTip="Judul/parameter diubah (belum diterapkan)"
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;" Foreground="{DynamicResource SS.Accent}" Margin="3,0" ToolTip="Title/parameters edited (not applied yet)"
                                                Visibility="{Binding Edited, Converter={StaticResource Vis}}"/>
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE71B;" Margin="3,0" ToolTip="{Binding BorrowedBy, StringFormat=Dipinjam {0}}"
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE71B;" Margin="3,0" ToolTip="{Binding BorrowedBy, StringFormat=Borrowed by {0}}"
                                                Visibility="{Binding Borrowed, Converter={StaticResource Vis}}"/>
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE735;" Foreground="{DynamicResource SS.Ok}" Margin="3,0" ToolTip="Baru dibuat di sesi ini"
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE735;" Foreground="{DynamicResource SS.Ok}" Margin="3,0" ToolTip="Created in this session"
                                                Visibility="{Binding IsNew, Converter={StaticResource Vis}}"/>
                                     <TextBlock Text="{Binding Count}" Foreground="{DynamicResource SS.FgMuted}" Margin="6,0"
                                                Visibility="{Binding IsGroup, Converter={StaticResource Vis}}"/>

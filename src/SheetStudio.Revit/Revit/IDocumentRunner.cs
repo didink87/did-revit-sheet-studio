@@ -16,5 +16,5 @@ public sealed class ActiveDocumentRunner(ExternalEventQueue queue) : IDocumentRu
     public Task RunUi(Action<UIApplication> work) => queue.Run(work);
 
     internal static Document ActiveDoc(UIApplication ui) =>
-        ui.ActiveUIDocument?.Document ?? throw new InvalidOperationException("Tidak ada dokumen Revit yang aktif");
+        ui.ActiveUIDocument?.Document ?? throw new InvalidOperationException("No active Revit document");
 }

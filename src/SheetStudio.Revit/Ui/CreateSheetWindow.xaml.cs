@@ -14,8 +14,8 @@ public partial class CreateSheetWindow : Window
         DataContext = vm;
         vm.Closed += () => { if (IsLoaded) Close(); };
         vm.WarningRequested += msg => MessageBox.Show(this, msg + Environment.NewLine + Environment.NewLine +
-            "Pilih kertas (A3/A2/A1) dan kop di kolom kanan atas, lalu tekan BUAT LEMBAR lagi.",
-            "Sheet Studio — Kertas & kop belum dipilih", MessageBoxButton.OK, MessageBoxImage.Warning);
+            "Choose a paper size (A3/A2/A1) and title block in the top-right column, then press CREATE SHEET again.",
+            "Sheet Studio — Paper & title block not chosen", MessageBoxButton.OK, MessageBoxImage.Warning);
         vm.PropertyChanged += OnChanged;
         UpdatePanels(vm);
     }

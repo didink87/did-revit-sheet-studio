@@ -56,7 +56,7 @@ public sealed partial class RevitStudioGateway(IDocumentRunner runner, Func<stri
             File.WriteAllText(UserPrefsPath, PreferencesStore.Serialize(prefs));
             if (state is null) return;
         }
-        using var t = new Transaction(doc, "Sheet Studio: Simpan preferensi");
+        using var t = new Transaction(doc, "Sheet Studio: Save preferences");
         t.Start();
         StorageAdapter.Write(doc, prefs is not null && !userLevel ? PreferencesStore.Serialize(prefs) : null,
             state is null ? null : ProjectStateJson.Serialize(state));

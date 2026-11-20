@@ -101,7 +101,7 @@ public class ApplyTests
             Tx(doc, () => a.SheetNumber = "A-150"); // someone else edits after the snapshot
             var report = ApplyExecutor.Apply(doc, plan);
             Assert.That(report.Skipped.Single().UniqueId, Is.EqualTo(a.UniqueId));
-            Assert.That(report.Skipped.Single().Pesan, Does.Contain("berubah sejak dibaca"));
+            Assert.That(report.Skipped.Single().Pesan, Does.Contain("changed since it was read"));
             Assert.That((a.SheetNumber, b.SheetNumber), Is.EqualTo(("A-150", "A-121")));
         }
         finally { doc.Close(false); }
@@ -212,7 +212,7 @@ public class ApplyTests
             var plan = Plan(doc, [(a, "A-111")]) with { DocumentKey = "dokumen-lain" };
             var report = ApplyExecutor.Apply(doc, plan);
             Assert.That(report.Applied, Is.EqualTo(0));
-            Assert.That(report.Skipped.Single().Pesan, Does.Contain("Dokumen aktif berbeda"));
+            Assert.That(report.Skipped.Single().Pesan, Does.Contain("active document differs"));
             Assert.That(a.SheetNumber, Is.EqualTo("A-110"));
             Assert.That(StorageAdapter.Read(doc).StatusUrutan, Is.EqualTo("{\"keep\":1}"));
         }

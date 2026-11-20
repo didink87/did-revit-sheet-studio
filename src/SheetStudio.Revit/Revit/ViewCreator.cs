@@ -18,7 +18,7 @@ public static class ViewCreator
             case "Plafon":
                 var level = new FilteredElementCollector(doc).OfClass(typeof(Level)).Cast<Level>()
                     .OrderBy(l => l.Elevation).FirstOrDefault(l => spec.LevelName is null || l.Name == spec.LevelName)
-                    ?? throw new InvalidOperationException($"Level '{spec.LevelName}' tidak ditemukan");
+                    ?? throw new InvalidOperationException($"Level '{spec.LevelName}' not found");
                 var family = spec.JenisView == "Denah" ? ViewFamily.FloorPlan : ViewFamily.CeilingPlan;
                 view = ViewPlan.Create(doc, TypeOf(doc, family).Id, level.Id);
                 break;
@@ -28,7 +28,7 @@ public static class ViewCreator
             case "Tampak":
             case "Potongan":
                 view = ViewDrafting.Create(doc, TypeOf(doc, ViewFamily.Drafting).Id);
-                warning = $"{spec.JenisView} dibuat sebagai drafting view sementara; buat garis {spec.JenisView.ToLowerInvariant()} di denah lalu ganti view-nya";
+                warning = $"{ViewKindLabels.Label(spec.JenisView)} was created as a temporary drafting view; draw the {ViewKindLabels.Label(spec.JenisView).ToLowerInvariant()} line on a plan, then replace the view";
                 break;
             case "TigaD":
                 view = View3D.CreateIsometric(doc, TypeOf(doc, ViewFamily.ThreeDimensional).Id);
@@ -36,7 +36,7 @@ public static class ViewCreator
             case "Legend":
                 var legend = new FilteredElementCollector(doc).OfClass(typeof(View)).Cast<View>()
                     .FirstOrDefault(v => v.ViewType == ViewType.Legend && !v.IsTemplate);
-                if (legend is null) { warning = "Belum ada legend di proyek; buat satu legend dulu agar bisa diduplikat"; return null; }
+                if (legend is null) { warning = "There is no legend in the project; create one first so it can be duplicated"; return null; }
                 view = (View)doc.GetElement(legend.Duplicate(ViewDuplicateOption.WithDetailing));
                 break;
             default:
@@ -47,7 +47,7 @@ public static class ViewCreator
         if (spec.ViewTemplate is { } tplName)
         {
             var tpl = new FilteredElementCollector(doc).OfClass(typeof(View)).Cast<View>().FirstOrDefault(v => v.IsTemplate && v.Name == tplName);
-            if (tpl is null) warning = Join(warning, $"View template '{tplName}' tidak ditemukan");
+            if (tpl is null) warning = Join(warning, $"View template '{tplName}' not found");
             else view.ViewTemplateId = tpl.Id;
         }
         SetUniqueName(view, title);
@@ -67,7 +67,7 @@ public static class ViewCreator
 
     private static ViewFamilyType TypeOf(Document doc, ViewFamily family) =>
         new FilteredElementCollector(doc).OfClass(typeof(ViewFamilyType)).Cast<ViewFamilyType>().FirstOrDefault(t => t.ViewFamily == family)
-        ?? throw new InvalidOperationException($"Tipe view {family} tidak ada di proyek");
+        ?? throw new InvalidOperationException($"View type {family} does not exist in the project");
 
     private static string Join(string? a, string b) => a is null ? b : a + "; " + b;
 }

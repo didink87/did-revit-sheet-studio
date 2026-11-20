@@ -38,25 +38,25 @@
     </UserControl.Resources>
 
     <DockPanel>
-        <!-- toolbar: tombol membungkus ke baris berikut bila pane sempit -->
+        <!-- toolbar: buttons wrap to the next row when the pane is narrow -->
         <Border DockPanel.Dock="Top" Background="{DynamicResource SS.Panel}" BorderBrush="{DynamicResource SS.Border}" BorderThickness="0,0,0,1" Padding="6,6,6,4">
             <StackPanel>
                 <WrapPanel>
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="＋ Baru" Command="{Binding NewSheet}" ToolTip="Buat satu lembar (pemilih nama interaktif)"/>
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="⧉ Batch" Command="{Binding Batch}" ToolTip="Buat banyak lembar sekaligus"/>
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="⟳" Command="{Binding Refresh}" ToolTip="Baca ulang model (F5)"/>
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="⇅ Rapikan nomor" Command="{Binding NormalizeNumbers}"
-                            ToolTip="Hitung ulang SEMUA nomor dari urutan panel (biasanya hanya grup yang Anda ubah)"/>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="＋ New" Command="{Binding NewSheet}" ToolTip="Create one sheet (interactive name picker)"/>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="⧉ Batch" Command="{Binding Batch}" ToolTip="Create many sheets at once"/>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="⟳" Command="{Binding Refresh}" ToolTip="Re-read the model (F5)"/>
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,4,4" Content="⇅ Renumber all" Command="{Binding NormalizeNumbers}"
+                            ToolTip="Recompute ALL numbers from the panel order (normally only the groups you changed)"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <TextBlock Text="Penomoran:" VerticalAlignment="Center" Margin="4,0,4,0" Foreground="{DynamicResource SS.FgMuted}"/>
+                        <TextBlock Text="Numbering:" VerticalAlignment="Center" Margin="4,0,4,0" Foreground="{DynamicResource SS.FgMuted}"/>
                         <ToggleButton Content="{Binding IsStrategyUrut, Converter={x:Static ui:StudioPane.StrategyLabel}}" IsChecked="{Binding IsStrategyUrut}" Padding="8,3"
-                                      ToolTip="Rentang: nomor dari rentang jenis gambar (mis. denah A-110…139). Urut: nomor berurutan per tipe."/>
-                        <Button Style="{StaticResource ToolButton}" Content="⚙" Margin="6,0,0,0" Command="{Binding OpenPreferences}" ToolTip="Preferensi"/>
+                                      ToolTip="Range: numbers come from the drawing-kind range (e.g. plans A-110…139). Sequential: consecutive numbers per type."/>
+                        <Button Style="{StaticResource ToolButton}" Content="⚙" Margin="6,0,0,0" Command="{Binding OpenPreferences}" ToolTip="Preferences"/>
                     </StackPanel>
                 </WrapPanel>
                 <Grid>
                     <TextBox x:Name="Search" Text="{Binding Layers.Filter, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Padding="22,2,4,2"
-                             ToolTip="Saring lembar menurut nomor atau judul"/>
+                             ToolTip="Filter sheets by number or title"/>
                     <TextBlock Text="🔍" Margin="5,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{DynamicResource SS.FgMuted}"/>
                 </Grid>
             </StackPanel>
@@ -68,15 +68,15 @@
                 <WrapPanel>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,4">
                         <TextBlock Text="●" Foreground="{DynamicResource SS.Accent}" Margin="0,0,4,0"/>
-                        <TextBlock Text="{Binding PendingCount, StringFormat={}{0} perubahan tertunda}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding PendingCount, StringFormat={}{0} pending change(s)}" FontWeight="SemiBold"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <Button Style="{StaticResource ToolButton}" Content="↶" Command="{Binding Undo}" ToolTip="Urungkan di panel (Ctrl+Z)"/>
-                        <Button Style="{StaticResource ToolButton}" Content="↷" Command="{Binding Redo}" ToolTip="Ulangi (Ctrl+Y)"/>
-                        <Button Style="{StaticResource ToolButton}" Content="Pratinjau daftar" Click="OnPreview"/>
-                        <Button Style="{StaticResource ToolButton}" Content="Buang" Command="{Binding Discard}"/>
-                        <Button Style="{StaticResource PrimaryButton}" Content="TERAPKAN" Command="{Binding Apply}"
-                                ToolTip="Tulis semua perubahan ke model sebagai satu langkah Undo"/>
+                        <Button Style="{StaticResource ToolButton}" Content="↶" Command="{Binding Undo}" ToolTip="Undo in panel (Ctrl+Z)"/>
+                        <Button Style="{StaticResource ToolButton}" Content="↷" Command="{Binding Redo}" ToolTip="Redo (Ctrl+Y)"/>
+                        <Button Style="{StaticResource ToolButton}" Content="Preview list" Click="OnPreview"/>
+                        <Button Style="{StaticResource ToolButton}" Content="Discard" Command="{Binding Discard}"/>
+                        <Button Style="{StaticResource PrimaryButton}" Content="APPLY" Command="{Binding Apply}"
+                                ToolTip="Write all changes to the model as a single Undo step"/>
                     </StackPanel>
                 </WrapPanel>
                 <TextBlock Text="{Binding Status}" Margin="0,0,0,2" Foreground="{DynamicResource SS.FgMuted}" TextTrimming="CharacterEllipsis"
@@ -92,12 +92,12 @@
                 <ColumnDefinition Width="300" MinWidth="200"/>
             </Grid.ColumnDefinitions>
             <DockPanel x:Name="LayersArea" Grid.Column="0">
-                <TextBlock DockPanel.Dock="Top" Text="LAPISAN — URUTAN LEMBAR" Margin="8,6,8,4" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
+                <TextBlock DockPanel.Dock="Top" Text="LAYERS — SHEET ORDER" Margin="8,6,8,4" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
                 <ui:LayersPanel x:Name="LayersView"/>
             </DockPanel>
             <GridSplitter x:Name="Splitter" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{DynamicResource SS.Border}"/>
             <DockPanel x:Name="InspectorArea" Grid.Column="2" Background="{DynamicResource SS.Panel}">
-                <TextBlock DockPanel.Dock="Top" Text="INSPEKTUR" Margin="8,6,8,4" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
+                <TextBlock DockPanel.Dock="Top" Text="INSPECTOR" Margin="8,6,8,4" FontWeight="Bold" Foreground="{DynamicResource SS.FgMuted}"/>
                 <ContentControl x:Name="InspectorHost"/>
             </DockPanel>
         </Grid>
