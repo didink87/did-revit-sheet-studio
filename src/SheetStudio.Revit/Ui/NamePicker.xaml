@@ -99,7 +99,7 @@
                                  Checked="OnDisciplineChecked">
                         <RadioButton.ToolTip>
                             <TextBlock MaxWidth="320" TextWrapping="Wrap">
-                                <Run Text="{Binding Code}" FontWeight="Bold"/> — <Run Text="{Binding NamaId}"/> (<Run Text="{Binding NamaEn}"/>)
+                                <Run Text="{Binding Code}" FontWeight="Bold"/> — <Run Text="{Binding NamaEn}"/>
                                 <LineBreak/><Run Text="{Binding Keterangan}"/>
                             </TextBlock>
                         </RadioButton.ToolTip>
