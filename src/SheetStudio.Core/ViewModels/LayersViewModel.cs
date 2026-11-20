@@ -285,6 +285,7 @@ public sealed class LayersViewModel : ObservableObject
                 vm.Borrowed = orig.BorrowedBy is not null;
                 vm.BorrowedBy = orig.BorrowedBy;
                 vm.InSheetList = shown[r.Key].InSheetList;
+                vm.PlacedViews = shown[r.Key].PlacedViews;
                 vm.IsNew = _studio.NewSheetIds.Contains(r.Key);
                 vm.Thumbnail = _thumbs.GetValueOrDefault(r.Key);
             }

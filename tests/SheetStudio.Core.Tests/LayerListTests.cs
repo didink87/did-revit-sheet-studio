@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using SheetStudio.Core.Layers;
+using SheetStudio.Core.Model;
+using SheetStudio.Core.ViewModels;
 using static SheetStudio.Core.Tests.Fx;
 
 namespace SheetStudio.Core.Tests;
@@ -100,5 +102,56 @@ public class LayerListTests
             Assert.Equal(LayerListBuilder.Build(sheets, State(), Profiles.Pupr, set, null),
                 LayerListBuilder.Collapse(LayerListBuilder.Build(sheets, State(), Profiles.Pupr, None, null), set));
         }
+    }
+
+    private static async Task<(StudioViewModel Vm, FakeGateway Gw)> LoadedWith(params SheetSnapshot[] sheets)
+    {
+        var gw = new FakeGateway { Sheets = [.. sheets] };
+        var vm = new StudioViewModel(gw);
+        await vm.LoadAsync();
+        return (vm, gw);
+    }
+
+    private static LayerRowViewModel RowOf(StudioViewModel vm, string key) => vm.Layers.Rows.Single(r => r.Key == key);
+
+    [Fact]
+    public async Task Row_SheetWithViews_HasViewsTrue()
+    {
+        var (vm, _) = await LoadedWith(S("L1", "A-110") with { PlacedViews = [new("v1", "Level 1", "FloorPlan"), new("v2", "Sch", "Schedule")] });
+        var row = RowOf(vm, "L1");
+        Assert.True(row.HasViews);
+        Assert.Equal(2, row.PlacedViews.Count);
+        Assert.Equal("2 views", row.ViewCountText);
+    }
+
+    [Fact]
+    public async Task Row_EmptySheet_HasViewsFalse()
+    {
+        var (vm, _) = await LoadedWith(S("L1", "A-110") with { PlacedViews = [] });
+        var row = RowOf(vm, "L1");
+        Assert.False(row.HasViews);
+        Assert.Equal("Empty sheet", row.ViewCountText);
+    }
+
+    [Fact]
+    public async Task GroupRow_HasViewsFalse()
+    {
+        var (vm, _) = await LoadedWith(S("L1", "A-110") with { PlacedViews = [new("v1", "Level 1", "FloorPlan")] });
+        Assert.False(RowOf(vm, "A").HasViews);
+    }
+
+    [Fact]
+    public async Task Row_Rebuild_UpdatesPlacedViewsInPlace()
+    {
+        var (vm, gw) = await LoadedWith(S("L1", "A-110"));
+        var row = RowOf(vm, "L1");
+        var raised = new List<string?>();
+        row.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+        gw.Sheets = [S("L1", "A-110") with { PlacedViews = [new("v1", "Level 1", "FloorPlan")] }];
+        await vm.LoadAsync();
+        Assert.Same(row, RowOf(vm, "L1"));
+        Assert.True(row.HasViews);
+        Assert.Equal("1 view", row.ViewCountText);
+        Assert.Contains(nameof(LayerRowViewModel.HasViews), raised);
     }
 }
