@@ -105,7 +105,7 @@ public static class Sequencer
             if (manual is int m)
             {
                 if (m is >= 0 and <= 99 && used.Add(m)) { result[s.UniqueId] = new SheetId(disc, type, m).Format(); continue; }
-                errors.Add($"Nomor {new SheetId(disc, type, m).Format()} sudah dipakai — dinomori otomatis");
+                errors.Add($"Number {new SheetId(disc, type, m).Format()} is already in use — numbered automatically");
             }
             free.Add(s);
         }
@@ -120,7 +120,7 @@ public static class Sequencer
                 while (seq <= range.To && used.Contains(seq)) seq++;
                 if (seq > range.To)
                 {
-                    errors.Add($"Rentang {label} {range.From:00}–{range.To:00} penuh; ubah rentang di profil atau pakai huruf kedua");
+                    errors.Add($"Range {label} {range.From:00}–{range.To:00} is full; change the range in the profile or use a second letter");
                     return null;
                 }
                 used.Add(seq);
@@ -139,7 +139,7 @@ public static class Sequencer
                 while (seq <= 99 && used.Contains(seq)) seq++;
                 if (seq > 99)
                 {
-                    errors.Add($"Grup {label} penuh (lebih dari 99 lembar); kurangi langkah atau pakai huruf kedua");
+                    errors.Add($"Group {label} is full (more than 99 sheets); reduce the step or use a second letter");
                     return null;
                 }
                 used.Add(seq);

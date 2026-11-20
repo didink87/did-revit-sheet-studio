@@ -79,7 +79,7 @@ public static class BulkEdit
             if (next.Length == 0 || next == current) continue;
             if (next.Any(c => TitleRules.Prohibited.Contains(c)))
             {
-                _rejected.Add($"{s.Number}: judul memuat karakter terlarang Revit ({string.Join(" ", next.Where(c => TitleRules.Prohibited.Contains(c)).Distinct())})");
+                _rejected.Add($"{s.Number}: title contains characters prohibited by Revit ({string.Join(" ", next.Where(c => TitleRules.Prohibited.Contains(c)).Distinct())})");
                 continue;
             }
             cs = cs.Upsert(new SheetChange(s.UniqueId, NewTitle: next == s.Title ? null : next)).Next;

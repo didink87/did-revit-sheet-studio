@@ -36,7 +36,7 @@ public sealed class StudioViewModel : ObservableObject
         Refresh = new AsyncRelayCommand(SafeLoadAsync, null, ReportError);
         NewSheet = new RelayCommand(() => CreateRequested?.Invoke(NewCreateSheet()));
         Batch = new RelayCommand(() => BatchRequested?.Invoke(NewBatch()));
-        NormalizeNumbers = new RelayCommand(() => Push(Current with { NormalizeAll = true }, "Semua nomor dirapikan sesuai urutan (belum diterapkan)"));
+        NormalizeNumbers = new RelayCommand(() => Push(Current with { NormalizeAll = true }, "All numbers renumbered in order (not applied yet)"));
         OpenPreferences = new RelayCommand(() => PreferencesRequested?.Invoke(NewPreferences()));
         _gateway.ModelChanged += async () =>
         {
@@ -82,7 +82,7 @@ public sealed class StudioViewModel : ObservableObject
     /// <summary>Sequencer errors (full range, taken manual number) or a title Revit would reject: Apply stays disabled.</summary>
     public bool HasBlockingErrors { get; private set; }
 
-    public void ReportError(Exception ex) => Status = "Galat: " + ex.Message;
+    public void ReportError(Exception ex) => Status = "Error: " + ex.Message;
 
     public string Status
     {
@@ -160,7 +160,7 @@ public sealed class StudioViewModel : ObservableObject
         var plan = BuildPlan();
         if (Snapshot.Prefs.KonfirmasiTerapkan && ConfirmApply is not null && !await ConfirmApply(plan))
         {
-            Status = "Terapkan dibatalkan";
+            Status = "Apply cancelled";
             return false;
         }
         _busy = true;
@@ -169,8 +169,8 @@ public sealed class StudioViewModel : ObservableObject
             var report = await _gateway.ApplyAsync(plan);
             await LoadAsync();
             Status = report.Skipped.Count == 0
-                ? $"{report.Applied} perubahan diterapkan"
-                : $"{report.Applied} diterapkan, {report.Skipped.Count} dilewati: " + string.Join("; ", report.Skipped.Select(s => s.Pesan).Distinct());
+                ? $"{report.Applied} change{(report.Applied == 1 ? "" : "s")} applied"
+                : $"{report.Applied} applied, {report.Skipped.Count} skipped: " + string.Join("; ", report.Skipped.Select(s => s.Pesan).Distinct());
             return true;
         }
         finally { _busy = false; }
@@ -306,11 +306,11 @@ public sealed class StudioViewModel : ObservableObject
             if (pending.PendingCount > 0)
             {
                 // Keep the staged work for its own document; Apply is refused elsewhere (Revit-side document check).
-                Status = $"{pending.PendingCount} perubahan tertunda milik dokumen lain — kembali ke dokumen itu untuk menerapkan, atau Buang";
+                Status = $"{pending.PendingCount} pending change{(pending.PendingCount == 1 ? "" : "s")} belong to another document — return to that document to apply, or Discard";
                 return;
             }
             ApplyFresh(fresh);
-            Status = "Dokumen aktif berganti";
+            Status = "Active document changed";
             return;
         }
         Snapshot = fresh;
@@ -319,7 +319,7 @@ public sealed class StudioViewModel : ObservableObject
         foreach (var id in dropped) _baseVersi.Remove(id);
         _undo.Reset(Current);
         Recompute();
-        Status = dropped.Count > 0 ? $"{dropped.Count} perubahan dibuang karena lembarnya terhapus di model" : statusIfOk ?? Status;
+        Status = dropped.Count > 0 ? $"{dropped.Count} change{(dropped.Count == 1 ? "" : "s")} discarded because the sheet was deleted in the model" : statusIfOk ?? Status;
         Raise(nameof(Snapshot));
     }
 
@@ -352,8 +352,8 @@ public sealed class StudioViewModel : ObservableObject
     {
         foreach (var r in report.Rows) if (r.UniqueId is not null) NewSheetIds.Add(r.UniqueId);
         var ok = report.Rows.Count(r => r.Ok);
-        await ReloadAsync(ReloadReason.SetelahBuat, report.Dibatalkan ? "Pembuatan dibatalkan; model dikembalikan" : $"{ok} lembar dibuat" +
-            (report.Rows.Count > ok ? $", {report.Rows.Count - ok} gagal" : ""));
+        await ReloadAsync(ReloadReason.SetelahBuat, report.Dibatalkan ? "Creation cancelled; model restored" : $"{ok} sheet{(ok == 1 ? "" : "s")} created" +
+            (report.Rows.Count > ok ? $", {report.Rows.Count - ok} failed" : ""));
         Layers.Reveal(report.Rows.Where(r => r.Ok && r.UniqueId is not null).Select(r => r.UniqueId!).ToList());
     }
 
@@ -418,14 +418,14 @@ public sealed class StudioViewModel : ObservableObject
         _undo.Reset(Current);
         _baseVersi.Clear();
         Recompute();
-        Status = "Perubahan dibuang";
+        Status = "Changes discarded";
     }
 
     private string StatusFromOutcome() => Outcome.Errors.Count > 0 ? string.Join("; ", Outcome.Errors) : "";
 
     internal string? WarningFor(SheetSnapshot display)
     {
-        if (!SheetId.Parse(display.Number, Profile).Ok) return "Nomor tidak standar UDS";
+        if (!SheetId.Parse(display.Number, Profile).Ok) return "Number is not UDS standard";
         var check = TitleRules.Check(display.Title, Profile);
         return check.Severity == Severity.Ok ? null : check.Pesan + (check.Hints.Count > 0 ? ": " + string.Join(", ", check.Hints.Select(h => h.Found)) : "");
     }

@@ -13,7 +13,7 @@ public static class BatchMatrix
         var rows = new List<BatchRow>();
         foreach (var id in kindIds)
         {
-            var kind = p.FindKind(id) ?? throw new ArgumentException($"Jenis '{id}' tidak ada di profil", nameof(kindIds));
+            var kind = p.FindKind(id) ?? throw new ArgumentException($"Kind '{id}' is not in the profile", nameof(kindIds));
             if (kind.PerLevel)
                 rows.AddRange(sorted.Select(l => new BatchRow(kind.Id, TitleRules.Normalize(l.Name), l.Name, null, null, 0, k, buatView)));
             else

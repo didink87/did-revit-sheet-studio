@@ -114,7 +114,7 @@ public class SequencerTests
 
         var clash = ChangeSet.Start(State(locked: ["a"])).Upsert(new SheetChange("b", ManualSeq: 10)).Next;
         var o = Sequencer.Compute(sheets, clash, Profiles.Pupr, Rentang);
-        Assert.Contains(o.Errors, e => e.Contains("A-110") && e.Contains("dipakai"));
+        Assert.Contains(o.Errors, e => e.Contains("A-110") && e.Contains("in use"));
         Assert.Equal("A-111", Numbers(o)["b"]);
     }
 
@@ -134,7 +134,7 @@ public class SequencerTests
         var sheets = full.Append(S("b", "A-111")).ToList();
         var ok = Sequencer.CanAccept(["b"], "A|2", sheets, ChangeSet.Start(State()), Profiles.Pupr, Rentang, out var reason);
         Assert.False(ok);
-        Assert.Contains("penuh", reason);
+        Assert.Contains("full", reason);
         Assert.True(Sequencer.CanAccept(["b"], "A|3", sheets, ChangeSet.Start(State()), Profiles.Pupr, Rentang, out _));
     }
 
@@ -143,7 +143,7 @@ public class SequencerTests
     {
         var sheets = Enumerable.Range(10, 31).Select(i => S($"d{i}", i <= 39 ? $"A-1{i}" : "A-150", kind: "denah")).ToList(); // 31 denah, range 10–39 holds 30
         var o = Sequencer.Compute(sheets, Norm(State()), Profiles.Pupr, Rentang);
-        Assert.Contains(o.Errors, e => e.Contains("penuh") && e.Contains("A-1"));
+        Assert.Contains(o.Errors, e => e.Contains("full") && e.Contains("A-1"));
         Assert.All(o.Results, r => Assert.False(r.Changed));
     }
 

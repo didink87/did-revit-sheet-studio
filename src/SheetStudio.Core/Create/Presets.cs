@@ -33,7 +33,7 @@ public static class Presets
             "DED PUPR LENGKAP" => Expand(Ded, lv, p, k),
             "DENAH SEMUA LANTAI" => BatchMatrix.Build(["denah"], lv, p, k, true),
             "TAMPAK & POTONGAN" => Expand(TampakPotongan, lv, p, k),
-            _ => throw new ArgumentException($"Preset '{name}' tidak ada", nameof(name)),
+            _ => throw new ArgumentException($"Preset '{name}' does not exist", nameof(name)),
         };
     }
 

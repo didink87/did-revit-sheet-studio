@@ -72,7 +72,7 @@ public class CreatePlanTests
         var existing = Enumerable.Range(1, 2).Select(i => S($"b{i}", $"A-10{i}", kind: "blockplan", subjek: $"S{i}")).ToList();
         var plan = Plan([Row("blockplan", "BARU")], existing);
         Assert.Equal(PlanStatus.Galat, plan[0].Status);
-        Assert.Contains("penuh", plan[0].Pesan);
+        Assert.Contains("full", plan[0].Pesan);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class CreatePlanTests
     {
         var plan = Plan([Row(null, judul: "Denah Lt 2", nomor: "A-130")]);
         Assert.Equal(PlanStatus.Baru, plan[0].Status);
-        Assert.Contains("singkatan", plan[0].Pesan);
+        Assert.Contains("abbreviation", plan[0].Pesan);
     }
 
     [Fact]

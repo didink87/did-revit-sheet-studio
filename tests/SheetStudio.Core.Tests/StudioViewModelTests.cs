@@ -109,7 +109,7 @@ public class StudioViewModelTests
         vm.Layers.RenameInline("L1", "DENAH SATU");
         gw.Sheets.RemoveAll(s => s.UniqueId == "T1");
         await vm.OnModelChangedAsync();
-        Assert.Contains("1 perubahan dibuang", vm.Status);
+        Assert.Contains("1 change discarded", vm.Status);
         Assert.Equal(1, vm.PendingCount);
         Assert.DoesNotContain(vm.Layers.Rows, r => r.Key == "T1");
     }
@@ -151,12 +151,12 @@ public class StudioViewModelTests
         var (vm, gw) = await Loaded();
         vm.Layers.ToggleLock("L1");
         Assert.False(vm.Layers.CanDrop(["L1"], "T1", DropPosition.Sebelum, out var reason));
-        Assert.Contains("terkunci", reason);
+        Assert.Contains("locked", reason);
 
         gw.Sheets.AddRange(Enumerable.Range(2, 98).Select(i => S($"t{i}", $"A-2{i:00}")));
         await vm.LoadAsync();
         Assert.False(vm.Layers.CanDrop(["L2"], "A|2", DropPosition.Ke, out var full));
-        Assert.Contains("penuh", full);
+        Assert.Contains("full", full);
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public class StudioViewModelTests
         gw.LoadError = "putus"; // the post-create reload will fail
         gw.CreateGate.SetResult();
         await run; // reload failure is reported via Status, not thrown
-        Assert.StartsWith("Galat", vm.Status);
+        Assert.StartsWith("Error", vm.Status);
         Assert.NotNull(batch.Report);
         Assert.False(batch.Report!.Dibatalkan);
     }
@@ -230,8 +230,8 @@ public class StudioViewModelTests
         create.Picker.FreeTitle = "DENAH LANTAI 3";
         Assert.Null(create.Kertas);
         Assert.Null(create.TitleBlockType);
-        Assert.Contains("kertas", create.Peringatan);
-        Assert.Contains("kop", create.Peringatan);
+        Assert.Contains("paper", create.Peringatan);
+        Assert.Contains("title block", create.Peringatan);
         string? shown = null;
         create.WarningRequested += m => shown = m;
         await create.CreateAsync();
@@ -240,7 +240,7 @@ public class StudioViewModelTests
 
         create.Kertas = Create.Kertas.A1; // kop A1 tidak ada di model (fake hanya punya A3, A2)
         Assert.Null(create.TitleBlockType);
-        Assert.Contains("kop", create.Peringatan);
+        Assert.Contains("title block", create.Peringatan);
         create.TitleBlockType = "PUPR_KOP_A2";
         Assert.Null(create.Peringatan);
         await create.CreateAsync();
@@ -288,7 +288,7 @@ public class StudioViewModelTests
         await batch.RunAsync();
         Assert.Contains("A1", shown);
         Assert.Empty(gw.Created);
-        Assert.Equal("Tutup", batch.CloseLabel);
+        Assert.Equal("Close", batch.CloseLabel);
     }
 
     [Fact]
@@ -296,21 +296,21 @@ public class StudioViewModelTests
     {
         var (vm, _) = await Loaded();
         var batch = vm.NewBatch();
-        Assert.Equal("Tutup", batch.CloseLabel);
+        Assert.Equal("Close", batch.CloseLabel);
         batch.LoadPreset("DENAH SEMUA LANTAI");
         batch.Preview();
         await batch.RunAsync();
         Assert.True(batch.IsDone);
-        Assert.StartsWith("✓ Selesai", batch.CloseLabel);
+        Assert.StartsWith("✓ Done", batch.CloseLabel);
     }
 
     [Fact]
     public async Task Refresh_NoDocument_ShowsStatusInsteadOfThrowing()
     {
         var (vm, gw) = await Loaded();
-        gw.LoadError = "Tidak ada dokumen Revit yang aktif";
+        gw.LoadError = "No active Revit document";
         await vm.SafeLoadAsync();
-        Assert.Equal("Tidak ada dokumen Revit yang aktif", vm.Status);
+        Assert.Equal("No active Revit document", vm.Status);
     }
 
     [Fact]
@@ -359,7 +359,7 @@ public class StudioViewModelTests
         var (vm, _) = await Loaded();
         vm.Layers.RenameInline("T1", "DETAIL 1: TANGGA");
         Assert.Equal(0, vm.PendingCount);
-        Assert.Contains("karakter terlarang", vm.Status);
+        Assert.Contains("prohibited", vm.Status);
         // a full group (sequencer error) blocks Apply
         vm.Push(vm.Current.Upsert(new SheetChange("L1", ManualSeq: 11)).Next);
         vm.Push(vm.Current.ToggleLock(["L2"]).Next);
@@ -425,7 +425,7 @@ public class StudioViewModelTests
         gw.Sheets.Clear(); // e.g. a family document is active now
         await vm.ReloadAsync(ReloadReason.GantiDokumen);
         Assert.Equal(1, vm.PendingCount);
-        Assert.Contains("dokumen lain", vm.Status);
+        Assert.Contains("another document", vm.Status);
         Assert.Equal("doc1", vm.BuildPlan().DocumentKey); // Apply would be refused by Revit-side check in doc2
         Assert.Equal("TAMPAK BARU", Row(vm, "T1").Label);
     }
@@ -439,7 +439,7 @@ public class StudioViewModelTests
         await vm.ReloadAsync(ReloadReason.GantiDokumen);
         Assert.Equal("doc2", vm.Snapshot.DocumentKey);
         Assert.DoesNotContain(vm.Layers.Rows, r => r.Key == "T1");
-        Assert.Contains("Dokumen aktif berganti", vm.Status);
+        Assert.Contains("Active document changed", vm.Status);
     }
 
     [Fact]

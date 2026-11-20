@@ -10,9 +10,9 @@ public static class ProfileLoader
 
     public static NamingProfile LoadBuiltIn(string id)
     {
-        if (!BuiltInIds.Contains(id)) throw new ArgumentException($"Profil bawaan '{id}' tidak ada.", nameof(id));
+        if (!BuiltInIds.Contains(id)) throw new ArgumentException($"Built-in profile '{id}' does not exist.", nameof(id));
         using var s = typeof(ProfileLoader).Assembly.GetManifestResourceStream($"SheetStudio.Core.Profiles.{id}.json")
-            ?? throw new InvalidOperationException($"Resource profil '{id}' tidak ditemukan.");
+            ?? throw new InvalidOperationException($"Profile resource '{id}' not found.");
         using var r = new StreamReader(s);
         return LoadFromJson(r.ReadToEnd());
     }
@@ -23,9 +23,9 @@ public static class ProfileLoader
         {
             foreach (var key in Required)
                 if (!doc.RootElement.TryGetProperty(key, out var v) || v.ValueKind == JsonValueKind.Null)
-                    throw new InvalidDataException($"Profil tidak valid: field '{key}' tidak ada.");
+                    throw new InvalidDataException($"Invalid profile: field '{key}' is missing.");
         }
         return JsonSerializer.Deserialize<NamingProfile>(json)
-            ?? throw new InvalidDataException("Profil tidak valid: kosong.");
+            ?? throw new InvalidDataException("Invalid profile: empty.");
     }
 }

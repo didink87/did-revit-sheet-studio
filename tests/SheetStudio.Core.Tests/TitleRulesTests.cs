@@ -58,7 +58,7 @@ public class TitleRulesTests
     {
         var c = TitleRules.Check(title, Profiles.Pupr);
         Assert.Equal(Severity.Galat, c.Severity);
-        Assert.Equal("Judul kosong", c.Pesan);
+        Assert.Equal("Title is empty", c.Pesan);
     }
 
     [Theory]
@@ -69,6 +69,6 @@ public class TitleRulesTests
     {
         var c = TitleRules.Check(title, Profiles.Pupr);
         Assert.Equal(Severity.Galat, c.Severity);
-        Assert.Contains("karakter", c.Pesan);
+        Assert.Contains("characters", c.Pesan);
     }
 }

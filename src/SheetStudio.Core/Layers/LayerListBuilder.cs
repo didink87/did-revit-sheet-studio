@@ -124,7 +124,7 @@ public static class LayerListBuilder
 
     private static string DiscLabel(string disc, NamingProfile p)
     {
-        if (disc == UnknownDiscipline) return "TIDAK DIKENAL";
+        if (disc == UnknownDiscipline) return "UNKNOWN";
         var d = p.FindDiscipline(disc)!;
         if (disc.Length == 2)
         {
@@ -136,7 +136,7 @@ public static class LayerListBuilder
 
     private static string TypeLabel(string typeKey, NamingProfile p)
     {
-        if (typeKey == UnknownType) return "NOMOR TIDAK STANDAR";
+        if (typeKey == UnknownType) return "NON-STANDARD NUMBER";
         var digit = int.Parse(typeKey.Split('|')[1]);
         var t = p.Tipe.FirstOrDefault(x => x.Digit == digit);
         return t is null ? digit.ToString() : t.Keterangan.Split(':')[0].TrimEnd('.').ToUpperInvariant();

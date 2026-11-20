@@ -42,7 +42,7 @@ public static class PreferencesStore
         catch (JsonException ex)
         {
             p = Prefs.Default;
-            err = "Preferensi rusak: " + ex.Message;
+            err = "Preferences file is corrupt: " + ex.Message;
             return false;
         }
     }

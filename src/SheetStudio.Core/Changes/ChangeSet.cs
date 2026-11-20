@@ -77,11 +77,11 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
     public OpResult MoveSelection(IReadOnlyList<string> ids, string targetGroup, int targetIndex, IReadOnlyList<SheetSnapshot> sheets, NamingProfile p)
     {
         if (targetGroup == LayerListBuilder.UnknownType || targetGroup == LayerListBuilder.UnknownDiscipline)
-            return new OpResult(this, "Tidak bisa memindah ke grup nomor tidak standar");
+            return new OpResult(this, "Cannot move into a non-standard number group");
 
         var (movable, locked) = SplitMovable(ids, sheets, p);
-        var pesan = locked > 0 ? $"{locked} lembar terkunci tidak dipindah" : null;
-        if (movable.Count == 0) return new OpResult(this, pesan ?? "Tidak ada lembar yang bisa dipindah");
+        var pesan = locked > 0 ? $"{locked} locked sheet{(locked == 1 ? "" : "s")} not moved" : null;
+        if (movable.Count == 0) return new OpResult(this, pesan ?? "No sheets can be moved");
 
         var byId = sheets.ToDictionary(s => s.UniqueId);
         var panel = PanelOrder(sheets, p);
@@ -179,7 +179,7 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
         var ranks = current.Select(d => p.FindDiscipline(d)?.Order ?? 99).ToList();
         var inUdsOrder = ranks.Zip(ranks.Skip(1)).All(x => x.First <= x.Second);
         var next = this with { State = State with { DisciplineOrder = current }, DisciplineOrderChanged = true };
-        return new OpResult(next, inUdsOrder ? null : "Urutan disiplin tidak sesuai urutan UDS");
+        return new OpResult(next, inUdsOrder ? null : "Discipline order does not match UDS order");
     }
 
     public OpResult ToggleLock(IReadOnlyList<string> ids)
@@ -242,7 +242,7 @@ public sealed record ChangeSet(ProjectState State, IReadOnlyDictionary<string, S
     private OpResult Reorder(IReadOnlyList<string> ids, IReadOnlyList<SheetSnapshot> sheets, NamingProfile p, Action<List<string>, HashSet<string>> op)
     {
         var (movable, locked) = SplitMovable(ids, sheets, p);
-        var pesan = locked > 0 ? $"{locked} lembar terkunci tidak dipindah" : null;
+        var pesan = locked > 0 ? $"{locked} locked sheet{(locked == 1 ? "" : "s")} not moved" : null;
         var byId = sheets.ToDictionary(s => s.UniqueId);
         var sel = movable.ToHashSet();
         var order = State.OrderPerGroup.ToDictionary(kv => kv.Key, kv => kv.Value);

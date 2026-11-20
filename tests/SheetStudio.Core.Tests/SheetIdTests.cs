@@ -33,13 +33,13 @@ public class SheetIdTests
     }
 
     [Theory]
-    [InlineData("A101", "Disiplin satu huruf wajib tanda '-'")]
-    [InlineData("A 101", "Format salah")]
-    [InlineData("A-1011", "Format salah")]
-    [InlineData("K-101", "Disiplin 'K' tidak dikenal")]
-    [InlineData("A-100", "Sequence 00 hanya untuk G-000")]
-    [InlineData("", "Nomor kosong")]
-    [InlineData(null, "Nomor kosong")]
+    [InlineData("A101", "One-letter discipline requires '-'")]
+    [InlineData("A 101", "Wrong format")]
+    [InlineData("A-1011", "Wrong format")]
+    [InlineData("K-101", "Discipline 'K' not recognized")]
+    [InlineData("A-100", "Sequence 00 is only for G-000")]
+    [InlineData("", "Number is empty")]
+    [InlineData(null, "Number is empty")]
     public void Parse_Invalid_GivesIndonesianError(string? txt, string msgStart)
     {
         var r = SheetId.Parse(txt, Profiles.Pupr);

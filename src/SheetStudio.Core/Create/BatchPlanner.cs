@@ -30,10 +30,10 @@ public static class BatchPlanner
             var check = TitleRules.Check(title, p);
             var key = Key(kind?.Id, row.Subjek, check.Normalized);
 
-            if (existingKeys.Contains(key)) { result.Add(new PlannedSheet(row, null, PlanStatus.SudahAda, "Lembar dengan jenis dan subjek ini sudah ada")); continue; }
-            if (!batchKeys.Add(key)) { result.Add(new PlannedSheet(row, null, PlanStatus.Duplikat, "Baris ganda di batch ini")); continue; }
+            if (existingKeys.Contains(key)) { result.Add(new PlannedSheet(row, null, PlanStatus.SudahAda, "A sheet with this kind and subject already exists")); continue; }
+            if (!batchKeys.Add(key)) { result.Add(new PlannedSheet(row, null, PlanStatus.Duplikat, "Duplicate row in this batch")); continue; }
             if (check.Severity == Severity.Galat && kind is null && row.NomorDiminta is null)
-            { result.Add(new PlannedSheet(row, null, PlanStatus.Galat, "Jenis atau nomor wajib diisi")); continue; }
+            { result.Add(new PlannedSheet(row, null, PlanStatus.Galat, "Kind or number is required")); continue; }
             if (check.Severity == Severity.Galat) { result.Add(new PlannedSheet(row, null, PlanStatus.Galat, check.Pesan)); continue; }
 
             var notes = new List<string>();
@@ -41,24 +41,24 @@ public static class BatchPlanner
             if (row.NomorDiminta is { } wanted)
             {
                 var parsed = SheetId.Parse(wanted, p);
-                if (!parsed.Ok) notes.Add($"Nomor '{wanted}' tidak valid ({parsed.Error})");
-                else if (Used(used, parsed.Id).Contains(parsed.Id.Seq)) notes.Add($"Nomor {parsed.Id.Format()} sudah dipakai");
+                if (!parsed.Ok) notes.Add($"Number '{wanted}' is not valid ({parsed.Error})");
+                else if (Used(used, parsed.Id).Contains(parsed.Id.Seq)) notes.Add($"Number {parsed.Id.Format()} is already in use");
                 else number = parsed.Id;
             }
             if (number is null)
             {
-                if (kind is null) { result.Add(new PlannedSheet(row, null, PlanStatus.Galat, string.Join("; ", notes.Append("Tanpa jenis, nomor harus diisi dengan benar")))); continue; }
+                if (kind is null) { result.Add(new PlannedSheet(row, null, PlanStatus.Galat, string.Join("; ", notes.Append("Without a kind, the number must be entered correctly")))); continue; }
                 var (from, to) = Sequencer.RangeFor(kind.Disiplin, kind.Tipe, kind.Id, p, o);
                 var set = Used(used, new SheetId(kind.Disiplin, kind.Tipe, 0));
                 var seq = Enumerable.Range(from, to - from + 1).FirstOrDefault(s => !set.Contains(s), -1);
                 if (seq < 0)
                 {
                     var label = Sequencer.GroupLabel(LayerListBuilder.TypeKey(kind.Disiplin, kind.Tipe));
-                    result.Add(new PlannedSheet(row, null, PlanStatus.Galat, $"Rentang {label} {from:00}–{to:00} penuh"));
+                    result.Add(new PlannedSheet(row, null, PlanStatus.Galat, $"Range {label} {from:00}–{to:00} is full"));
                     continue;
                 }
                 number = new SheetId(kind.Disiplin, kind.Tipe, seq);
-                if (notes.Count > 0) notes[^1] += $", diganti {number.Value.Format()}";
+                if (notes.Count > 0) notes[^1] += $", replaced with {number.Value.Format()}";
             }
             Used(used, number.Value).Add(number.Value.Seq);
             if (check.Severity == Severity.Peringatan) notes.Add(check.Pesan!);

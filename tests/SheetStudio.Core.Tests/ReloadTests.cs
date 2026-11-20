@@ -131,7 +131,7 @@ public class ReloadTests
         await vm.ReloadAsync(ReloadReason.ModelBerubah);
         Assert.Equal("doc1", vm.Snapshot.DocumentKey);
         Assert.Equal(1, vm.PendingCount);
-        Assert.Contains("milik dokumen lain", vm.Status);
+        Assert.Contains("belong to another document", vm.Status);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class ReloadTests
         await vm.ReloadAsync(ReloadReason.ModelBerubah);
         Assert.Equal("doc1", vm.Snapshot.DocumentKey);
         Assert.Equal(1, vm.PendingCount);
-        Assert.Contains("milik dokumen lain", vm.Status);
+        Assert.Contains("belong to another document", vm.Status);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class ReloadTests
         await vm.ReloadAsync(ReloadReason.ModelBerubah);
         Assert.Equal("doc1", vm.Snapshot.DocumentKey);
         Assert.Equal(1, vm.PendingCount);
-        Assert.Contains("milik dokumen lain", vm.Status);
+        Assert.Contains("belong to another document", vm.Status);
     }
 
     [Fact]
@@ -191,6 +191,6 @@ public class ReloadTests
         gw.LoadError = "putus";
         var report = await vm.CreateThenReloadAsync(() => gw.CreateAsync([], new Progress<(int, int, string)>(), default));
         Assert.NotNull(report);
-        Assert.StartsWith("Galat", vm.Status);
+        Assert.StartsWith("Error", vm.Status);
     }
 }

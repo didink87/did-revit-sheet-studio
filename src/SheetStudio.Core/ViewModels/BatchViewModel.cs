@@ -82,7 +82,7 @@ public sealed class BatchViewModel : ObservableObject
     /// <summary>Batch sudah dijalankan; tombol tutup menjadi "Selesai" agar tidak terkesan gagal.</summary>
     public bool IsDone => Report is not null && !_isRunning;
 
-    public string CloseLabel => IsDone ? "✓ Selesai — kembali ke Revit" : "Tutup";
+    public string CloseLabel => IsDone ? "✓ Done — back to Revit" : "Close";
 
     /// <summary>Diminta saat JALANKAN ditekan tapi kop untuk kertas tertentu belum ada; UI menampilkan pesan.</summary>
     public event Action<string>? WarningRequested;
@@ -90,8 +90,8 @@ public sealed class BatchViewModel : ObservableObject
     public string ProgressText { get => _progressText; private set => Set(ref _progressText, value); }
     public CreateReport? Report { get; private set; }
     public string Summary => _plan.Count == 0 ? "" :
-        $"{_plan.Count(p => p.Status == PlanStatus.Baru)} baru · {_plan.Count(p => p.Status == PlanStatus.SudahAda)} sudah ada · " +
-        $"{_plan.Count(p => p.Status == PlanStatus.Duplikat)} ganda · {_plan.Count(p => p.Status == PlanStatus.Galat)} galat";
+        $"{_plan.Count(p => p.Status == PlanStatus.Baru)} new · {_plan.Count(p => p.Status == PlanStatus.SudahAda)} already exist · " +
+        $"{_plan.Count(p => p.Status == PlanStatus.Duplikat)} duplicate · {_plan.Count(p => p.Status == PlanStatus.Galat)} errors";
 
     public ICommand BuildFromMatrix { get; }
     public ICommand PreviewCommand { get; }
@@ -164,15 +164,15 @@ public sealed class BatchViewModel : ObservableObject
         }
     }
 
-    /// <summary>Kertas yang kopnya (dari Preferensi) belum diatur atau tidak ada di model; null bila semua lengkap.</summary>
+    /// <summary>Paper sizes whose title block (from Preferences) is unset or missing from the model; null when all are complete.</summary>
     public string? MissingTitleBlocks(IEnumerable<CreateRequest> reqs)
     {
         var bad = reqs.Select(r => r.Kertas).Distinct()
             .Select(k => (k, tb: _studio.Snapshot.Prefs.TitleBlockPerKertas.GetValueOrDefault(k)))
             .Where(x => string.IsNullOrWhiteSpace(x.tb) || !_studio.Snapshot.TitleBlockTypes.Contains(x.tb))
-            .Select(x => string.IsNullOrWhiteSpace(x.tb) ? $"• {x.k}: kop belum dipilih" : $"• {x.k}: kop '{x.tb}' tidak ada di model")
+            .Select(x => string.IsNullOrWhiteSpace(x.tb) ? $"• {x.k}: title block not chosen" : $"• {x.k}: title block '{x.tb}' is not in the model")
             .ToList();
-        return bad.Count == 0 ? null : "Kop (title block) untuk kertas berikut belum siap:\n" + string.Join("\n", bad);
+        return bad.Count == 0 ? null : "Title block is not ready for these paper sizes:\n" + string.Join("\n", bad);
     }
 
     private void BuildMatrix()

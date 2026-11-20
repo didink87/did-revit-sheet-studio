@@ -3,10 +3,13 @@ using SheetStudio.Core.Profiles;
 
 namespace SheetStudio.Core.Create;
 
-/// <summary>CSV import/export of batch rows. Separator ';' (Excel Indonesia) or ','; quotes supported.</summary>
+/// <summary>CSV import/export of batch rows. Separator ';' (Excel with a comma decimal locale) or ','; quotes supported.</summary>
 public static class BatchCsv
 {
-    public static readonly string[] Header = ["JENIS", "SUBJEK", "LEVEL", "NOMOR", "JUDUL", "SKALA", "KERTAS", "BUAT VIEW"];
+    public static readonly string[] Header = ["KIND", "SUBJECT", "LEVEL", "NUMBER", "TITLE", "SCALE", "PAPER", "CREATE VIEW"];
+
+    /// <summary>Pre-1.1 Indonesian header; still accepted on import so existing files load.</summary>
+    private static readonly string[] LegacyHeader = ["JENIS", "SUBJEK", "LEVEL", "NOMOR", "JUDUL", "SKALA", "KERTAS", "BUAT VIEW"];
 
     public static string Write(IEnumerable<BatchRow> rows)
     {
@@ -16,7 +19,7 @@ public static class BatchCsv
             sb.AppendLine(string.Join(';', new[]
             {
                 r.KindId ?? "", r.Subjek, r.LevelName ?? "", r.NomorDiminta ?? "", r.Judul ?? "",
-                r.Skala == 0 ? "" : r.Skala.ToString(), r.Kertas.ToString(), r.BuatView ? "YA" : "TIDAK",
+                r.Skala == 0 ? "" : r.Skala.ToString(), r.Kertas.ToString(), r.BuatView ? "YES" : "NO",
             }.Select(Quote)));
         return sb.ToString();
     }
@@ -28,14 +31,14 @@ public static class BatchCsv
         var lines = text.Replace("\r\n", "\n").Split('\n');
         if (lines.Length == 0 || string.IsNullOrWhiteSpace(lines[0]))
         {
-            errors = ["Baris 1: header kosong"];
+            errors = ["Row 1: header is empty"];
             return rows;
         }
         var sep = lines[0].Count(c => c == ';') >= lines[0].Count(c => c == ',') ? ';' : ',';
         var header = Split(lines[0], sep).Select(h => h.Trim().ToUpperInvariant()).ToList();
-        if (!header.SequenceEqual(Header))
+        if (!header.SequenceEqual(Header) && !header.SequenceEqual(LegacyHeader))
         {
-            errors = [$"Baris 1: header harus {string.Join(sep, Header)}"];
+            errors = [$"Row 1: header must be {string.Join(sep, Header)}"];
             return rows;
         }
 
@@ -48,13 +51,13 @@ public static class BatchCsv
             if (f[0].Length > 0)
             {
                 kind = (p.FindKind(f[0].ToLowerInvariant()) ?? p.Jenis.FirstOrDefault(k => string.Equals(k.Nama, f[0], StringComparison.OrdinalIgnoreCase)))?.Id;
-                if (kind is null) { errs.Add($"Baris {line}: jenis '{f[0]}' tidak dikenal"); continue; }
+                if (kind is null) { errs.Add($"Row {line}: kind '{f[0]}' not recognized"); continue; }
             }
             var skala = 0;
-            if (f[5].Length > 0 && !int.TryParse(f[5], out skala)) { errs.Add($"Baris {line}: skala '{f[5]}' bukan angka"); continue; }
+            if (f[5].Length > 0 && !int.TryParse(f[5], out skala)) { errs.Add($"Row {line}: scale '{f[5]}' is not a number"); continue; }
             var kertas = Kertas.A3;
-            if (f[6].Length > 0 && !Enum.TryParse(f[6], true, out kertas)) { errs.Add($"Baris {line}: kertas '{f[6]}' harus A3, A2, atau A1"); continue; }
-            var view = f[7].Length == 0 || f[7].Equals("YA", StringComparison.OrdinalIgnoreCase);
+            if (f[6].Length > 0 && !Enum.TryParse(f[6], true, out kertas)) { errs.Add($"Row {line}: paper '{f[6]}' must be A3, A2, or A1"); continue; }
+            var view = f[7].Length == 0 || f[7].Equals("YES", StringComparison.OrdinalIgnoreCase) || f[7].Equals("YA", StringComparison.OrdinalIgnoreCase);
             rows.Add(new BatchRow(kind, f[1], Null(f[2]), Null(f[3]), Null(f[4]), skala, kertas, view));
         }
         errors = errs;

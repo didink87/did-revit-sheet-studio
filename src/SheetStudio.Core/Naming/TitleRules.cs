@@ -22,10 +22,10 @@ public static class TitleRules
     public static TitleCheck Check(string? raw, NamingProfile p)
     {
         var norm = Normalize(raw);
-        if (norm.Length == 0) return new TitleCheck("", Severity.Galat, [], "Judul kosong");
+        if (norm.Length == 0) return new TitleCheck("", Severity.Galat, [], "Title is empty");
         var bad = norm.Where(c => Prohibited.Contains(c)).Distinct().ToList();
         if (bad.Count > 0)
-            return new TitleCheck(norm, Severity.Galat, [], $"Judul memuat karakter terlarang Revit: {string.Join(" ", bad)}");
+            return new TitleCheck(norm, Severity.Galat, [], $"Title contains characters prohibited by Revit: {string.Join(" ", bad)}");
         var hints = new List<AbbrevHint>();
         foreach (var tok in norm.Split(' '))
         {
@@ -35,7 +35,7 @@ public static class TitleRules
         }
         return hints.Count == 0
             ? new TitleCheck(norm, Severity.Ok, hints, null)
-            : new TitleCheck(norm, Severity.Peringatan, hints, "Judul tidak boleh memakai singkatan");
+            : new TitleCheck(norm, Severity.Peringatan, hints, "Title must not use abbreviations");
     }
 
     public static string ApplySuggestions(string title, NamingProfile p) =>

@@ -38,7 +38,7 @@ public class PreferencesTests
     public void Corrupt_TryDeserializeFalse_MergeIgnoresLayer()
     {
         Assert.False(PreferencesStore.TryDeserialize("{not json", out var p, out var err));
-        Assert.StartsWith("Preferensi rusak", err);
+        Assert.StartsWith("Preferences file is corrupt", err);
         Assert.Equal(Prefs.Default.Langkah, p.Langkah);
         Assert.Equal(1, PreferencesStore.Merge(Prefs.Default, "{oops", null).Langkah);
     }

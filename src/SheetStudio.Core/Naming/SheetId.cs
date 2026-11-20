@@ -15,16 +15,16 @@ public readonly partial record struct SheetId(string Discipline, int Type, int S
 
     public static ParseResult Parse(string? text, NamingProfile p)
     {
-        if (string.IsNullOrWhiteSpace(text)) return Fail("Nomor kosong");
+        if (string.IsNullOrWhiteSpace(text)) return Fail("Number is empty");
         var t = text.Trim().ToUpperInvariant();
-        if (OneLetterNoHyphen().IsMatch(t)) return Fail("Disiplin satu huruf wajib tanda '-' (mis. A-101)");
+        if (OneLetterNoHyphen().IsMatch(t)) return Fail("One-letter discipline requires '-' (e.g. A-101)");
         var m = Uds().Match(t);
-        if (!m.Success) return Fail("Format salah: pakai AA-NNN, mis. A-101 atau EP110");
+        if (!m.Success) return Fail("Wrong format: use AA-NNN, e.g. A-101 or EP110");
         var first = m.Groups[1].Value;
-        if (p.FindDiscipline(first) is null) return Fail($"Disiplin '{first}' tidak dikenal di profil {p.Id}");
+        if (p.FindDiscipline(first) is null) return Fail($"Discipline '{first}' not recognized in profile {p.Id}");
         var disc = m.Groups[2].Value == "-" ? first : first + m.Groups[2].Value;
         var id = new SheetId(disc, m.Groups[3].Value[0] - '0', int.Parse(m.Groups[4].Value));
-        if (id.Seq == 0 && !(disc == "G" && id.Type == 0)) return Fail("Sequence 00 hanya untuk G-000");
+        if (id.Seq == 0 && !(disc == "G" && id.Type == 0)) return Fail("Sequence 00 is only for G-000");
         return new ParseResult(true, id, null, id.Format());
     }
 

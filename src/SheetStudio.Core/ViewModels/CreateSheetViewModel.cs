@@ -68,10 +68,10 @@ public sealed class CreateSheetViewModel : ObservableObject
         get
         {
             var kurang = new List<string>();
-            if (_kertas is null) kurang.Add("ukuran kertas (A3/A2/A1)");
-            if (string.IsNullOrWhiteSpace(_titleBlock)) kurang.Add("kop / title block");
-            else if (!TitleBlockTypes.Contains(_titleBlock)) return $"Kop '{_titleBlock}' tidak ada di model ini. Pilih kop lain.";
-            return kurang.Count == 0 ? null : "Anda belum memilih " + string.Join(" dan ", kurang) + ".";
+            if (_kertas is null) kurang.Add("paper size (A3/A2/A1)");
+            if (string.IsNullOrWhiteSpace(_titleBlock)) kurang.Add("title block");
+            else if (!TitleBlockTypes.Contains(_titleBlock)) return $"Title block '{_titleBlock}' is not in this model. Choose another title block.";
+            return kurang.Count == 0 ? null : "You have not chosen " + string.Join(" and ", kurang) + ".";
         }
     }
 

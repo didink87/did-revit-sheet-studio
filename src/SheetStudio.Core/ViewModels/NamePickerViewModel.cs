@@ -17,7 +17,7 @@ public sealed record NumberCell(int Seq, string Label, CellState State);
 /// <summary>Interactive sheet number + title picker: discipline chips, type slider, number map, title builder.</summary>
 public sealed class NamePickerViewModel : ObservableObject
 {
-    public const string Bebas = "BEBAS (KETIK SENDIRI)";
+    public const string Bebas = "FREE (TYPE YOUR OWN)";
     private static readonly string[] Elevations = ["TAMPAK DEPAN", "TAMPAK BELAKANG", "TAMPAK KIRI", "TAMPAK KANAN"];
     private static readonly string[] Sections = ["POTONGAN A-A", "POTONGAN B-B", "POTONGAN C-C", "POTONGAN D-D"];
 
@@ -101,7 +101,7 @@ public sealed class NamePickerViewModel : ObservableObject
     }
 
     public IReadOnlyList<SecondLetterOption> SecondLetters =>
-        new[] { new SecondLetterOption(null, "— (tanpa)", "Satu huruf; tanda '-' mengisi posisi huruf kedua") }
+        new[] { new SecondLetterOption(null, "— (none)", "One letter; the '-' fills the second-letter position") }
             .Concat(_p.FindDiscipline(_discipline)!.HurufKedua.Select(h => new SecondLetterOption(h.Huruf, $"{_discipline}{h.Huruf} {h.Nama}", h.Keterangan)))
             .ToList();
 
@@ -297,9 +297,9 @@ public sealed class NamePickerViewModel : ObservableObject
         {
             var seq = EffectiveSeq;
             var number = new SheetId(Disc, _type, seq).Format();
-            if (seq == 0 && !(Disc == "G" && _type == 0)) return "Sequence 00 hanya untuk G-000";
+            if (seq == 0 && !(Disc == "G" && _type == 0)) return "Sequence 00 is only for G-000";
             if (!UsedSeqs().Contains(seq)) return null;
-            return _autoSeq ? $"Rentang {number[..^2]}xx penuh — pilih nomor manual atau jenis lain" : $"Nomor {number} sudah dipakai";
+            return _autoSeq ? $"Range {number[..^2]}xx is full — choose a manual number or another kind" : $"Number {number} is already in use";
         }
     }
 

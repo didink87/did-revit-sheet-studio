@@ -35,7 +35,7 @@ public class ChangeSetTests
     {
         var r = ChangeSet.Start(State(locked: ["L2"])).MoveSelection(["A|1", "L2", "L3"], "A|1", 0, Sheets, Profiles.Pupr);
         Assert.Equal(new[] { "L3", "L1", "L2" }, Order(r.Next, "A|1"));
-        Assert.Equal("1 lembar terkunci tidak dipindah", r.Pesan);
+        Assert.Equal("1 locked sheet not moved", r.Pesan);
     }
 
     [Fact]

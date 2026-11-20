@@ -147,7 +147,7 @@ public sealed class LayersViewModel : ObservableObject
     {
         if (TryDisciplineDrop(keys, targetKey, out var discIndex))
         {
-            reason = discIndex < 0 ? "Grup disiplin hanya bisa dilepas di grup disiplin lain" : null;
+            reason = discIndex < 0 ? "A discipline group can only be dropped onto another discipline group" : null;
             return discIndex >= 0;
         }
         var cacheKey = string.Join(",", keys) + "|" + targetKey + "|" + pos;
@@ -162,7 +162,7 @@ public sealed class LayersViewModel : ObservableObject
     private bool Decide(IReadOnlyList<string> keys, string targetKey, DropPosition pos, out string? reason)
     {
         var (group, index) = Target(targetKey, pos);
-        if (group is null) { reason = "Tidak bisa dilepas di sini"; return false; }
+        if (group is null) { reason = "Cannot drop here"; return false; }
         var ids = Expand(keys);
         var r = _studio.Current.MoveSelection(ids, group, index, _studio.Sheets, _studio.Profile);
         if (ReferenceEquals(r.Next, _studio.Current)) { reason = r.Pesan; return r.Pesan is null; }
