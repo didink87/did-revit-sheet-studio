@@ -1,5 +1,5 @@
-# Membangun paket rilis: dist\SheetStudio-<versi>-Revit2026.zip
-# Pakai:  .\setup\Build-Release.ps1 -Version 1.0.0
+# Builds the release package: dist\SheetStudio-<version>-Revit2026.zip
+# Usage:  .\setup\Build-Release.ps1 -Version 1.0.0
 param([string]$Version = '1.0.0')
 $ErrorActionPreference = 'Stop'
 $root  = Split-Path $PSScriptRoot -Parent
@@ -7,10 +7,10 @@ $name  = "SheetStudio-$Version-Revit2026"
 $stage = Join-Path $root "dist\$name"
 $zip   = Join-Path $root "dist\$name.zip"
 
-# Build ke folder tersendiri agar tidak bentrok dengan DLL yang sedang dipakai Revit.
+# Build into its own folder so it does not clash with DLLs Revit has loaded.
 $out = Join-Path $root 'dist\build'
 dotnet build (Join-Path $root 'src\SheetStudio.Revit') -c Release -o $out
-if ($LASTEXITCODE -ne 0) { throw 'Build gagal' }
+if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 if (Test-Path $zip)   { Remove-Item $zip -Force }
@@ -22,4 +22,4 @@ Copy-Item (Join-Path $root 'docs\PANDUAN.md') (Join-Path $stage 'PANDUAN.md')
 Copy-Item (Join-Path $PSScriptRoot 'BACA-DULU.txt') $stage
 
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip
-Write-Host "Paket: $zip" -ForegroundColor Green
+Write-Host "Package: $zip" -ForegroundColor Green

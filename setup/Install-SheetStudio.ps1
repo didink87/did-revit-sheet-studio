@@ -1,6 +1,6 @@
-# Sheet Studio - pemasang sederhana untuk Revit 2026
-# Pakai:  .\Install-SheetStudio.ps1            (pasang / perbarui)
-#         .\Install-SheetStudio.ps1 -Uninstall (copot)
+# Sheet Studio - simple installer for Revit 2026
+# Usage:  .\Install-SheetStudio.ps1            (install / update)
+#         .\Install-SheetStudio.ps1 -Uninstall (uninstall)
 param(
     [switch]$Uninstall,
     [string]$Source = (Join-Path $PSScriptRoot 'bin'),
@@ -12,25 +12,25 @@ $targetDir = Join-Path $addinsDir 'SheetStudio'
 $manifest  = Join-Path $addinsDir 'SheetStudio.addin'
 
 Write-Host ''
-Write-Host '=== Sheet Studio untuk Revit' $RevitVersion '===' -ForegroundColor Cyan
+Write-Host '=== Sheet Studio for Revit' $RevitVersion '===' -ForegroundColor Cyan
 
 if (Get-Process -Name Revit -ErrorAction SilentlyContinue) {
-    Write-Host 'Revit sedang terbuka. Tutup semua jendela Revit dulu, lalu jalankan lagi.' -ForegroundColor Yellow
+    Write-Host 'Revit is running. Close all Revit windows first, then run this again.' -ForegroundColor Yellow
     exit 2
 }
 
 if ($Uninstall) {
     if (Test-Path $manifest)  { Remove-Item $manifest -Force }
     if (Test-Path $targetDir) { Remove-Item $targetDir -Recurse -Force }
-    Write-Host 'Sheet Studio sudah dicopot.' -ForegroundColor Green
-    Write-Host "(Preferensi & judul tersimpan tetap ada di $env:APPDATA\SheetStudio)"
+    Write-Host 'Sheet Studio has been uninstalled.' -ForegroundColor Green
+    Write-Host "(Preferences & saved titles are kept in $env:APPDATA\SheetStudio)"
     exit 0
 }
 
 $dll = Join-Path $Source 'SheetStudio.Revit.dll'
 if (-not (Test-Path $dll)) {
-    Write-Host "File add-in tidak ditemukan: $dll" -ForegroundColor Red
-    Write-Host 'Pastikan folder "bin" ada di sebelah skrip ini (ekstrak seluruh isi ZIP).'
+    Write-Host "Add-in file not found: $dll" -ForegroundColor Red
+    Write-Host 'Make sure the "bin" folder sits next to this script (extract the whole ZIP).'
     exit 1
 }
 
@@ -54,9 +54,9 @@ $xml = @"
 "@
 [System.IO.File]::WriteAllText($manifest, $xml, (New-Object System.Text.UTF8Encoding($false)))
 
-Write-Host 'Terpasang:' -ForegroundColor Green
+Write-Host 'Installed:' -ForegroundColor Green
 Write-Host "  $manifest"
 Write-Host "  $targetDir"
 Write-Host ''
-Write-Host 'Buka Revit 2026 -> tab DID -> Sheet Studio.'
-Write-Host 'Bila muncul dialog keamanan add-in, pilih "Always Load".'
+Write-Host 'Open Revit 2026 -> DID tab -> Sheet Studio.'
+Write-Host 'If an add-in security dialog appears, choose "Always Load".'

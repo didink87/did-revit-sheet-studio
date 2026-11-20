@@ -5,11 +5,11 @@ cd /d "%~dp0"
 echo.
 echo   SHEET STUDIO - Revit 2026
 echo   -------------------------
-echo   [1] Pasang / perbarui
-echo   [2] Copot
-echo   [3] Keluar
+echo   [1] Install / update
+echo   [2] Uninstall
+echo   [3] Exit
 echo.
-set /p pilih="Pilih 1/2/3 lalu Enter: "
+set /p pilih="Choose 1/2/3 then press Enter: "
 if "%pilih%"=="1" powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Install-SheetStudio.ps1"
 if "%pilih%"=="2" powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Install-SheetStudio.ps1" -Uninstall
 echo.

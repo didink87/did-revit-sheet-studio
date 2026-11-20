@@ -1,20 +1,20 @@
 SHEET STUDIO - Revit 2026
 =========================
 
-CARA PASANG (sederhana)
-1. Tutup Revit.
-2. Ekstrak SELURUH isi ZIP ini ke satu folder (jangan dijalankan dari dalam ZIP).
-3. Klik-ganda Setup.bat, pilih [1] Pasang.
-4. Buka Revit 2026 -> tab DID -> Sheet Studio.
-   Bila muncul dialog keamanan add-in, pilih "Always Load".
+HOW TO INSTALL (simple)
+1. Close Revit.
+2. Extract the WHOLE ZIP into one folder (do not run it from inside the ZIP).
+3. Double-click Setup.bat, choose [1] Install.
+4. Open Revit 2026 -> DID tab -> Sheet Studio.
+   If an add-in security dialog appears, choose "Always Load".
 
-CARA COPOT
-Klik-ganda Setup.bat, pilih [2] Copot.
+HOW TO UNINSTALL
+Double-click Setup.bat, choose [2] Uninstall.
 
-LOKASI FILE
-- Add-in : %AppData%\Autodesk\Revit\Addins\2026\SheetStudio\
-- Manifest: %AppData%\Autodesk\Revit\Addins\2026\SheetStudio.addin
-- Preferensi: %AppData%\SheetStudio\
+FILE LOCATIONS
+- Add-in    : %AppData%\Autodesk\Revit\Addins\2026\SheetStudio\
+- Manifest  : %AppData%\Autodesk\Revit\Addins\2026\SheetStudio.addin
+- Preferences: %AppData%\SheetStudio\
 - Log: %LocalAppData%\SheetStudio\log\
 
-Panduan pemakaian: PANDUAN.md
+User guide: PANDUAN.md (in English)

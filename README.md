@@ -1,27 +1,34 @@
 # Sheet Studio — Revit 2026
 
-Plugin Revit untuk **membuat, mengurutkan, dan mengedit lembar (sheet)** dengan penomoran UDS / US National CAD Standard (Discipline Designator + Sheet Type Designator) dan profil standar PUPR.
+A Revit add-in to **create, reorder, and edit sheets** using UDS / US National CAD Standard numbering (Discipline Designator + Sheet Type Designator) and the PUPR standard profile.
 
-- Rancangan: `docs/superpowers/specs/2026-11-03-sheet-studio-design.md`
-- Aturan penamaan: `docs/reference/02-penamaan-lembar-aia-ncs.md`
-- Plan & keputusan: `docs/superpowers/plans/2026-11-03-sheet-studio.md`
+- Design: `docs/superpowers/specs/2026-11-03-sheet-studio-design.md`
+- Naming rules: `docs/reference/02-penamaan-lembar-aia-ncs.md`
+- Plan & decisions: `docs/superpowers/plans/2026-11-03-sheet-studio.md`
 
-## Instalasi
+## What's new in 1.1
 
-Butuh **Revit 2026** (Windows). Tutup Revit sebelum memasang atau memperbarui.
+- **Sheet fill indicator.** Every sheet row in the Layers panel starts with a small circle: **hollow** when the sheet is empty, **filled Revit blue** when the sheet holds views or schedules. Click it to open a short list of what is on the sheet (name and kind of each view or schedule). The indicator follows the model when viewports or schedules are placed or removed.
+- **English UI.** Every window, menu, tooltip, status line, message box, ribbon label, transaction name, and the setup scripts are now in English. Profile descriptions (discipline and sheet-type notes) are English too. PUPR title vocabulary (DENAH, TAMPAK, POTONGAN …), the profile JSON, and the stored preference keys are unchanged, so existing projects, saved titles, and preferences keep working.
+- **Batch CSV** now exports an English header (`KIND;SUBJECT;LEVEL;NUMBER;TITLE;SCALE;PAPER;CREATE VIEW`, `YES`/`NO`). Files exported by 1.0 (Indonesian header, `YA`/`TIDAK`) still import.
+- Revit transaction names are now English: `Sheet Studio: Apply sheet changes`, `Sheet Studio: Delete & temporary numbers`, `Sheet Studio: Save sheet order`, and so on.
 
-### Jalur 1 — Setup sederhana (tanpa terminal)
+## Installation
 
-1. Buka halaman [Releases](https://github.com/didink87/did-revit-sheet-studio/releases), unduh `SheetStudio-<versi>-Revit2026.zip`.
-2. Ekstrak **seluruh** isi ZIP ke satu folder.
-3. Klik-ganda **`Setup.bat`** → pilih **[1] Pasang / perbarui**.
-4. Buka Revit 2026 → tab **DID** → **Sheet Studio**. Bila muncul dialog keamanan add-in, pilih **Always Load**.
+Requires **Revit 2026** (Windows). Close Revit before installing or updating.
 
-Setup menyalin add-in ke `%AppData%\Autodesk\Revit\Addins\2026\SheetStudio\` dan menulis `SheetStudio.addin`. Copot: jalankan `Setup.bat` → **[2] Copot**.
+### Option 1 — Simple setup (no terminal)
 
-### Jalur 2 — Terminal (dari kode sumber)
+1. Open the [Releases](https://github.com/didink87/did-revit-sheet-studio/releases) page and download `SheetStudio-<version>-Revit2026.zip`.
+2. Extract **the whole** ZIP into one folder.
+3. Double-click **`Setup.bat`** → choose **[1] Install / update**.
+4. Open Revit 2026 → **DID** tab → **Sheet Studio**. If an add-in security dialog appears, choose **Always Load**.
 
-Butuh [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) dan Git.
+Setup copies the add-in to `%AppData%\Autodesk\Revit\Addins\2026\SheetStudio\` and writes `SheetStudio.addin`. To uninstall: run `Setup.bat` → **[2] Uninstall**.
+
+### Option 2 — Terminal (from source)
+
+Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and Git.
 
 ```
 git clone https://github.com/didink87/did-revit-sheet-studio.git
@@ -29,117 +36,117 @@ cd did-revit-sheet-studio
 dotnet build src/SheetStudio.Revit -c Release -p:InstallAddin=true
 ```
 
-Menyalin `SheetStudio.addin` ke `%AppData%\Autodesk\Revit\Addins\2026\` dan menunjuk ke `bin\Release\SheetStudio.Revit.dll`. Pakai **Release**: build Debug lebih lambat (target memberi peringatan bila dipasang dari Debug). Perbarui: `git pull` lalu ulangi perintah build. Copot: hapus file `.addin` itu.
+This copies `SheetStudio.addin` to `%AppData%\Autodesk\Revit\Addins\2026\` and points it at `bin\Release\SheetStudio.Revit.dll`. Use **Release**: Debug builds are slower (the build target warns when installing from Debug). To update: `git pull`, then repeat the build command. To uninstall: delete that `.addin` file.
 
-Kedua jalur menulis manifest yang sama (`SheetStudio.addin`), jadi jalur terakhir yang dijalankan yang berlaku.
+Both options write the same manifest (`SheetStudio.addin`), so whichever you ran last wins.
 
-### Membuat paket rilis (pengembang)
+### Building a release package (developers)
 
 ```
 powershell -ExecutionPolicy Bypass -File setup/Build-Release.ps1 -Version 1.0.0
 ```
 
-Hasil: `dist/SheetStudio-1.0.0-Revit2026.zip` (isi: `bin\`, `Setup.bat`, `Install-SheetStudio.ps1`, `BACA-DULU.txt`, `PANDUAN.md`).
+Output: `dist/SheetStudio-1.0.0-Revit2026.zip` (contents: `bin\`, `Setup.bat`, `Install-SheetStudio.ps1`, `BACA-DULU.txt`, `PANDUAN.md`; the last two are the read-me and the quick guide, in English despite their file names).
 
-Panduan pemakaian ringkas: [`docs/PANDUAN.md`](docs/PANDUAN.md).
+Short user guide: [`docs/PANDUAN.md`](docs/PANDUAN.md).
 
-## Diagnosa
+## Diagnostics
 
-Log ditulis ke `%LocalAppData%\SheetStudio\log\sheetstudio-yyyyMMdd.log` (satu file per hari). Peristiwa yang dicatat:
+The log is written to `%LocalAppData%\SheetStudio\log\sheetstudio-yyyyMMdd.log` (one file per day). Log lines keep their original wording. Events recorded:
 
-| Peristiwa | Isi |
+| Event | Content |
 |---|---|
-| `startup` | Add-in dimuat |
-| `load` | Pembacaan model (dengan durasi) |
-| `create` | Pembuatan lembar (＋ Baru / Batch) |
-| `apply` | TERAPKAN ke model |
-| `thumb` / `thumb-gagal` | Thumbnail berhasil dibuat / gagal |
-| `watcher` | Pemantau perubahan model |
-| `event` | ExternalEvent ditolak/tidak diterima Revit (Denied/TimedOut) |
-| `reload` | Baca ulang panel |
+| `startup` | Add-in loaded |
+| `load` | Model read (with duration) |
+| `create` | Sheet creation (＋ New / Batch) |
+| `apply` | APPLY to the model |
+| `thumb` / `thumb-gagal` | Thumbnail created / failed |
+| `watcher` | Model change watcher |
+| `event` | ExternalEvent denied/not accepted by Revit (Denied/TimedOut) |
+| `reload` | Panel re-read |
 
-Lampirkan file log hari itu saat melaporkan masalah.
+Attach that day's log file when reporting a problem.
 
-## Tiga sistem dalam satu panel
+## Three systems in one panel
 
-Tab ribbon **DID → panel DID → Sheet Studio** membuka/menutup panel. (Panel DID dipakai bersama Family Browser dan Face View.)
+Ribbon tab **DID → DID panel → Sheet Studio** shows/hides the panel. (The DID panel is shared with Family Browser and Face View.)
 
-| Bagian | Fungsi |
+| Part | What it does |
 |---|---|
-| **Lapisan** (kiri) | Urutan set ala panel Layers Photoshop: grup Disiplin › Tipe, multi-pilih, drag-drop, gembok, mata, thumbnail |
-| **Inspektur** (kanan) | Edit lembar terpilih (satu/banyak): disiplin, tipe (slider), nomor, judul, cari-ganti, awalan/akhiran, parameter kop, title block, duplikat, hapus |
-| **＋ Baru / ⧉ Batch** | Pemilih nama interaktif (kartu disiplin, slider tipe, peta nomor 10×10) dan batch (matriks jenis × level, CSV, preset) |
+| **Layers** (left) | Set order like Photoshop's Layers panel: Discipline › Type groups, multi-select, drag-drop, lock, eye, thumbnail, fill indicator |
+| **Inspector** (right) | Edit the selected sheets (one or many): discipline, type (slider), number, title, find-replace, prefix/suffix, title-block parameters, title block, duplicate, delete |
+| **＋ New / ⧉ Batch** | Interactive name picker (discipline cards, type slider, 10×10 number map) and batch (kind × level matrix, CSV, presets) |
 
-Semua perubahan di panel **bertahap**: nomor baru tampil biru, judul berubah ✎, lembar dihapus dicoret merah. Ctrl+Z/Ctrl+Y di panel membatalkan/mengulang langkah bertahap. **TERAPKAN** menulis semuanya ke model sebagai **satu langkah Undo** Revit. Lembar yang diubah orang lain sejak dibaca dilewati dan dilaporkan.
+All panel changes are **staged**: new numbers show in blue, edited titles show ✎, sheets marked for deletion are struck through in red. Ctrl+Z/Ctrl+Y in the panel undo/redo staged steps. **APPLY** writes everything to the model as **one Revit Undo step**. Sheets changed by someone else since they were read are skipped and reported.
 
-## Pintasan keyboard (fokus di panel)
+## Keyboard shortcuts (focus in the panel)
 
-| Tombol | Aksi |
+| Key | Action |
 |---|---|
-| Klik / Ctrl+klik / Shift+klik / Ctrl+Shift+klik | Pilih satu / tambah-lepas / rentang / tambah rentang |
-| Klik baris grup | Pilih semua lembar di grup |
-| Ctrl+A / Esc | Pilih semua yang terlihat / kosongkan pilihan |
-| Drag di antara baris | Pindah posisi (semua yang terpilih ikut, urutan relatif tetap) |
-| Drag ke baris grup Tipe/Disiplin | Pindah grup = ganti tipe/disiplin (ditolak bila rentang penuh) |
-| Drag header Disiplin | Ubah urutan set (peringatan bila keluar urutan UDS) |
-| Ctrl+] / Ctrl+[ | Naik / turun satu |
-| Ctrl+Shift+] / Ctrl+Shift+[ | Ke paling atas / bawah grup |
-| F2 / klik-ganda judul | Ubah judul di baris |
-| Enter / klik-ganda nomor | Buka lembar |
-| Delete | Tandai hapus |
-| Ctrl+D | Duplikat (lembar saja) |
-| Ctrl+Z / Ctrl+Y | Undo / redo di panel |
-| F5 | Baca ulang model |
-| Alt+klik panah | Lipat/buka semua grup |
+| Click / Ctrl+click / Shift+click / Ctrl+Shift+click | Select one / toggle / range / add range |
+| Click a group row | Select all sheets in the group |
+| Ctrl+A / Esc | Select all visible / clear selection |
+| Drag between rows | Move (everything selected follows, relative order kept) |
+| Drag onto a Type/Discipline group row | Move group = change type/discipline (refused when the range is full) |
+| Drag a Discipline header | Reorder the set (warning when it leaves UDS order) |
+| Ctrl+] / Ctrl+[ | Move up / down one |
+| Ctrl+Shift+] / Ctrl+Shift+[ | To top / bottom of the group |
+| F2 / double-click title | Rename the title in the row |
+| Enter / double-click number | Open the sheet |
+| Delete | Mark for deletion |
+| Ctrl+D | Duplicate (sheet only) |
+| Ctrl+Z / Ctrl+Y | Undo / redo in the panel |
+| F5 | Re-read the model |
+| Alt+click arrow | Collapse/expand all groups |
 
-## Penomoran
+## Numbering
 
-Format: `{Disiplin 1–2 huruf}{'-' bila 1 huruf}{Tipe 0–9}{Urut 01–99}` → `A-111`, `EP110`, `G-000` (sampul).
+Format: `{Discipline 1–2 letters}{'-' if 1 letter}{Type 0–9}{Sequence 01–99}` → `A-111`, `EP110`, `G-000` (cover).
 
-- **Rentang** (bawaan): tiap jenis gambar punya rentang di profil PUPR (mis. denah `A-110…139`, plafon `A-145…154`). Urutan di panel menentukan siapa dapat nomor kecil.
-- **Urut**: nomor berurutan per grup tipe, mulai 1 (G mulai 0), langkah 1/5/10 (untuk menyisakan celah).
-- Hanya **grup yang Anda ubah** yang dinomori ulang. Tombol **⇅ Rapikan nomor** menghitung ulang semua grup.
-- Lembar **terkunci**, lembar yang dipinjam user lain (workshared), dan nomor non-UDS tidak pernah diubah.
+- **Range** (default): each drawing kind has a range in the PUPR profile (e.g. plans `A-110…139`, ceiling plans `A-145…154`). The order in the panel decides who gets the lower numbers.
+- **Sequential**: consecutive numbers per type group, starting at 1 (G starts at 0), step 1/5/10 (to leave gaps).
+- Only the **groups you changed** are renumbered. The **⇅ Renumber all** button recomputes every group.
+- **Locked** sheets, sheets borrowed by another user (workshared), and non-UDS numbers are never changed.
 
-## Profil
+## Profiles
 
-- `pupr` — 21 disiplin NCS + huruf ke-2 contoh AIA (AD, EP, EL, MH, MP, QH, FA, RA; AS/AE/AI/AF/AG ditandai "cek NCS"), 10 tipe, jenis gambar PUPR dengan rentang & templat judul, daftar singkatan.
-- `uds` — disiplin & tipe saja, tanpa rentang jenis.
-- Impor profil JSON sendiri **belum** tersedia.
+- `pupr` — 21 NCS disciplines + AIA example second letters (AD, EP, EL, MH, MP, QH, FA, RA; AS/AE/AI/AF/AG flagged "check NCS"), 10 types, PUPR drawing kinds with ranges & title templates, abbreviation list.
+- `uds` — disciplines & types only, no kind ranges.
+- Importing your own JSON profile is **not** available yet.
 
-## Format CSV batch
+## Batch CSV format
 
-Header (pemisah `;` atau `,`):
-
-```
-JENIS;SUBJEK;LEVEL;NOMOR;JUDUL;SKALA;KERTAS;BUAT VIEW
-denah;LANTAI 1;Lantai 1;;;100;A3;YA
-;;;A-701;GAMBAR KHUSUS;;A3;TIDAK
-```
-
-`JENIS` = id jenis (mis. `denah`, `rencana-plafon`) atau nama jenis; kosong = judul bebas (wajib isi `NOMOR` dan `JUDUL`). `NOMOR` kosong = otomatis. Baris yang sudah ada (jenis + subjek sama) dilewati.
-
-## Preferensi
-
-⚙ di panel. Urutan berlaku: bawaan < `%AppData%\SheetStudio\preferensi.json` ("Jadikan default saya") < tersimpan di proyek ("Simpan untuk proyek ini", Extensible Storage). Urutan panel, kunci, dan urutan disiplin disimpan di proyek saat **TERAPKAN**.
-
-## Batasan yang diketahui
-
-- **Tampak & potongan** dibuat sebagai *drafting view* sementara — garis potong/tampak harus Anda buat di denah lalu ganti view-nya.
-- **Legend** tidak bisa dibuat lewat API; minimal harus ada satu legend di proyek untuk diduplikat.
-- **Batch** berjalan per 5 lembar per langkah agar progres & tombol Batal hidup; satu batch = beberapa langkah Undo. Batal/galat (mode "batalkan semua") menghapus lembar yang sudah dibuat.
-- Revit bisa "mencuri" Ctrl+Z bila fokus keyboard tidak di dalam panel — klik daftar lembar dulu.
-- Parameter `SS_JenisGambar` dan `SS_Subjek` (Identity Data) ditambahkan ke kategori Sheets saat pembuatan pertama.
-- **Thumbnail mati secara bawaan** (mahal di proyek besar) — aktifkan di ⚙ Preferensi.
-- Rasa interaksi (drag, tema gelap, 1000 lembar) dan "satu Undo" diuji manual, bukan otomatis.
-
-## Pengembangan
+Header (separator `;` or `,`):
 
 ```
-dotnet test tests/SheetStudio.Core.Tests      # xUnit, tanpa Revit
-dotnet test tests/SheetStudio.Revit.Tests     # ricaun: membuka & menutup Revit 2026 sendiri
+KIND;SUBJECT;LEVEL;NUMBER;TITLE;SCALE;PAPER;CREATE VIEW
+denah;LANTAI 1;Lantai 1;;;100;A3;YES
+;;;A-701;GAMBAR KHUSUS;;A3;NO
 ```
 
-Tes Revit tidak pernah menyentuh Revit yang sedang Anda pakai.
+`KIND` = kind id (e.g. `denah`, `rencana-plafon`) or kind name; empty = free title (`NUMBER` and `TITLE` are then required). Empty `NUMBER` = automatic. Rows that already exist (same kind + subject) are skipped. The old Indonesian header (`JENIS;SUBJEK;LEVEL;NOMOR;JUDUL;SKALA;KERTAS;BUAT VIEW`, `YA`/`TIDAK`) is still accepted on import.
 
-**Catatan:** `dotnet test tests/SheetStudio.Revit.Tests` akan menggantung (timeout ricaun) selama `%AppData%\Autodesk\Revit\Addins\2026\SheetStudio.addin` terpasang, karena Revit tes menampilkan dialog keamanan add-in tak bertanda tangan. Ganti nama sementara menjadi `SheetStudio.addin.disabled` selama tes berjalan, lalu kembalikan.
+## Preferences
+
+⚙ in the panel. Precedence: defaults < `%AppData%\SheetStudio\preferensi.json` ("Make my default") < saved in the project ("Save for this project", Extensible Storage). Panel order, locks, and discipline order are saved in the project on **APPLY**.
+
+## Known limitations
+
+- **Elevations & sections** are created as temporary *drafting views* — you must draw the section/elevation line on a plan and swap the view.
+- **Legends** cannot be created through the API; the project needs at least one legend to duplicate.
+- **Batch** runs 5 sheets per step so progress and the Stop button stay alive; one batch = several Undo steps. Cancel/error ("cancel all" mode) deletes the sheets already created.
+- Revit can "steal" Ctrl+Z when keyboard focus is not inside the panel — click the sheet list first.
+- The parameters `SS_JenisGambar` and `SS_Subjek` (Identity Data) are added to the Sheets category on first creation.
+- **Thumbnails are off by default** (expensive in large projects) — enable them in ⚙ Preferences.
+- Interaction feel (drag, dark theme, 1000 sheets) and the "single Undo" are tested manually, not automatically.
+
+## Development
+
+```
+dotnet test tests/SheetStudio.Core.Tests      # xUnit, no Revit
+dotnet test tests/SheetStudio.Revit.Tests     # ricaun: opens and closes its own Revit 2026
+```
+
+The Revit tests never touch the Revit you are using.
+
+**Note:** `dotnet test tests/SheetStudio.Revit.Tests` hangs (ricaun timeout) while `%AppData%\Autodesk\Revit\Addins\2026\SheetStudio.addin` is installed, because the test Revit shows the unsigned-add-in security dialog. Temporarily rename it to `SheetStudio.addin.disabled` while the tests run, then restore it.
