@@ -97,7 +97,26 @@ public class WatcherTests
 
             Tx(doc, () => doc.Delete(vp));
 
-            Assert.That(raised, Is.GreaterThanOrEqualTo(1));
+            Assert.That(raised, Is.EqualTo(1));
+        }
+        finally { doc.Close(false); }
+    }
+
+    [Test]
+    public void Watcher_FirstEventIsViewportDelete_Raises(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var sheet = Sheet(doc, "A-110", "DENAH");
+            var vp = PlaceViewport(doc, sheet);
+            using var watcher = new ModelWatcher(app, debounceMs: 0, dispatch: a => a());
+            var raised = 0;
+            watcher.Changed += () => raised++;
+
+            Tx(doc, () => doc.Delete(vp));
+
+            Assert.That(raised, Is.EqualTo(1));
         }
         finally { doc.Close(false); }
     }
