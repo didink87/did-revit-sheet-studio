@@ -31,7 +31,7 @@ public sealed class ParamField : ObservableObject
 /// <summary>Edits the selected sheet(s). Mixed values show as <see cref="MixedText"/>; setting a value applies to all.</summary>
 public sealed class InspectorViewModel : ObservableObject
 {
-    public const string MixedText = "<berbeda>";
+    public const string MixedText = "<mixed>";
 
     private readonly StudioViewModel _studio;
     private IReadOnlyList<SheetSnapshot> _sel = [];

@@ -131,7 +131,7 @@ public class ReloadTests
         await vm.ReloadAsync(ReloadReason.ModelBerubah);
         Assert.Equal("doc1", vm.Snapshot.DocumentKey);
         Assert.Equal(1, vm.PendingCount);
-        Assert.Contains("belong to another document", vm.Status);
+        Assert.Contains("to another document", vm.Status);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class ReloadTests
         await vm.ReloadAsync(ReloadReason.ModelBerubah);
         Assert.Equal("doc1", vm.Snapshot.DocumentKey);
         Assert.Equal(1, vm.PendingCount);
-        Assert.Contains("belong to another document", vm.Status);
+        Assert.Contains("to another document", vm.Status);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class ReloadTests
         await vm.ReloadAsync(ReloadReason.ModelBerubah);
         Assert.Equal("doc1", vm.Snapshot.DocumentKey);
         Assert.Equal(1, vm.PendingCount);
-        Assert.Contains("belong to another document", vm.Status);
+        Assert.Contains("to another document", vm.Status);
     }
 
     [Fact]

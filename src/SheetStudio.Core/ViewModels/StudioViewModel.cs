@@ -306,7 +306,7 @@ public sealed class StudioViewModel : ObservableObject
             if (pending.PendingCount > 0)
             {
                 // Keep the staged work for its own document; Apply is refused elsewhere (Revit-side document check).
-                Status = $"{pending.PendingCount} pending change{(pending.PendingCount == 1 ? "" : "s")} belong to another document — return to that document to apply, or Discard";
+                Status = $"{pending.PendingCount} pending change{(pending.PendingCount == 1 ? " belongs" : "s belong")} to another document — return to that document to apply, or Discard";
                 return;
             }
             ApplyFresh(fresh);
