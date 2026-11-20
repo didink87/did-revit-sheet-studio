@@ -15,7 +15,7 @@ public class UiSmokeTests
     {
         public List<SheetSnapshot> Sheets { get; } =
         [
-            Snap("L1", "A-110", "DENAH LANTAI 1", "denah"),
+            Snap("L1", "A-110", "DENAH LANTAI 1", "denah") with { PlacedViews = [new PlacedView("v1", "Level 1", "FloorPlan"), new PlacedView("v2", "Door Schedule", "Schedule")] },
             Snap("L2", "A-111", "DENAH LANTAI 2", "denah"),
             Snap("T1", "A-201", "TAMPAK DEPAN", "tampak-bangunan"),
         ];
@@ -139,5 +139,60 @@ public class UiSmokeTests
         Pump(window);
         Assert.That(window.TitleBlockA3.Text, Is.EqualTo("PUPR_KOP_A3"));
         window.Close();
+    }
+
+    private static T? Find<T>(System.Windows.DependencyObject root, string name) where T : System.Windows.FrameworkElement
+    {
+        for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var c = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (c is T t && t.Name == name) return t;
+            var r = Find<T>(c, name);
+            if (r is not null) return r;
+        }
+        return null;
+    }
+
+    private static System.Windows.Controls.ListBoxItem ItemFor(ListBox list, string key) =>
+        (System.Windows.Controls.ListBoxItem)list.ItemContainerGenerator.ContainerFromItem(list.Items.Cast<LayerRowViewModel>().First(r => r.Key == key));
+
+    [Test]
+    public async Task LayersPanel_FillCircle_BindsHasViews()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var pane = new StudioPane(vm);
+        Pump(pane);
+        var list = pane.LayersView.LayerList;
+        var filled = Find<System.Windows.Shapes.Ellipse>(ItemFor(list, "L1"), "FillDot")!;
+        var empty = Find<System.Windows.Shapes.Ellipse>(ItemFor(list, "L2"), "FillDot")!;
+        Assert.That(((System.Windows.Media.SolidColorBrush)filled.Fill).Color, Is.EqualTo(System.Windows.Media.Color.FromRgb(0x06, 0x96, 0xD7)));
+        Assert.That(empty.Fill, Is.EqualTo(System.Windows.Media.Brushes.Transparent));
+    }
+
+    [Test]
+    public async Task LayersPanel_FillDotClick_DoesNotChangeSelection()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var pane = new StudioPane(vm);
+        var host = new System.Windows.Window { Content = pane, Width = 900, Height = 600, ShowInTaskbar = false, WindowStartupLocation = System.Windows.WindowStartupLocation.Manual, Left = -5000 };
+        host.Show(); // a Popup only opens once its tree is loaded in a window
+        Pump(pane);
+        var list = pane.LayersView.LayerList;
+        var before = vm.Layers.SelectedSheetIds().ToList();
+        var item = ItemFor(list, "L1");
+        var toggle = Find<System.Windows.Controls.Primitives.ToggleButton>(item, "FillToggle")!;
+        var popup = Find<System.Windows.Controls.Primitives.Popup>(item, "ViewsPopup")!;
+        var down = new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount, System.Windows.Input.MouseButton.Left)
+            { RoutedEvent = System.Windows.UIElement.PreviewMouseLeftButtonDownEvent, Source = toggle };
+        toggle.RaiseEvent(down);
+        ((System.Windows.Automation.Provider.IToggleProvider)System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(toggle)).Toggle(); // raises the real OnClick
+        Pump(pane);
+        Assert.That(toggle.IsChecked, Is.True, "toggle");
+        Assert.That(popup.IsOpen, Is.True, "popup " + popup.GetBindingExpression(System.Windows.Controls.Primitives.Popup.IsOpenProperty)?.Status + " " + popup.IsLoaded + " " + popup.PlacementTarget);
+        Assert.That(vm.Layers.SelectedSheetIds(), Is.EqualTo(before));
+        Assert.That(vm.Layers.Rows.First(r => r.Key == "L1").IsEditing, Is.False);
+        host.Close();
     }
 }

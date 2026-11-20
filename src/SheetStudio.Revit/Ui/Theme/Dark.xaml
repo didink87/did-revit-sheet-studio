@@ -14,4 +14,5 @@
     <SolidColorBrush x:Key="SS.Danger" Color="#F87171"/>
     <SolidColorBrush x:Key="SS.Warn" Color="#FBBF24"/>
     <SolidColorBrush x:Key="SS.Ok" Color="#34D399"/>
+    <SolidColorBrush x:Key="SS.RevitBlue" Color="#0696D7"/>
 </ResourceDictionary>

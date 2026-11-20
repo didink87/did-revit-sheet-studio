@@ -101,21 +101,63 @@
                 <DataTemplate DataType="{x:Type vm:LayerRowViewModel}">
                     <Grid x:Name="RowRoot" MinHeight="26" Background="Transparent" ToolTip="{Binding WarningText}">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="18"/>
                             <ColumnDefinition Width="22"/>
                             <ColumnDefinition Width="22"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <ToggleButton Grid.Column="0" Style="{StaticResource IconToggle}" IsChecked="{Binding InSheetList, Mode=OneWay}"
+                        <ToggleButton x:Name="FillToggle" Grid.Column="0" Style="{StaticResource IconToggle}" Width="18"
+                                      ToolTip="{Binding ViewCountText}"
+                                      Visibility="{Binding IsGroup, Converter={StaticResource NotVis}}">
+                            <Ellipse x:Name="FillDot" Width="10" Height="10" StrokeThickness="1.5">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Stroke" Value="{DynamicResource SS.FgMuted}"/>
+                                        <Setter Property="Fill" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasViews}" Value="True">
+                                                <Setter Property="Stroke" Value="{DynamicResource SS.RevitBlue}"/>
+                                                <Setter Property="Fill" Value="{DynamicResource SS.RevitBlue}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                        </ToggleButton>
+                        <Popup x:Name="ViewsPopup" PlacementTarget="{Binding ElementName=FillToggle}" Placement="Bottom" StaysOpen="False"
+                               AllowsTransparency="True" IsOpen="{Binding IsChecked, ElementName=FillToggle, Mode=TwoWay}">
+                            <Border Background="{DynamicResource SS.Panel}" BorderBrush="{DynamicResource SS.Border}" BorderThickness="1"
+                                    CornerRadius="4" Padding="10,8" MinWidth="180" MaxWidth="360" Margin="0,0,6,6">
+                                <Border.Effect><DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25"/></Border.Effect>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding ViewCountText}" FontWeight="SemiBold" Foreground="{DynamicResource SS.Fg}" Margin="0,0,0,4"/>
+                                    <TextBlock Text="No views on this sheet" Foreground="{DynamicResource SS.FgMuted}"
+                                               Visibility="{Binding HasViews, Converter={StaticResource NotVis}}"/>
+                                    <ItemsControl ItemsSource="{Binding PlacedViews}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <DockPanel Margin="0,1">
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Kind}" Foreground="{DynamicResource SS.FgMuted}" Margin="12,0,0,0"/>
+                                                    <TextBlock Text="{Binding Name}" Foreground="{DynamicResource SS.Fg}" TextTrimming="CharacterEllipsis"/>
+                                                </DockPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+
+                        <ToggleButton Grid.Column="1" Style="{StaticResource IconToggle}" IsChecked="{Binding InSheetList, Mode=OneWay}"
                                       Click="OnEyeClick" ToolTip="Muncul di daftar gambar">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7B3;" FontSize="11" Opacity="{Binding InSheetList, Converter={x:Static ui:LayersPanel.EyeOpacity}}"/>
                         </ToggleButton>
-                        <ToggleButton Grid.Column="1" Style="{StaticResource IconToggle}" IsChecked="{Binding Locked, Mode=OneWay}"
+                        <ToggleButton Grid.Column="2" Style="{StaticResource IconToggle}" IsChecked="{Binding Locked, Mode=OneWay}"
                                       Click="OnLockClick" ToolTip="Kunci: nomor tidak ikut berubah, tidak bisa digeser">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE72E;" FontSize="11" Opacity="{Binding Locked, Converter={x:Static ui:LayersPanel.LockOpacity}}"/>
                         </ToggleButton>
 
-                        <Border Grid.Column="2" x:Name="Body" Margin="{Binding Indent, Converter={StaticResource Indent}}"
+                        <Border Grid.Column="3" x:Name="Body" Margin="{Binding Indent, Converter={StaticResource Indent}}"
                                 Padding="4,2" CornerRadius="3" BorderThickness="0,2,0,2" BorderBrush="Transparent">
                             <DockPanel LastChildFill="True">
                                 <TextBlock x:Name="Arrow" DockPanel.Dock="Left" Width="14" Text="▾" VerticalAlignment="Center"
