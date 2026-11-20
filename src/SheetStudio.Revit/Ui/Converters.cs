@@ -83,6 +83,13 @@ public sealed class ViewKindLabel : IValueConverter
     public object ConvertBack(object value, Type t, object p, CultureInfo c) => Binding.DoNothing;
 }
 
+/// <summary>Revit ViewType name (FloorPlan, DraftingView…) → English label.</summary>
+public sealed class RevitViewTypeLabel : IValueConverter
+{
+    public object Convert(object value, Type t, object p, CultureInfo c) => ViewKindLabels.RevitTypeLabel(value as string);
+    public object ConvertBack(object value, Type t, object p, CultureInfo c) => Binding.DoNothing;
+}
+
 internal static class Theme
 {
     /// <summary>Merges the light or dark palette following Revit's UI theme.</summary>

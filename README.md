@@ -43,10 +43,10 @@ Both options write the same manifest (`SheetStudio.addin`), so whichever you ran
 ### Building a release package (developers)
 
 ```
-powershell -ExecutionPolicy Bypass -File setup/Build-Release.ps1 -Version 1.0.0
+powershell -ExecutionPolicy Bypass -File setup/Build-Release.ps1 -Version 1.1.0
 ```
 
-Output: `dist/SheetStudio-1.0.0-Revit2026.zip` (contents: `bin\`, `Setup.bat`, `Install-SheetStudio.ps1`, `BACA-DULU.txt`, `PANDUAN.md`; the last two are the read-me and the quick guide, in English despite their file names).
+Output: `dist/SheetStudio-1.1.0-Revit2026.zip` (contents: `bin\`, `Setup.bat`, `Install-SheetStudio.ps1`, `BACA-DULU.txt`, `PANDUAN.md`; the last two are the read-me and the quick guide, in English despite their file names).
 
 Short user guide: [`docs/PANDUAN.md`](docs/PANDUAN.md).
 

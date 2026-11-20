@@ -57,7 +57,7 @@ public class NamePickerTests
         Assert.Single(vm.DisciplineOptions, d => d.IsSelected && d.Code == "A");
         vm.ShowAllDisciplines = true;
         Assert.Equal(21, vm.DisciplineOptions.Count);
-        Assert.Contains("Arsitektur", vm.DisciplineDescription);
+        Assert.Contains("Architectural", vm.DisciplineDescription);
     }
 
     [Fact]

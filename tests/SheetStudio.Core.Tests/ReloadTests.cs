@@ -50,6 +50,7 @@ public class ReloadTests
         gw.LoadGate.SetResult();
         await t;
         Assert.Equal(1, vm.PendingCount);
+        Assert.Equal("1 pending change", vm.PendingText);
         Assert.Contains(vm.Layers.Rows, r => r.Key == "L3");
     }
 

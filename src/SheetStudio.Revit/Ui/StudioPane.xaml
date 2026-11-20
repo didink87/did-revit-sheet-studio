@@ -68,7 +68,7 @@
                 <WrapPanel>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,4">
                         <TextBlock Text="●" Foreground="{DynamicResource SS.Accent}" Margin="0,0,4,0"/>
-                        <TextBlock Text="{Binding PendingCount, StringFormat={}{0} pending change(s)}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding PendingText}" FontWeight="SemiBold"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                         <Button Style="{StaticResource ToolButton}" Content="↶" Command="{Binding Undo}" ToolTip="Undo in panel (Ctrl+Z)"/>

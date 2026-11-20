@@ -25,7 +25,7 @@
                         <Border x:Name="Card" CornerRadius="6" BorderThickness="1.5" BorderBrush="{DynamicResource SS.Border}" Background="{DynamicResource SS.Bg}">
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Code}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Foreground="{DynamicResource SS.Fg}"/>
-                                <TextBlock Text="{Binding NamaId}" FontSize="9" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                <TextBlock Text="{Binding DisplayName}" FontSize="9" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
                                            Margin="3,0" Foreground="{DynamicResource SS.FgMuted}"/>
                             </StackPanel>
                         </Border>

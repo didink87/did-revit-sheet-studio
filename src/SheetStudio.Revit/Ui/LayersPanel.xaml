@@ -10,6 +10,7 @@
         <ui:IndentToMargin x:Key="Indent"/>
         <ui:BytesToImage x:Key="Img"/>
         <ui:EqualsToVisibility x:Key="Eq"/>
+        <ui:RevitViewTypeLabel x:Key="ViewTypeLabel"/>
 
         <Style x:Key="IconToggle" TargetType="ToggleButton">
             <Setter Property="Width" Value="20"/>
@@ -147,7 +148,7 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <DockPanel Margin="0,1">
-                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Kind}" Foreground="{DynamicResource SS.FgMuted}" Margin="12,0,0,0"/>
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Kind, Converter={StaticResource ViewTypeLabel}}" Foreground="{DynamicResource SS.FgMuted}" Margin="12,0,0,0"/>
                                                     <TextBlock Text="{Binding Name}" Foreground="{DynamicResource SS.Fg}" TextTrimming="CharacterEllipsis"/>
                                                 </DockPanel>
                                             </DataTemplate>

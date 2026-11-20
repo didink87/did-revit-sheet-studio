@@ -4,7 +4,11 @@ public sealed record SecondLetterDef(char Huruf, string Nama, string Keterangan)
 
 public sealed record DisciplineDef(
     string Code, string NamaId, string NamaEn, string Keterangan, int Order, bool Umum,
-    IReadOnlyList<SecondLetterDef> HurufKedua);
+    IReadOnlyList<SecondLetterDef> HurufKedua)
+{
+    /// <summary>English discipline name for display; falls back to the Indonesian name when empty.</summary>
+    public string DisplayName => string.IsNullOrWhiteSpace(NamaEn) ? NamaId : NamaEn;
+}
 
 public sealed record SheetTypeDef(int Digit, string Nama, string Keterangan);
 

@@ -31,6 +31,7 @@ public class StudioViewModelTests
         var (vm, _) = await Loaded();
         Assert.Equal(new[] { "A", "A|1", "L1", "L2", "A|2", "T1" }, vm.Layers.Rows.Select(r => r.Key));
         Assert.Equal(0, vm.PendingCount);
+        Assert.Equal("0 pending changes", vm.PendingText);
     }
 
     [Fact]

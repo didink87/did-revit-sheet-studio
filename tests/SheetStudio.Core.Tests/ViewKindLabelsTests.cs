@@ -20,6 +20,22 @@ public class ViewKindLabelsTests
     public void KindLabel_MapsAndFallsBack(string? id, string expected) => Assert.Equal(expected, ViewKindLabels.Label(id));
 
     [Theory]
+    [InlineData("FloorPlan", "Floor plan")]
+    [InlineData("CeilingPlan", "Ceiling plan")]
+    [InlineData("Elevation", "Elevation")]
+    [InlineData("Section", "Section")]
+    [InlineData("Detail", "Detail")]
+    [InlineData("DraftingView", "Drafting")]
+    [InlineData("Legend", "Legend")]
+    [InlineData("ThreeD", "3D")]
+    [InlineData("AreaPlan", "Area plan")]
+    [InlineData("EngineeringPlan", "Structural plan")]
+    [InlineData("Schedule", "Schedule")]
+    [InlineData("Walkthrough", "Walkthrough")]
+    [InlineData(null, "")]
+    public void RevitTypeLabel_MapsAndFallsBack(string? type, string expected) => Assert.Equal(expected, ViewKindLabels.RevitTypeLabel(type));
+
+    [Theory]
     [InlineData(PlanStatus.Baru, "New")]
     [InlineData(PlanStatus.SudahAda, "Exists")]
     [InlineData(PlanStatus.Duplikat, "Duplicate")]

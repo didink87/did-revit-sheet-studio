@@ -47,7 +47,7 @@
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" ToolTip="{Binding Keterangan}">
                                                 <TextBlock Text="{Binding Code}" FontWeight="Bold" Width="22" FontFamily="Consolas"/>
-                                                <TextBlock Text="{Binding NamaId}"/>
+                                                <TextBlock Text="{Binding DisplayName}"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>

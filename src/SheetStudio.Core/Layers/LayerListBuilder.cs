@@ -129,9 +129,9 @@ public static class LayerListBuilder
         if (disc.Length == 2)
         {
             var second = d.HurufKedua.FirstOrDefault(h => h.Huruf == disc[1]);
-            return (second?.Nama ?? d.NamaId).ToUpperInvariant();
+            return (second?.Nama ?? d.DisplayName).ToUpperInvariant();
         }
-        return d.NamaId.ToUpperInvariant();
+        return d.DisplayName.ToUpperInvariant();
     }
 
     private static string TypeLabel(string typeKey, NamingProfile p)

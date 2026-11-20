@@ -78,6 +78,7 @@ public sealed class StudioViewModel : ObservableObject
     public Func<ApplyPlan, Task<bool>>? ConfirmApply { get; set; }
 
     public int PendingCount => Current.PendingCount;
+    public string PendingText => PendingCount == 1 ? "1 pending change" : $"{PendingCount} pending changes";
 
     /// <summary>Sequencer errors (full range, taken manual number) or a title Revit would reject: Apply stays disabled.</summary>
     public bool HasBlockingErrors { get; private set; }
@@ -399,7 +400,7 @@ public sealed class StudioViewModel : ObservableObject
             DisplaySheets().Any(s => Current.Changes.ContainsKey(s.UniqueId) && TitleRules.Check(s.Title, Profile).Severity == Severity.Galat);
         Layers.Rebuild();
         Inspector.Refresh();
-        Raise(nameof(PendingCount), nameof(Current), nameof(Outcome), nameof(HasBlockingErrors));
+        Raise(nameof(PendingCount), nameof(PendingText), nameof(Current), nameof(Outcome), nameof(HasBlockingErrors));
         foreach (var c in new[] { Undo, Redo, Discard }.OfType<RelayCommand>()) c.RaiseCanExecuteChanged();
         (Apply as AsyncRelayCommand)?.RaiseCanExecuteChanged();
     }

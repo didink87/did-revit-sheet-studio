@@ -8,7 +8,10 @@ using SheetStudio.Core.Profiles;
 
 namespace SheetStudio.Core.ViewModels;
 
-public sealed record DisciplineOption(string Code, string NamaId, string NamaEn, string Keterangan, bool IsSelected);
+public sealed record DisciplineOption(string Code, string NamaId, string NamaEn, string Keterangan, bool IsSelected)
+{
+    public string DisplayName => string.IsNullOrWhiteSpace(NamaEn) ? NamaId : NamaEn;
+}
 public sealed record SecondLetterOption(char? Huruf, string Nama, string Keterangan);
 public sealed record KindOption(string? Id, string Nama);
 public sealed record CreateName(SheetId Id, string Title, string? KindId, string Subjek);
@@ -122,7 +125,7 @@ public sealed class NamePickerViewModel : ObservableObject
         get
         {
             var d = _p.FindDiscipline(_discipline)!;
-            return $"{d.NamaId} ({d.NamaEn}) — {d.Keterangan}";
+            return $"{d.DisplayName} — {d.Keterangan}";
         }
     }
 

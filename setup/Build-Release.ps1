@@ -1,6 +1,6 @@
 # Builds the release package: dist\SheetStudio-<version>-Revit2026.zip
-# Usage:  .\setup\Build-Release.ps1 -Version 1.0.0
-param([string]$Version = '1.0.0')
+# Usage:  .\setup\Build-Release.ps1 -Version 1.1.0
+param([string]$Version = '1.1.0')
 $ErrorActionPreference = 'Stop'
 $root  = Split-Path $PSScriptRoot -Parent
 $name  = "SheetStudio-$Version-Revit2026"
