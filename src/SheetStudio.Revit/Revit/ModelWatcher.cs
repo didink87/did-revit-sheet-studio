@@ -15,8 +15,12 @@ public sealed class ModelWatcher : IDisposable
     private readonly int _debounceMs;
     private readonly Action<Action> _dispatch;
     private readonly Dictionary<string, HashSet<ElementId>> _knownSheets = [];
+    private readonly Dictionary<string, HashSet<ElementId>> _knownPlaced = [];
     private readonly ElementFilter _filter = new LogicalOrFilter(
-        new ElementClassFilter(typeof(ViewSheet)), new ElementCategoryFilter(BuiltInCategory.OST_TitleBlocks));
+    [
+        new ElementClassFilter(typeof(ViewSheet)), new ElementCategoryFilter(BuiltInCategory.OST_TitleBlocks),
+        new ElementClassFilter(typeof(Viewport)), new ElementClassFilter(typeof(ScheduleSheetInstance)),
+    ]);
     private Timer? _timer;
 
     public ModelWatcher(Application app, int debounceMs = 500, Action<Action>? dispatch = null)
@@ -43,11 +47,15 @@ public sealed class ModelWatcher : IDisposable
         var key = doc.PathName is { Length: > 0 } p ? p : doc.Title;
         if (!_knownSheets.TryGetValue(key, out var known))
             _knownSheets[key] = known = new FilteredElementCollector(doc).OfClass(typeof(ViewSheet)).ToElementIds().ToHashSet();
+        if (!_knownPlaced.TryGetValue(key, out var placed))
+            _knownPlaced[key] = placed = new FilteredElementCollector(doc).WherePasses(new LogicalOrFilter(
+                new ElementClassFilter(typeof(Viewport)), new ElementClassFilter(typeof(ScheduleSheetInstance)))).ToElementIds().ToHashSet();
 
         var added = e.GetAddedElementIds(_filter);
-        var relevant = added.Count > 0 || e.GetModifiedElementIds(_filter).Count > 0 || e.GetDeletedElementIds().Any(known.Contains);
+        var relevant = added.Count > 0 || e.GetModifiedElementIds(_filter).Count > 0 || e.GetDeletedElementIds().Any(id => known.Contains(id) || placed.Contains(id));
         foreach (var id in added) if (doc.GetElement(id) is ViewSheet) known.Add(id);
-        foreach (var id in e.GetDeletedElementIds()) known.Remove(id);
+        foreach (var id in added) if (doc.GetElement(id) is Viewport or ScheduleSheetInstance) placed.Add(id);
+        foreach (var id in e.GetDeletedElementIds()) { known.Remove(id); placed.Remove(id); }
         if (!relevant) return;
 
         if (_debounceMs <= 0) { _dispatch(Raise); return; }

@@ -112,4 +112,65 @@ public class SnapshotTests
         }
         finally { doc.Close(false); }
     }
+
+    private static ViewDrafting Drafting(Document doc, string name)
+    {
+        ViewDrafting? v = null;
+        Tx(doc, () =>
+        {
+            var type = new FilteredElementCollector(doc).OfClass(typeof(ViewFamilyType)).Cast<ViewFamilyType>()
+                .First(t => t.ViewFamily == ViewFamily.Drafting);
+            v = ViewDrafting.Create(doc, type.Id);
+            v.Name = name;
+            doc.Create.NewDetailCurve(v, Line.CreateBound(XYZ.Zero, new XYZ(5, 0, 0)));
+        });
+        return v!;
+    }
+
+    [Test]
+    public void Snapshot_PlacedViews_ListsViewportViews(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var sheet = Sheet(doc, "A-110", "DENAH");
+            Sheet(doc, "A-111", "KOSONG");
+            var view = Drafting(doc, "Detail Uji");
+            Tx(doc, () => Viewport.Create(doc, sheet.Id, view.Id, XYZ.Zero));
+
+            var snap = SnapshotReader.Read(doc, Prefs.Default, ProjectState.Empty);
+
+            var placed = snap.Sheets.Single(s => s.Number == "A-110").PlacedViews;
+            Assert.That(placed, Has.Count.EqualTo(1));
+            Assert.That(placed[0].Name, Is.EqualTo("Detail Uji"));
+            Assert.That(placed[0].Kind, Is.EqualTo("DraftingView"));
+            Assert.That(snap.Sheets.Single(s => s.Number == "A-111").PlacedViews, Is.Empty);
+        }
+        finally { doc.Close(false); }
+    }
+
+    [Test]
+    public void Snapshot_PlacedViews_SchedulesCountRevisionDoesNot(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var tb = LoadTitleBlock(app, doc, "A3");
+            var withSchedule = Sheet(doc, "A-110", "DENAH");
+            Sheet(doc, "A-111", "HANYA KOP", tb);
+            Tx(doc, () =>
+            {
+                var sch = ViewSchedule.CreateSchedule(doc, new ElementId(BuiltInCategory.OST_Walls));
+                ScheduleSheetInstance.Create(doc, withSchedule.Id, sch.Id, XYZ.Zero);
+            });
+
+            var snap = SnapshotReader.Read(doc, Prefs.Default, ProjectState.Empty);
+
+            var placed = snap.Sheets.Single(s => s.Number == "A-110").PlacedViews;
+            Assert.That(placed, Has.Count.EqualTo(1));
+            Assert.That(placed[0].Kind, Is.EqualTo("Schedule"));
+            Assert.That(snap.Sheets.Single(s => s.Number == "A-111").PlacedViews, Is.Empty);
+        }
+        finally { doc.Close(false); }
+    }
 }

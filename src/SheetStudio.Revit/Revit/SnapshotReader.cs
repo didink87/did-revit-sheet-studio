@@ -61,7 +61,28 @@ public static class SnapshotReader
             owner,
             SheetSnapshot.MakeVersi(s.SheetNumber, s.Name),
             Params(s),
-            tb is null ? "" : TitleBlocks.Display(tb.Symbol));
+            tb is null ? "" : TitleBlocks.Display(tb.Symbol))
+        {
+            PlacedViews = PlacedViews(doc, s),
+        };
+    }
+
+    /// <summary>Views and schedules placed on the sheet, by name. One sheet-scoped collector; revision schedules excluded.</summary>
+    internal static IReadOnlyList<PlacedView> PlacedViews(Document doc, ViewSheet s)
+    {
+        var result = new List<PlacedView>();
+        foreach (var id in s.GetAllViewports())
+        {
+            if (doc.GetElement(id) is not Viewport vp || doc.GetElement(vp.ViewId) is not View v) continue;
+            result.Add(new PlacedView(v.UniqueId, v.Name, v.ViewType.ToString()));
+        }
+        foreach (var inst in new FilteredElementCollector(doc, s.Id).OfClass(typeof(ScheduleSheetInstance)).Cast<ScheduleSheetInstance>())
+        {
+            if (inst.IsTitleblockRevisionSchedule) continue;
+            if (doc.GetElement(inst.ScheduleId) is not View v) continue;
+            result.Add(new PlacedView(v.UniqueId, v.Name, "Schedule"));
+        }
+        return result.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
     }
 
     private static Dictionary<string, string> Params(ViewSheet s)
