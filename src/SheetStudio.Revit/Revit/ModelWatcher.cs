@@ -16,11 +16,13 @@ public sealed class ModelWatcher : IDisposable
     private readonly Action<Action> _dispatch;
     private readonly Dictionary<string, HashSet<ElementId>> _knownSheets = [];
     private readonly Dictionary<string, HashSet<ElementId>> _knownPlaced = [];
-    private readonly ElementFilter _filter = new LogicalOrFilter(
-    [
-        new ElementClassFilter(typeof(ViewSheet)), new ElementCategoryFilter(BuiltInCategory.OST_TitleBlocks),
-        new ElementClassFilter(typeof(Viewport)), new ElementClassFilter(typeof(ScheduleSheetInstance)),
-    ]);
+    private static readonly ElementFilter PlacedFilter = new LogicalOrFilter(
+        new ElementClassFilter(typeof(Viewport)), new ElementClassFilter(typeof(ScheduleSheetInstance)));
+    // Modifications: sheets and title blocks only. Moving a viewport or regenerating a schedule must not reload the panel.
+    private static readonly ElementFilter ModifiedFilter = new LogicalOrFilter(
+        new ElementClassFilter(typeof(ViewSheet)), new ElementCategoryFilter(BuiltInCategory.OST_TitleBlocks));
+    // Additions: also viewports and schedule instances placed on a sheet.
+    private static readonly ElementFilter AddedFilter = new LogicalOrFilter(ModifiedFilter, PlacedFilter);
     private Timer? _timer;
 
     public ModelWatcher(Application app, int debounceMs = 500, Action<Action>? dispatch = null)
@@ -42,7 +44,6 @@ public sealed class ModelWatcher : IDisposable
 
     private void OnChanged(object? sender, DocumentChangedEventArgs e)
     {
-        if (ShouldIgnore(e.GetTransactionNames(), e.Operation)) return;
         var doc = e.GetDocument();
         var key = doc.PathName is { Length: > 0 } p ? p : doc.Title;
         var deleted = e.GetDeletedElementIds();
@@ -56,20 +57,32 @@ public sealed class ModelWatcher : IDisposable
         if (!_knownPlaced.TryGetValue(key, out var placed))
         {
             fresh = true;
-            _knownPlaced[key] = placed = new FilteredElementCollector(doc).WherePasses(new LogicalOrFilter(
-                new ElementClassFilter(typeof(Viewport)), new ElementClassFilter(typeof(ScheduleSheetInstance)))).ToElementIds().ToHashSet();
+            _knownPlaced[key] = placed = new FilteredElementCollector(doc).WherePasses(PlacedFilter).ToElementIds().ToHashSet();
         }
 
-        var added = e.GetAddedElementIds(_filter);
-        var relevant = added.Count > 0 || e.GetModifiedElementIds(_filter).Count > 0 || (deleted.Count > 0 && fresh) || deleted.Any(id => known.Contains(id) || placed.Contains(id));
+        var added = e.GetAddedElementIds(AddedFilter);
+        var relevant = added.Count > 0 || ModifiedSheetsOrTitleBlocks(e, doc) || (deleted.Count > 0 && fresh) || deleted.Any(id => known.Contains(id) || placed.Contains(id));
         foreach (var id in added) if (doc.GetElement(id) is ViewSheet) known.Add(id);
         foreach (var id in added) if (doc.GetElement(id) is Viewport or ScheduleSheetInstance) placed.Add(id);
         foreach (var id in deleted) { known.Remove(id); placed.Remove(id); }
-        if (!relevant) return;
+        // Bookkeeping above always runs; ignoring our own commits only suppresses raising.
+        if (!relevant || ShouldIgnore(e.GetTransactionNames(), e.Operation)) return;
 
         if (_debounceMs <= 0) { _dispatch(Raise); return; }
         _timer?.Dispose();
         _timer = new Timer(_ => _dispatch(Raise), null, _debounceMs, Timeout.Infinite);
+    }
+
+    /// <summary>
+    /// Moving a viewport (or regenerating a schedule) also marks the owning sheet as modified. When a viewport/schedule
+    /// instance is modified in the same event, the modified sheets are explained by it and do not count.
+    /// </summary>
+    private static bool ModifiedSheetsOrTitleBlocks(DocumentChangedEventArgs e, Document doc)
+    {
+        var modified = e.GetModifiedElementIds(ModifiedFilter);
+        if (modified.Count == 0) return false;
+        if (e.GetModifiedElementIds(PlacedFilter).Count == 0) return true;
+        return modified.Any(id => doc.GetElement(id) is not ViewSheet);
     }
 
     private void Raise()

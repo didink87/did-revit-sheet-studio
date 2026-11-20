@@ -127,4 +127,56 @@ public class WatcherTests
         }
         finally { doc.Close(false); }
     }
+
+    [Test]
+    public void Watcher_ViewportMoved_DoesNotRaise(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var sheet = Sheet(doc, "A-110", "DENAH");
+            var vpId = PlaceViewport(doc, sheet);
+            using var watcher = new ModelWatcher(app, debounceMs: 0, dispatch: a => a());
+            var raised = 0;
+            watcher.Changed += () => raised++;
+
+            Tx(doc, () =>
+            {
+                var vp = (Autodesk.Revit.DB.Viewport)doc.GetElement(vpId);
+                vp.SetBoxCenter(new Autodesk.Revit.DB.XYZ(0.5, 0.5, 0));
+            });
+
+            Assert.That(raised, Is.EqualTo(0));
+        }
+        finally { doc.Close(false); }
+    }
+
+    [Test]
+    public void Watcher_OwnTransactionViewportThenExternalDelete_Raises(Application app)
+    {
+        var doc = NewDoc(app);
+        try
+        {
+            var sheet = Sheet(doc, "A-110", "DENAH");
+            using var watcher = new ModelWatcher(app, debounceMs: 0, dispatch: a => a());
+            var raised = 0;
+            watcher.Changed += () => raised++;
+            Tx(doc, () => Autodesk.Revit.DB.Level.Create(doc, 10)); // unrelated event: builds the known sets
+            Autodesk.Revit.DB.ElementId? vp = null;
+            Tx(doc, () =>
+            {
+                var type = new Autodesk.Revit.DB.FilteredElementCollector(doc).OfClass(typeof(Autodesk.Revit.DB.ViewFamilyType))
+                    .Cast<Autodesk.Revit.DB.ViewFamilyType>().First(t => t.ViewFamily == Autodesk.Revit.DB.ViewFamily.Drafting);
+                var v = Autodesk.Revit.DB.ViewDrafting.Create(doc, type.Id);
+                doc.Create.NewDetailCurve(v, Autodesk.Revit.DB.Line.CreateBound(Autodesk.Revit.DB.XYZ.Zero, new Autodesk.Revit.DB.XYZ(5, 0, 0)));
+                vp = Autodesk.Revit.DB.Viewport.Create(doc, sheet.Id, v.Id, Autodesk.Revit.DB.XYZ.Zero).Id;
+            }, "Sheet Studio: test");
+            Assert.That(raised, Is.EqualTo(0));
+
+            Tx(doc, () => doc.Delete(vp!));
+
+            Assert.That(raised, Is.EqualTo(1));
+        }
+        finally { doc.Close(false); }
+    }
 }

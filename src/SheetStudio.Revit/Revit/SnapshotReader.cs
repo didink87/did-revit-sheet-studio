@@ -23,9 +23,10 @@ public static class SnapshotReader
     public static StudioSnapshot Read(Document doc, Prefs prefs, ProjectState state)
     {
         var titleBlocks = TitleBlocks.ByOwner(doc);
+        var schedules = SchedulesBySheet(doc);
         var sheets = new FilteredElementCollector(doc).OfClass(typeof(ViewSheet)).Cast<ViewSheet>()
             .Where(s => !s.IsPlaceholder)
-            .Select(s => Sheet(doc, s, titleBlocks))
+            .Select(s => Sheet(doc, s, titleBlocks, schedules))
             .ToList();
 
         var levels = new FilteredElementCollector(doc).OfClass(typeof(Level)).Cast<Level>()
@@ -46,7 +47,8 @@ public static class SnapshotReader
         };
     }
 
-    private static SheetSnapshot Sheet(Document doc, ViewSheet s, Dictionary<ElementId, FamilyInstance> titleBlocks)
+    private static SheetSnapshot Sheet(Document doc, ViewSheet s, Dictionary<ElementId, FamilyInstance> titleBlocks,
+        ILookup<ElementId, ScheduleSheetInstance> schedules)
     {
         var (editable, owner) = Ownership(doc, s.Id);
         titleBlocks.TryGetValue(s.Id, out var tb);
@@ -63,12 +65,21 @@ public static class SnapshotReader
             Params(s),
             tb is null ? "" : TitleBlocks.Display(tb.Symbol))
         {
-            PlacedViews = PlacedViews(doc, s),
+            PlacedViews = PlacedViews(doc, s, schedules),
         };
     }
 
-    /// <summary>Views and schedules placed on the sheet, by name. One sheet-scoped collector; revision schedules excluded.</summary>
-    internal static IReadOnlyList<PlacedView> PlacedViews(Document doc, ViewSheet s)
+    /// <summary>All non-revision schedule instances in the document (one collector), grouped by owning sheet.</summary>
+    private static ILookup<ElementId, ScheduleSheetInstance> SchedulesBySheet(Document doc) =>
+        new FilteredElementCollector(doc).OfClass(typeof(ScheduleSheetInstance)).Cast<ScheduleSheetInstance>()
+            .Where(i => !i.IsTitleblockRevisionSchedule)
+            .ToLookup(i => i.OwnerViewId);
+
+    /// <summary>Views and schedules placed on one sheet, by name (builds the schedule lookup itself; use the overload in loops).</summary>
+    internal static IReadOnlyList<PlacedView> PlacedViews(Document doc, ViewSheet s) => PlacedViews(doc, s, SchedulesBySheet(doc));
+
+    /// <summary>Views and schedules placed on the sheet, by name. Revision schedules are already excluded from <paramref name="schedules"/>.</summary>
+    internal static IReadOnlyList<PlacedView> PlacedViews(Document doc, ViewSheet s, ILookup<ElementId, ScheduleSheetInstance> schedules)
     {
         var result = new List<PlacedView>();
         foreach (var id in s.GetAllViewports())
@@ -76,9 +87,8 @@ public static class SnapshotReader
             if (doc.GetElement(id) is not Viewport vp || doc.GetElement(vp.ViewId) is not View v) continue;
             result.Add(new PlacedView(v.UniqueId, v.Name, v.ViewType.ToString()));
         }
-        foreach (var inst in new FilteredElementCollector(doc, s.Id).OfClass(typeof(ScheduleSheetInstance)).Cast<ScheduleSheetInstance>())
+        foreach (var inst in schedules[s.Id])
         {
-            if (inst.IsTitleblockRevisionSchedule) continue;
             if (doc.GetElement(inst.ScheduleId) is not View v) continue;
             result.Add(new PlacedView(v.UniqueId, v.Name, "Schedule"));
         }
