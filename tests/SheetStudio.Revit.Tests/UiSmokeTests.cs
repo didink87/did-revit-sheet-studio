@@ -170,29 +170,88 @@ public class UiSmokeTests
         Assert.That(empty.Fill, Is.EqualTo(System.Windows.Media.Brushes.Transparent));
     }
 
+    private static (System.Windows.Window Host, StudioPane Pane) HostPane(StudioViewModel vm)
+    {
+        var pane = new StudioPane(vm);
+        var host = new System.Windows.Window { Content = pane, Width = 900, Height = 600, ShowInTaskbar = false, WindowStartupLocation = System.Windows.WindowStartupLocation.Manual, Left = -5000 };
+        host.Show(); // a Popup only opens once its tree is loaded in a window
+        Pump(pane);
+        return (host, pane);
+    }
+
+    private static void ToggleViaAutomation(System.Windows.Controls.Primitives.ToggleButton toggle) =>
+        ((System.Windows.Automation.Provider.IToggleProvider)System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(toggle)).Toggle(); // raises the real OnClick
+
+    private static System.Windows.Input.MouseButtonEventArgs MouseEvent(System.Windows.RoutedEvent ev, object source) =>
+        new(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount, System.Windows.Input.MouseButton.Left) { RoutedEvent = ev, Source = source };
+
     [Test]
     public async Task LayersPanel_FillDotClick_DoesNotChangeSelection()
     {
         var vm = new StudioViewModel(new Fake());
         await vm.LoadAsync();
-        var pane = new StudioPane(vm);
-        var host = new System.Windows.Window { Content = pane, Width = 900, Height = 600, ShowInTaskbar = false, WindowStartupLocation = System.Windows.WindowStartupLocation.Manual, Left = -5000 };
-        host.Show(); // a Popup only opens once its tree is loaded in a window
-        Pump(pane);
-        var list = pane.LayersView.LayerList;
-        var before = vm.Layers.SelectedSheetIds().ToList();
-        var item = ItemFor(list, "L1");
-        var toggle = Find<System.Windows.Controls.Primitives.ToggleButton>(item, "FillToggle")!;
-        var popup = Find<System.Windows.Controls.Primitives.Popup>(item, "ViewsPopup")!;
-        var down = new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount, System.Windows.Input.MouseButton.Left)
-            { RoutedEvent = System.Windows.UIElement.PreviewMouseLeftButtonDownEvent, Source = toggle };
-        toggle.RaiseEvent(down);
-        ((System.Windows.Automation.Provider.IToggleProvider)System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(toggle)).Toggle(); // raises the real OnClick
-        Pump(pane);
-        Assert.That(toggle.IsChecked, Is.True, "toggle");
-        Assert.That(popup.IsOpen, Is.True, "popup " + popup.GetBindingExpression(System.Windows.Controls.Primitives.Popup.IsOpenProperty)?.Status + " " + popup.IsLoaded + " " + popup.PlacementTarget);
-        Assert.That(vm.Layers.SelectedSheetIds(), Is.EqualTo(before));
-        Assert.That(vm.Layers.Rows.First(r => r.Key == "L1").IsEditing, Is.False);
-        host.Close();
+        var (host, pane) = HostPane(vm);
+        try
+        {
+            var list = pane.LayersView.LayerList;
+            var before = vm.Layers.SelectedSheetIds().ToList();
+            var item = ItemFor(list, "L1");
+            var toggle = Find<System.Windows.Controls.Primitives.ToggleButton>(item, "FillToggle")!;
+            var popup = Find<System.Windows.Controls.Primitives.Popup>(item, "ViewsPopup")!;
+            toggle.RaiseEvent(MouseEvent(System.Windows.UIElement.PreviewMouseLeftButtonDownEvent, toggle));
+            ToggleViaAutomation(toggle);
+            Pump(pane);
+            Assert.That(popup.IsOpen, Is.True);
+            Assert.That(vm.Layers.SelectedSheetIds(), Is.EqualTo(before));
+            Assert.That(vm.Layers.Rows.First(r => r.Key == "L1").IsEditing, Is.False);
+        }
+        finally { host.Close(); }
+    }
+
+    [Test]
+    public async Task LayersPanel_ClickInsidePopup_DoesNotChangeSelection()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var (host, pane) = HostPane(vm);
+        try
+        {
+            var item = ItemFor(pane.LayersView.LayerList, "L1");
+            var toggle = Find<System.Windows.Controls.Primitives.ToggleButton>(item, "FillToggle")!;
+            var popup = Find<System.Windows.Controls.Primitives.Popup>(item, "ViewsPopup")!;
+            ToggleViaAutomation(toggle);
+            Pump(pane);
+            Assert.That(popup.IsOpen, Is.True);
+            var before = vm.Layers.SelectedSheetIds().ToList();
+            var content = (System.Windows.FrameworkElement)popup.Child;
+            content.RaiseEvent(MouseEvent(System.Windows.UIElement.PreviewMouseLeftButtonDownEvent, content));
+            content.RaiseEvent(MouseEvent(System.Windows.UIElement.PreviewMouseLeftButtonUpEvent, content));
+            Pump(pane);
+            Assert.That(vm.Layers.SelectedSheetIds(), Is.EqualTo(before));
+            Assert.That(vm.Layers.Rows.First(r => r.Key == "L1").IsSelected, Is.False);
+        }
+        finally { host.Close(); }
+    }
+
+    [Test]
+    public async Task LayersPanel_FillPopup_ClosesOnDataContextChange()
+    {
+        var vm = new StudioViewModel(new Fake());
+        await vm.LoadAsync();
+        var (host, pane) = HostPane(vm);
+        try
+        {
+            var item = ItemFor(pane.LayersView.LayerList, "L1");
+            var toggle = Find<System.Windows.Controls.Primitives.ToggleButton>(item, "FillToggle")!;
+            var popup = Find<System.Windows.Controls.Primitives.Popup>(item, "ViewsPopup")!;
+            ToggleViaAutomation(toggle);
+            Pump(pane);
+            Assert.That(popup.IsOpen, Is.True);
+            toggle.DataContext = vm.Layers.Rows.First(r => r.Key == "L2"); // what recycling does
+            Pump(pane);
+            Assert.That(popup.IsOpen, Is.False);
+            Assert.That(toggle.IsChecked, Is.False);
+        }
+        finally { host.Close(); }
     }
 }

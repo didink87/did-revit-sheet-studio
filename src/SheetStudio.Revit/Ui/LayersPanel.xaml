@@ -107,9 +107,18 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <ToggleButton x:Name="FillToggle" Grid.Column="0" Style="{StaticResource IconToggle}" Width="18"
-                                      ToolTip="{Binding ViewCountText}"
+                        <ToggleButton x:Name="FillToggle" Grid.Column="0" Width="18"
+                                      ToolTip="{Binding ViewCountText}" DataContextChanged="OnFillContextChanged"
                                       Visibility="{Binding IsGroup, Converter={StaticResource NotVis}}">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton" BasedOn="{StaticResource IconToggle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOpen, ElementName=ViewsPopup}" Value="True">
+                                            <Setter Property="IsHitTestVisible" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ToggleButton.Style>
                             <Ellipse x:Name="FillDot" Width="10" Height="10" StrokeThickness="1.5">
                                 <Ellipse.Style>
                                     <Style TargetType="Ellipse">
@@ -125,7 +134,7 @@
                                 </Ellipse.Style>
                             </Ellipse>
                         </ToggleButton>
-                        <Popup x:Name="ViewsPopup" PlacementTarget="{Binding ElementName=FillToggle}" Placement="Bottom" StaysOpen="False"
+                        <Popup x:Name="ViewsPopup" Opened="OnViewsPopupOpened" PlacementTarget="{Binding ElementName=FillToggle}" Placement="Bottom" StaysOpen="False"
                                AllowsTransparency="True" IsOpen="{Binding IsChecked, ElementName=FillToggle, Mode=TwoWay}">
                             <Border Background="{DynamicResource SS.Panel}" BorderBrush="{DynamicResource SS.Border}" BorderThickness="1"
                                     CornerRadius="4" Padding="10,8" MinWidth="180" MaxWidth="360" Margin="0,0,6,6">

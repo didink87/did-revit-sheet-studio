@@ -73,7 +73,7 @@ public partial class LayersPanel : UserControl
     // ── mouse selection ─────────────────────────────────────────
     private void OnRowMouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (IsInside<ButtonBase>(e.OriginalSource) || IsInside<TextBox>(e.OriginalSource)) return;
+        if (InPopup(e.OriginalSource) || IsInside<ButtonBase>(e.OriginalSource) || IsInside<TextBox>(e.OriginalSource)) return;
         var row = RowAt(e.OriginalSource);
         if (row is null || Layers is null) return;
         LayerList.Focus();
@@ -101,6 +101,7 @@ public partial class LayersPanel : UserControl
 
     private void OnRowMouseUp(object sender, MouseButtonEventArgs e)
     {
+        if (InPopup(e.OriginalSource)) return;
         if (_deferredClick && _downRow is not null) Layers?.Click(_downRow.Key);
         _deferredClick = false;
         _downAt = null;
@@ -108,6 +109,7 @@ public partial class LayersPanel : UserControl
 
     private void OnRowRightDown(object sender, MouseButtonEventArgs e)
     {
+        if (InPopup(e.OriginalSource)) return;
         var row = RowAt(e.OriginalSource);
         if (row is not null && !row.IsSelected) Layers?.Click(row.Key);
     }
@@ -132,6 +134,7 @@ public partial class LayersPanel : UserControl
     // ── drag & drop ─────────────────────────────────────────────
     private void OnRowMouseMove(object sender, MouseEventArgs e)
     {
+        if (InPopup(e.OriginalSource)) return;
         if (e.LeftButton != MouseButtonState.Pressed || _downAt is null || _downRow is null || Layers is null) return;
         var pos = e.GetPosition(LayerList);
         if (Math.Abs(pos.X - _downAt.Value.X) < SystemParameters.MinimumHorizontalDragDistance &&
@@ -209,7 +212,38 @@ public partial class LayersPanel : UserControl
     private System.Windows.Threading.DispatcherTimer? _thumbTimer;
 
     /// <summary>Debounced (250 ms): scrolling fast must not queue an export per row that flew past.</summary>
-    private void OnScrollChanged(object sender, ScrollChangedEventArgs e) => ScheduleThumbnails();
+    private void OnScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        CloseFillPopups();
+        ScheduleThumbnails();
+    }
+
+    /// <summary>True when the event source lives in a Popup's own window (events still route to the ListBox via the logical tree).</summary>
+    private bool InPopup(object source)
+    {
+        if (source is not Visual v) return false;
+        var src = PresentationSource.FromVisual(v);
+        var mine = PresentationSource.FromVisual(LayerList);
+        return src is not null && mine is not null && !ReferenceEquals(src, mine);
+    }
+
+    private ToggleButton? _openFill;
+
+    private void OnViewsPopupOpened(object sender, EventArgs e) => _openFill = FindFillToggle(sender);
+
+    private static ToggleButton? FindFillToggle(object popup) => (popup as Popup)?.PlacementTarget as ToggleButton;
+
+    // Recycled row containers keep their toggle state, so a popup must not follow a container to another row.
+    private void CloseFillPopups()
+    {
+        if (_openFill is { IsChecked: true } t) t.IsChecked = false;
+        _openFill = null;
+    }
+
+    private void OnFillContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (sender is ToggleButton t && t.IsChecked == true) t.IsChecked = false;
+    }
 
     private void ScheduleThumbnails()
     {
